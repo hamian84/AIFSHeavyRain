@@ -1,0 +1,1226 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AIFSHeavyRain Step08 Pass2 candidate synthesis",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "init",
+    "candidates"
+  ],
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "step08-pass2-result-v4",
+        "step08-pass2-result-v5",
+        "step08-pass2-result-v6",
+        "step08-pass2-result-v7",
+        "step08-pass2-result-v8",
+        "step08-pass2-result-v9",
+        "step08-pass2-result-v10",
+        "step08-pass2-result-v12",
+        "step08-pass2-result-v13",
+        "step08-pass2-result-v14",
+        "step08-pass2-result-v15",
+        "step08-pass2-result-v16",
+        "step08-pass2-result-v17"
+      ]
+    },
+    "init": {
+      "type": "string",
+      "minLength": 10
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    }
+  },
+  "$defs": {
+    "hypothesis_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_id",
+        "statement",
+        "supporting_check_ids",
+        "opposing_check_ids",
+        "assessment",
+        "evidence_check_ids",
+        "quantitative_relation_ids",
+        "rationale",
+        "uncertainties"
+      ],
+      "properties": {
+        "hypothesis_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supporting_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "opposing_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "assessment": {
+          "enum": [
+            "supported",
+            "partially_supported",
+            "not_supported",
+            "contradicted",
+            "uncertain",
+            "insufficient_evidence"
+          ]
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quantitative_relation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Step07에서 Python 사후검증을 통과한 정량관계 참조만 기록한다. 참조값은 <check_id>:<relation_id> 형식이며 새 정량관계를 생성하지 않는다."
+        }
+      }
+    },
+    "forecaster_question_answer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecaster_question_id",
+        "question",
+        "answer",
+        "evidence_check_ids",
+        "quantitative_relation_ids",
+        "uncertainties"
+      ],
+      "properties": {
+        "forecaster_question_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "uniqueItems": true
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "quantitative_relation_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "Step07에서 Python 사후검증을 통과한 정량관계 참조만 기록한다. 참조값은 <check_id>:<relation_id> 형식이며 새 정량관계를 생성하지 않는다."
+        }
+      }
+    },
+    "signal_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "signal_class",
+        "direct_precipitation_status",
+        "environment_support_status",
+        "environment_persistence_status",
+        "environment_persistence_evidence_check_ids",
+        "direct_precipitation_assessment",
+        "precursor_environment_assessment",
+        "contradictory_evidence",
+        "validated_precursor_evidence",
+        "validated_precursor_signal_categories",
+        "validated_spatiotemporal_alignment",
+        "environment_localization",
+        "spatiotemporal_alignment_evidence_check_ids",
+        "signal_evidence_check_ids",
+        "physical_consistency_status",
+        "physical_mechanism_summary",
+        "mechanism_evidence",
+        "monitoring_evidence",
+        "monitoring_value",
+        "operational_surface_reason",
+        "operational_surface_decision"
+      ],
+      "properties": {
+        "direct_precipitation_status": {
+          "enum": [
+            "confirmed",
+            "partial",
+            "not_confirmed",
+            "insufficient_evidence"
+          ]
+        },
+        "environment_support_status": {
+          "enum": [
+            "confirmed",
+            "partial",
+            "not_confirmed",
+            "insufficient_evidence"
+          ]
+        },
+        "signal_class": {
+          "enum": [
+            "direct_environment_supported",
+            "direct_environment_conditional",
+            "direct_environment_unsupported",
+            "direct_environment_unresolved",
+            "precursor_watch",
+            "partially_supported",
+            "rejected",
+            "insufficient_evidence"
+          ]
+        },
+        "direct_precipitation_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "precursor_environment_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "contradictory_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validated_precursor_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/precursor_evidence"
+          }
+        },
+        "validated_precursor_signal_categories": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing",
+              "thermodynamic_support",
+              "organization_persistence",
+              "direct_precipitation"
+            ]
+          }
+        },
+        "validated_spatiotemporal_alignment": {
+          "type": "boolean"
+        },
+        "spatiotemporal_alignment_evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "signal_evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          }
+        },
+        "operational_surface_decision": {
+          "enum": [
+            "surface",
+            "do_not_surface",
+            "not_applicable"
+          ]
+        },
+        "physical_consistency_status": {
+          "enum": [
+            "coherent",
+            "conditionally_coherent",
+            "incoherent",
+            "insufficient_evidence"
+          ]
+        },
+        "physical_mechanism_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "monitoring_value": {
+          "enum": [
+            "meaningful",
+            "marginal",
+            "low",
+            "undetermined"
+          ]
+        },
+        "operational_surface_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mechanism_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision_evidence"
+          },
+          "description": "강수 발생·유지 메커니즘 판단에 사용한 Step07 근거 역할 객체. 직접 강수 presence anchor는 포함하지 않는다."
+        },
+        "monitoring_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision_evidence"
+          },
+          "description": "예보관 우선 확인 가치 판단에 사용한 Step07 근거 역할 객체. 직접 강수 presence anchor는 포함하지 않는다."
+        },
+        "environment_localization": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/environment_localization"
+            }
+          ],
+          "description": "Python이 검증된 Step07 다변수 중첩 위치를 전달한 구조화 위치정보. 새로운 기상학적 판정이나 임계값을 생성하지 않는다."
+        },
+        "environment_persistence_status": {
+          "enum": [
+            "confirmed",
+            "limited",
+            "insufficient_evidence",
+            "not_applicable"
+          ],
+          "description": "핵심시각 환경 존재와 분리된 환경의 시간적 지속·강화 상태. confirmed=지속/강화 확인, limited=약화·분리 등 지속성 제한, insufficient_evidence=판단 근거 부족, not_applicable=환경 존재 판단 대상이 아님."
+        },
+        "environment_persistence_evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "description": "환경 지속성 판단에 실제 사용한 Step07 시간변화/지속성 Check ID."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "validated_spatiotemporal_alignment": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spatiotemporal_alignment_evidence_check_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      ]
+    },
+    "precursor_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "category",
+        "evidence_check_ids"
+      ],
+      "properties": {
+        "category": {
+          "enum": [
+            "moisture_supply",
+            "low_level_forcing",
+            "mid_upper_forcing",
+            "thermodynamic_support",
+            "organization_persistence",
+            "direct_precipitation"
+          ]
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "revision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "revised_candidate_name",
+        "candidate_name_revision_reason",
+        "candidate_name_revision_evidence_check_ids",
+        "revised_area",
+        "revised_time_window"
+      ],
+      "properties": {
+        "revised_candidate_name": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 60,
+          "description": "GPT-6 Sol이 candidate_name_grounding_contract.allowed_display_names 중 선택한 최종 사용자 표시 후보명. Step04 원본 candidate_name은 provenance로 보존."
+        },
+        "candidate_name_revision_reason": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1,
+          "maxLength": 240,
+          "description": "허용된 후보명 중 이 표시명을 선택한 기상학적·공간적 이유."
+        },
+        "candidate_name_revision_evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": "선택한 candidate_name_grounding_contract.name_option이 요구하는 Step07 근거 Check ID."
+        },
+        "revised_area": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "west",
+            "east",
+            "south",
+            "north"
+          ],
+          "properties": {
+            "west": {
+              "type": "number"
+            },
+            "east": {
+              "type": "number"
+            },
+            "south": {
+              "type": "number"
+            },
+            "north": {
+              "type": "number"
+            }
+          }
+        },
+        "revised_time_window": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "forecast_hour_start",
+            "forecast_hour_end"
+          ],
+          "properties": {
+            "forecast_hour_start": {
+              "type": "integer"
+            },
+            "forecast_hour_end": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "input_fingerprint",
+        "provenance",
+        "final_spatial_identity",
+        "hypothesis_assessments",
+        "forecaster_question_answers",
+        "signal_assessment",
+        "uncertainties",
+        "final_assessment",
+        "revision"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "input_fingerprint": {
+          "type": "string",
+          "minLength": 16
+        },
+        "provenance": {
+          "$ref": "#/$defs/provenance"
+        },
+        "hypothesis_assessments": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/hypothesis_assessment"
+          }
+        },
+        "forecaster_question_answers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/forecaster_question_answer"
+          }
+        },
+        "signal_assessment": {
+          "$ref": "#/$defs/signal_assessment"
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "final_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "revision": {
+          "$ref": "#/$defs/revision"
+        },
+        "operational_guidance": {
+          "$ref": "#/$defs/operational_guidance"
+        },
+        "operational_brief": {
+          "$ref": "#/$defs/operational_brief"
+        },
+        "final_spatial_identity": {
+          "$ref": "#/$defs/final_spatial_identity"
+        },
+        "candidate_name_grounding_audit": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contract_version",
+            "decision_owner",
+            "source_candidate_name",
+            "required_direct_precipitation_status",
+            "precipitation_object_grounding_required",
+            "precipitation_object_grounding_available",
+            "spatial_evidence",
+            "name_options",
+            "allowed_display_names"
+          ],
+          "properties": {
+            "contract_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "decision_owner": {
+              "const": "llm_with_system_grounding"
+            },
+            "source_candidate_name": {
+              "type": "string"
+            },
+            "required_direct_precipitation_status": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "precipitation_object_grounding_required": {
+              "type": "boolean"
+            },
+            "precipitation_object_grounding_available": {
+              "type": "boolean"
+            },
+            "spatial_evidence": {},
+            "name_options": {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "name",
+                  "evidence_check_ids",
+                  "basis"
+                ],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "evidence_check_ids": {
+                    "type": "array",
+                    "uniqueItems": true,
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "basis": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              }
+            },
+            "allowed_display_names": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    "operational_guidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_action",
+        "next_check",
+        "interpretation_limit",
+        "evidence_check_ids"
+      ],
+      "properties": {
+        "current_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_check": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interpretation_limit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step07_schema_version",
+        "step07_result_fingerprints",
+        "synthesis_prompt_sha256",
+        "synthesis_schema_sha256",
+        "provider",
+        "model",
+        "reasoning_effort",
+        "image_detail"
+      ],
+      "properties": {
+        "step07_schema_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "step07_result_fingerprints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "check_id",
+              "input_fingerprint"
+            ],
+            "properties": {
+              "check_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "input_fingerprint": {
+                "type": "string",
+                "minLength": 16
+              }
+            }
+          }
+        },
+        "synthesis_prompt_sha256": {
+          "type": "string",
+          "minLength": 16
+        },
+        "synthesis_schema_sha256": {
+          "type": "string",
+          "minLength": 16
+        },
+        "direct_precipitation_anchor_contract_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Step08 직접 강수 존재 판정에 적용한 SYSTEM pure-presence anchor 계약 버전. 과거 Step08 산출물 호환을 위해 선택 필드로 유지한다."
+        },
+        "analysis_region_naming_contract_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "candidate_area와 겹치는 operational_region_index 명칭을 분석영역 설명에 사용하는 Step08 명명 계약 버전. 과거 산출물 호환을 위해 선택 필드로 유지한다."
+        },
+        "candidate_analysis_region_index_sha256": {
+          "type": "string",
+          "minLength": 16,
+          "description": "해당 후보의 분석영역 명명 컨텍스트(candidate_analysis_region_index) 해시. 운영권역 정의가 바뀌면 Step08 재생성을 유도한다."
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "model": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reasoning_effort": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repair_reasoning_effort": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Step08 의미 단위 재생성(repair)에 사용한 추론 등급. 과거 산출물 호환을 위해 선택 필드로 유지한다."
+        },
+        "image_detail": {
+          "type": "string",
+          "minLength": 1
+        },
+        "intent_lineage": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "check_id",
+              "step04_intent_hash",
+              "step07_source_intent_hash"
+            ],
+            "properties": {
+              "check_id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "step04_intent_hash": {
+                "type": "string",
+                "minLength": 16
+              },
+              "step07_source_intent_hash": {
+                "type": "string",
+                "minLength": 16
+              }
+            }
+          }
+        },
+        "candidate_name_grounding_contract_version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "SYSTEM 후보명 공간 grounding 계약 버전. 과거 Step08 산출물 호환을 위해 선택 필드로 유지한다."
+        },
+        "candidate_name_grounding_contract_sha256": {
+          "type": "string",
+          "minLength": 16,
+          "description": "해당 후보의 candidate_name_grounding_contract 정규화 해시. 공간 grounding 또는 허용 후보명이 바뀌면 Step08 재생성을 유도한다."
+        }
+      }
+    },
+    "decision_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "effect",
+        "reason"
+      ],
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effect": {
+          "enum": [
+            "supporting",
+            "limiting",
+            "mixed",
+            "context"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "environment_localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "forecast_hour",
+        "confidence",
+        "evidence_check_id",
+        "signal_components",
+        "regions",
+        "source"
+      ],
+      "properties": {
+        "status": {
+          "const": "localized"
+        },
+        "forecast_hour": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium"
+          ]
+        },
+        "evidence_check_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/localized_region"
+          }
+        },
+        "source": {
+          "const": "step07_validated_spatial_localization"
+        },
+        "signal_components": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "direct_precipitation",
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing"
+            ]
+          },
+          "description": "해당 위치 판독 Check가 실제로 요구한 모델 강수 및 환경요소. 표출할 기상장 집합을 결정한다."
+        }
+      }
+    },
+    "localized_region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "region_id",
+        "relative_sector"
+      ],
+      "properties": {
+        "region_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relative_sector": {
+          "enum": [
+            "unspecified",
+            "north",
+            "northeast",
+            "east",
+            "southeast",
+            "south",
+            "southwest",
+            "west",
+            "northwest",
+            "central"
+          ]
+        },
+        "coverage_class": {
+          "enum": [
+            "broad",
+            "partial",
+            "local"
+          ]
+        },
+        "object_relation": {
+          "enum": [
+            "interior",
+            "edge",
+            "adjacent"
+          ]
+        },
+        "region_role": {
+          "enum": [
+            "operational_land",
+            "marine_macro"
+          ]
+        },
+        "precip_coverage_fraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "object_overlap_fraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "overlap_grid_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "region_precip_grid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "full_region_grid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "object_share_of_region_precip": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "broad_name_allowed": {
+          "type": "boolean"
+        },
+        "local_name_supported": {
+          "type": "boolean"
+        }
+      }
+    },
+    "operational_brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key_signal",
+        "key_limitation",
+        "next_check",
+        "evidence_check_ids"
+      ],
+      "properties": {
+        "key_signal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key_limitation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_check": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "final_spatial_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "forecast_hour",
+        "confidence",
+        "evidence_check_ids",
+        "regions",
+        "source"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "localized",
+            "precipitation_object",
+            "discovery_envelope"
+          ]
+        },
+        "forecast_hour": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "confidence": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "high",
+            "medium",
+            null
+          ]
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "regions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/localized_region"
+          }
+        },
+        "source": {
+          "enum": [
+            "step07_validated_spatial_localization",
+            "system_precipitation_object",
+            "step04_candidate_area"
+          ]
+        },
+        "precipitation_object_id": {
+          "type": "string"
+        },
+        "object_grid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "object_centroid": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "latitude",
+            "longitude"
+          ],
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            }
+          }
+        },
+        "object_bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/bbox"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "operational_overlap_fraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "localized"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "forecast_hour": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "confidence": {
+                "enum": [
+                  "high",
+                  "medium"
+                ]
+              },
+              "evidence_check_ids": {
+                "minItems": 1
+              },
+              "regions": {
+                "minItems": 1
+              },
+              "source": {
+                "const": "step07_validated_spatial_localization"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "precipitation_object"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "forecast_hour": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "confidence": {
+                "enum": [
+                  "high",
+                  "medium"
+                ]
+              },
+              "evidence_check_ids": {
+                "minItems": 1
+              },
+              "regions": {
+                "minItems": 1,
+                "maxItems": 2,
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/localized_region"
+                    },
+                    {
+                      "required": [
+                        "coverage_class",
+                        "object_relation",
+                        "region_role",
+                        "precip_coverage_fraction",
+                        "object_overlap_fraction",
+                        "overlap_grid_count"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "source": {
+                "const": "system_precipitation_object"
+              }
+            },
+            "required": []
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "discovery_envelope"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "forecast_hour": {
+                "type": "null"
+              },
+              "confidence": {
+                "type": "null"
+              },
+              "evidence_check_ids": {
+                "maxItems": 0
+              },
+              "regions": {
+                "maxItems": 0
+              },
+              "source": {
+                "const": "step04_candidate_area"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "bbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "west",
+        "east",
+        "south",
+        "north"
+      ],
+      "properties": {
+        "west": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "north": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

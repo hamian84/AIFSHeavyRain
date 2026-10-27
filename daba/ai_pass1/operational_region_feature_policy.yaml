@@ -1,0 +1,76 @@
+# 운영권역 역할별 고정 feature 계약입니다.
+# 이 파일은 이미 생산된 feature 배열 중 각 권역 역할별로 요약할 대상을 제어합니다.
+# 후보, 예측시간, 권역을 동적으로 선정하지 않습니다.
+
+policy_id: operational_region_feature_policy_v1
+policy_version: 1.0.0
+selection_mode: fixed_role_contract
+threshold_filtering_applied: false
+
+statistics:
+  - valid_grid_count
+  - mean
+  - min
+  - max
+  - p95
+  - max_location
+  - min_location
+
+compact_output:
+  group_by: [region_id, feature_id]
+  preserve_forecast_hours: true
+  preserve_valid_times_utc: true
+  preserve_mask_status: true
+  preserve_source_lineage: true
+
+region_role_features:
+  source_corridor:
+    - tp_6h_increment_mm
+    - msl_hpa
+    - tcw_kg_m2
+    - wind10_ms
+    - wind925_ms
+    - wind850_ms
+    - convergence925_1e5_s
+    - q925_gkg
+    - q850_gkg
+    - moisture_flux925
+    - moisture_flux850
+    - omega700_upward
+    - omega500_upward
+    - z500_gpm
+    - upper_jet300_ms
+
+  operational_land:
+    - tp_accum_mm
+    - tp_6h_increment_mm
+    - cp_accum_mm
+    - cp_6h_increment_mm
+    - msl_hpa
+    - tcw_kg_m2
+    - convergence925_1e5_s
+    - q925_gkg
+    - q850_gkg
+    - moisture_flux925
+    - moisture_flux850
+    - omega700_upward
+    - omega500_upward
+    - z500_gpm
+    - upper_jet300_ms
+
+  marine_macro:
+    - tp_6h_increment_mm
+    - msl_hpa
+    - tcw_kg_m2
+    - wind10_ms
+    - wind925_ms
+    - wind850_ms
+    - convergence925_1e5_s
+    - q925_gkg
+    - q850_gkg
+    - moisture_flux925
+    - moisture_flux850
+    - omega700_upward
+
+  # Pass2 예약 대상입니다. Step03/04에서 계산하지 않습니다.
+  marine_detail: []

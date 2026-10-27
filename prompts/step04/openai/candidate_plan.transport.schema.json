@@ -1,0 +1,651 @@
+{
+  "title": "AIFS Pass1 Meteorological Verification Plan Transport",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "analysis_objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "context_domain": {
+      "anyOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "west": {
+              "type": "number"
+            },
+            "east": {
+              "type": "number"
+            },
+            "south": {
+              "type": "number"
+            },
+            "north": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "west",
+            "east",
+            "south",
+            "north"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "context_domain_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "hypotheses": {
+      "type": "array",
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "hypothesis_key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "statement": {
+            "type": "string",
+            "minLength": 1
+          },
+          "supporting_check_keys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "opposing_check_keys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        "required": [
+          "hypothesis_key",
+          "statement",
+          "supporting_check_keys",
+          "opposing_check_keys"
+        ]
+      }
+    },
+    "analysis_phases": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "phase_key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "phase_type": {
+            "type": "string",
+            "enum": [
+              "pre_peak",
+              "peak",
+              "post_peak",
+              "context"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "forecast_hours": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 20,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          }
+        },
+        "required": [
+          "phase_key",
+          "phase_type",
+          "forecast_hours",
+          "purpose"
+        ]
+      }
+    },
+    "forecaster_questions": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 6,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "coverage_self_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "covered_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "hazard_magnitude",
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_level_forcing",
+              "upper_level_forcing",
+              "instability_or_stability",
+              "temporal_evolution",
+              "spatial_evolution",
+              "terrain_or_regional_effect",
+              "supporting_evidence",
+              "opposing_evidence",
+              "forecast_uncertainty"
+            ]
+          }
+        },
+        "potentially_missing_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "hazard_magnitude",
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_level_forcing",
+              "upper_level_forcing",
+              "instability_or_stability",
+              "temporal_evolution",
+              "spatial_evolution",
+              "terrain_or_regional_effect",
+              "supporting_evidence",
+              "opposing_evidence",
+              "forecast_uncertainty"
+            ]
+          }
+        },
+        "not_applicable_roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "hazard_magnitude",
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_level_forcing",
+              "upper_level_forcing",
+              "instability_or_stability",
+              "temporal_evolution",
+              "spatial_evolution",
+              "terrain_or_regional_effect",
+              "supporting_evidence",
+              "opposing_evidence",
+              "forecast_uncertainty"
+            ]
+          }
+        }
+      },
+      "required": [
+        "covered_roles",
+        "potentially_missing_roles",
+        "not_applicable_roles"
+      ]
+    },
+    "plan_chunk_index": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "is_complete": {
+      "type": "boolean"
+    },
+    "remaining_roles": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "hazard_magnitude",
+          "moisture_supply",
+          "low_level_forcing",
+          "mid_level_forcing",
+          "upper_level_forcing",
+          "instability_or_stability",
+          "temporal_evolution",
+          "spatial_evolution",
+          "terrain_or_regional_effect",
+          "supporting_evidence",
+          "opposing_evidence",
+          "forecast_uncertainty"
+        ]
+      }
+    },
+    "verification_requests": {
+      "type": "array",
+      "minItems": 0,
+      "maxItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "check_key": {
+            "type": "string",
+            "minLength": 1
+          },
+          "signal_components": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 5,
+            "items": {
+              "type": "string",
+              "enum": [
+                "direct_precipitation",
+                "moisture_supply",
+                "low_level_forcing",
+                "mid_upper_forcing",
+                "organization_persistence"
+              ]
+            }
+          },
+          "verification_mode": {
+            "type": "string",
+            "enum": [
+              "spatial_distribution",
+              "regional_intensity",
+              "temporal_change",
+              "spatial_evolution",
+              "multivariable_alignment",
+              "vertical_structure",
+              "vertical_time_evolution",
+              "precipitation_amount"
+            ]
+          },
+          "domain_scope": {
+            "type": "string",
+            "enum": [
+              "candidate",
+              "context"
+            ]
+          },
+          "phase_keys": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "representative_spatial_hours": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 3,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "expected_signal": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decision_relevance": {
+            "type": "string",
+            "minLength": 1
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "required",
+              "supplementary"
+            ]
+          },
+          "evidence_role": {
+            "type": "string",
+            "enum": [
+              "supporting",
+              "opposing",
+              "context"
+            ]
+          },
+          "coverage_roles": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "hazard_magnitude",
+                "moisture_supply",
+                "low_level_forcing",
+                "mid_level_forcing",
+                "upper_level_forcing",
+                "instability_or_stability",
+                "temporal_evolution",
+                "spatial_evolution",
+                "terrain_or_regional_effect",
+                "supporting_evidence",
+                "opposing_evidence",
+                "forecast_uncertainty"
+              ]
+            }
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "cross_section_line": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "start_latitude",
+                  "start_longitude",
+                  "end_latitude",
+                  "end_longitude",
+                  "selection_reason"
+                ],
+                "properties": {
+                  "start_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "start_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "end_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "end_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "selection_reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cross_section_strategy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "across_precipitation_band",
+              "along_precipitation_axis",
+              "along_moisture_inflow",
+              null
+            ]
+          },
+          "reference_band_axis": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "start_latitude",
+                  "start_longitude",
+                  "end_latitude",
+                  "end_longitude"
+                ],
+                "properties": {
+                  "start_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "start_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "end_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "end_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "atomic_claims": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 4,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "claim_key": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "claim_statement": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "claim_components": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 5,
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "direct_precipitation",
+                      "moisture_supply",
+                      "low_level_forcing",
+                      "mid_upper_forcing",
+                      "organization_persistence"
+                    ]
+                  }
+                },
+                "phase_keys": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "expected_state": {
+                  "type": "string",
+                  "enum": [
+                    "present",
+                    "absent",
+                    "increase",
+                    "decrease",
+                    "strengthen",
+                    "not_strengthen",
+                    "weaken",
+                    "greater_than",
+                    "less_than",
+                    "overlap",
+                    "not_overlap",
+                    "move",
+                    "persist",
+                    "split",
+                    "merge",
+                    "expand",
+                    "contract",
+                    "reorganize",
+                    "located_at",
+                    "peak_at"
+                  ]
+                },
+                "scope_quantifier": {
+                  "type": "string",
+                  "enum": [
+                    "all",
+                    "majority",
+                    "at_least_one",
+                    "specific"
+                  ]
+                },
+                "scope_description": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quantitative_scope": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "properties": {
+                        "feature_id": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "region_scope": {
+                          "type": "string",
+                          "enum": [
+                            "explicit_regions",
+                            "candidate_overlap"
+                          ]
+                        },
+                        "region_ids": {
+                          "type": "array",
+                          "minItems": 0,
+                          "maxItems": 1,
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "forecast_hours": {
+                          "type": "array",
+                          "minItems": 2,
+                          "maxItems": 8,
+                          "items": {
+                            "type": "integer",
+                            "minimum": 0
+                          }
+                        },
+                        "comparison_forecast_hours": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "minItems": 2,
+                              "maxItems": 2,
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0
+                              }
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "statistic": {
+                          "type": "string",
+                          "enum": [
+                            "min",
+                            "max",
+                            "mean",
+                            "p95"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "feature_id",
+                        "region_scope",
+                        "region_ids",
+                        "forecast_hours",
+                        "comparison_forecast_hours",
+                        "statistic"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "claim_key",
+                "claim_statement",
+                "claim_components",
+                "phase_keys",
+                "expected_state",
+                "scope_quantifier",
+                "scope_description",
+                "quantitative_scope"
+              ]
+            }
+          },
+          "spatial_relation_scope": {
+            "type": "string",
+            "enum": [
+              "candidate_interior",
+              "candidate_boundary_crossing",
+              "candidate_external_context",
+              "not_applicable"
+            ]
+          }
+        },
+        "required": [
+          "check_key",
+          "signal_components",
+          "verification_mode",
+          "domain_scope",
+          "spatial_relation_scope",
+          "phase_keys",
+          "representative_spatial_hours",
+          "expected_signal",
+          "decision_relevance",
+          "priority",
+          "evidence_role",
+          "coverage_roles",
+          "purpose",
+          "cross_section_line",
+          "cross_section_strategy",
+          "reference_band_axis",
+          "atomic_claims"
+        ]
+      }
+    }
+  },
+  "required": [
+    "analysis_objective",
+    "context_domain",
+    "context_domain_reason",
+    "hypotheses",
+    "analysis_phases",
+    "verification_requests",
+    "forecaster_questions",
+    "coverage_self_assessment",
+    "plan_chunk_index",
+    "is_complete",
+    "remaining_roles"
+  ]
+}

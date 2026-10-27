@@ -1,0 +1,652 @@
+# AIFSHeavyRain AI 탐색 Pass1의 운영권역 계층입니다.
+#
+# 공간 역할:
+# - source_corridor: 상류 시스템·수분 경로 맥락이며 최종 위험 순위를 부여하지 않습니다.
+# - operational_land: 대한민국 육상 운영권역이며 Pass1 위험 순위 대상입니다.
+# - marine_macro: 광역 해상 운영권역이며 관련 시 Pass1 위험 순위 대상입니다.
+# - marine_detail: Pass2에 예약된 상세 해상권역이며 Pass1에서 계산하지 않습니다.
+#
+# 모든 bbox는 WGS84 십진도이며 후보와 권역의 빠른 사전 교차검사용입니다.
+# operational_land의 실제 소속은 고정 AIFS 격자 매핑으로 판정하며 bbox나 Natural Earth 육지
+# 마스크를 지역 경계로 사용하지 않습니다. 해상/발원 통로의 육지·해양 마스크는 기존 로컬
+# Natural Earth 육지 shapefile을 사용합니다.
+
+policy_id: ai_discovery_operational_regions_v1
+policy_version: 1.2.0
+coordinate_reference_system: EPSG:4326
+
+mask_resources:
+  land_shapefile_candidates:
+    - daba/map/ne_50m_land/ne_50m_land.shp
+    - daba/map/ne_10m_land/ne_10m_land.shp
+  operational_land_grid_mapping_candidates:
+    - daba/analysis/aifs_operational_region_grid_map.csv
+  operational_land_grid_coordinate_tolerance_degrees: 1.0e-7
+  failure_policy: error
+
+region_role_contract:
+  source_corridor:
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+  operational_land:
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+  marine_macro:
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+  marine_detail:
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+
+regions:
+  # ---------------------------------------------------------------------------
+  # 1. 상류/발원 통로 (8개)
+  # ---------------------------------------------------------------------------
+  - region_id: SRC_BOHAI_BAY
+    name_ko: 발해만
+    aliases: [발해만_육상앞바다]
+    region_role: source_corridor
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+    bbox: {lat_min: 37.0, lat_max: 41.0, lon_min: 117.5, lon_max: 122.5}
+    mask_type: mixed
+    mask_fallback: error
+    overlap_group_id: OG_NORTHWEST_UPSTREAM
+    analysis_purpose: 서쪽 저기압·기압골·수렴계 발원 및 접근 추적
+
+  - region_id: SRC_SHANDONG_PENINSULA
+    name_ko: 산둥반도
+    aliases: [산둥반도_육상앞바다]
+    region_role: source_corridor
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+    bbox: {lat_min: 35.0, lat_max: 37.5, lon_min: 119.0, lon_max: 122.5}
+    mask_type: mixed
+    mask_fallback: error
+    overlap_group_id: OG_WESTERN_UPSTREAM
+    analysis_purpose: 서해 방향 시스템 발원·이동 및 하층 유입 추적
+
+  - region_id: SRC_EAST_CHINA_SEA
+    name_ko: 동중국해
+    aliases: [동중국해_수증기통로]
+    region_role: source_corridor
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+    bbox: {lat_min: 28.0, lat_max: 33.0, lon_min: 122.0, lon_max: 129.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_SOUTHERN_MOISTURE_PATH
+    analysis_purpose: 태풍·저기압 및 고수증기 공기의 북상 통로 추적
+
+  - region_id: SRC_KYUSHU_WEST
+    name_ko: 규슈서해
+    aliases: []
+    region_role: source_corridor
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+    bbox: {lat_min: 31.0, lat_max: 34.0, lon_min: 129.0, lon_max: 130.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_KYUSHU_WEST_PATH
+    analysis_purpose: 남동쪽 수증기 유입과 강수계 북상 경로 추적
+
+  - region_id: SRC_KYUSHU_SOUTH
+    name_ko: 규슈 남쪽 해상
+    aliases: []
+    region_role: source_corridor
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+    bbox: {lat_min: 29.0, lat_max: 31.0, lon_min: 129.0, lon_max: 132.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_SOUTHERN_MOISTURE_PATH
+    analysis_purpose: 남쪽 시스템과 수증기 유입의 선행 변화 추적
+
+  - region_id: MARINE_KOREA_STRAIT
+    name_ko: 대한해협
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 34.0, lat_max: 35.5, lon_min: 129.0, lon_max: 130.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_KOREA_STRAIT
+    analysis_purpose: 대한해협의 강수계 접근과 남해·영남권으로 이어지는 하층 수분·바람 통로 감시
+
+  - region_id: SRC_NORTH_WEST_SEA
+    name_ko: 서해북부
+    aliases: [북한서해]
+    region_role: source_corridor
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+    bbox: {lat_min: 38.0, lat_max: 40.0, lon_min: 123.5, lon_max: 125.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_NORTHWEST_UPSTREAM
+    analysis_purpose: 북한 서해상 강수계와 북서쪽 시스템 이동 추적
+
+  - region_id: SRC_NORTH_EAST_SEA
+    name_ko: 동해북부
+    aliases: [북한동해]
+    region_role: source_corridor
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: false
+    bbox: {lat_min: 38.6, lat_max: 42.5, lon_min: 128.0, lon_max: 132.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_EAST_SEA_NORTH
+    analysis_purpose: 동해상 저기압·북동기류·동해안 영향 시스템 추적
+
+  # ---------------------------------------------------------------------------
+  # 2. 대한민국 육상 운영권역 (10개)
+  #    - 실제 공간 소속은 aifs_operational_region_grid_map.csv의 AIFS 격자 좌표로 확정합니다.
+  #    - 울릉도·독도와 서해5도는 AIFS 격자 매칭 한계로 operational_land에서 제외합니다.
+  # ---------------------------------------------------------------------------
+  - region_id: LAND_CAPITAL
+    name_ko: 수도권
+    aliases: [서울·인천·경기도, 서울·인천·경기, 서울인천경기, 서울경기인천]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 36.9, lat_max: 38.3, lon_min: 126.5, lon_max: 127.8}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 18
+    overlap_group_id: OG_LAND_CAPITAL
+    analysis_purpose: 수도권 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_GANGWON_YEONGSEO
+    name_ko: 강원영서
+    aliases: [강원 영서, 강원도영서, 강원특별자치도 영서]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 37.0, lat_max: 38.5, lon_min: 127.5, lon_max: 128.8}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 16
+    overlap_group_id: OG_LAND_GANGWON
+    analysis_purpose: 강원영서 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_GANGWON_YEONGDONG
+    name_ko: 강원영동
+    aliases: [강원 영동, 강원도영동, 강원특별자치도 영동]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 37.0, lat_max: 38.6, lon_min: 128.4, lon_max: 129.4}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 5
+    overlap_group_id: OG_LAND_GANGWON
+    analysis_purpose: 강원영동 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_CHUNGNAM
+    name_ko: 충남권
+    aliases: [대전·세종·충청남도, 대전·세종·충남, 대전세종충남]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 35.9, lat_max: 37.1, lon_min: 126.2, lon_max: 127.5}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 14
+    overlap_group_id: OG_LAND_CHUNGCHEONG
+    analysis_purpose: 충남권 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_CHUNGBUK
+    name_ko: 충북
+    aliases: [충청북도, 충북권]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 36.1, lat_max: 37.3, lon_min: 127.3, lon_max: 128.6}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 14
+    overlap_group_id: OG_LAND_CHUNGCHEONG
+    analysis_purpose: 충북 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_JEONBUK
+    name_ko: 전북
+    aliases: [전북특별자치도, 전북자치도, 전북권]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 35.3, lat_max: 36.1, lon_min: 126.4, lon_max: 127.8}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 12
+    overlap_group_id: OG_LAND_JEOLLA
+    analysis_purpose: 전북 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_JEONNAM
+    name_ko: 전남권
+    aliases: [광주·전라남도, 광주·전남, 광주전남]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 34.2, lat_max: 35.4, lon_min: 126.2, lon_max: 127.8}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 18
+    overlap_group_id: OG_LAND_JEOLLA
+    analysis_purpose: 전남권 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_GYEONGNAM
+    name_ko: 경남권
+    aliases: [부산·울산·경상남도, 부산·울산·경남, 부산울산경남]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 34.5, lat_max: 35.8, lon_min: 127.6, lon_max: 129.4}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 19
+    overlap_group_id: OG_LAND_GYEONGSANG
+    analysis_purpose: 경남권 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_GYEONGBUK
+    name_ko: 경북권
+    aliases: [대구·경상북도, 대구·경북, 대구경북]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 35.5, lat_max: 37.1, lon_min: 127.8, lon_max: 129.6}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 31
+    overlap_group_id: OG_LAND_GYEONGSANG
+    analysis_purpose: 경북권 육상 위험후보 투영 및 우선순위 산출
+
+  - region_id: LAND_JEJU
+    name_ko: 제주도
+    aliases: [제주특별자치도, 제주권, 제주도 육상, 제주도육상]
+    region_role: operational_land
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 33.1, lat_max: 33.6, lon_min: 126.1, lon_max: 127.0}
+    mask_type: land
+    mask_fallback: error
+    grid_membership_mode: fixed_aifs_grid_points
+    expected_aifs_grid_count: 4
+    overlap_group_id: OG_LAND_JEJU
+    analysis_purpose: 제주도 육상 위험후보 투영 및 우선순위 산출
+
+  # ---------------------------------------------------------------------------
+  # 3. Pass1 광역 해상권역 (7개)
+  # ---------------------------------------------------------------------------
+  - region_id: MARINE_WEST_CENTRAL
+    name_ko: 서해중부 광역
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 35.9, lat_max: 38.0, lon_min: 124.0, lon_max: 126.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_CENTRAL
+    analysis_purpose: 수도권·충청 서해 유입 및 해상 강수계 접근 감시
+
+  - region_id: MARINE_WEST_SOUTH
+    name_ko: 서해남부 광역
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 33.0, lat_max: 36.0, lon_min: 123.0, lon_max: 126.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_SOUTH
+    analysis_purpose: 전북·전남 서해 유입 및 해상 강수계 접근 감시
+
+  - region_id: MARINE_SOUTH_WEST
+    name_ko: 남해서부 광역
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 33.0, lat_max: 34.7, lon_min: 125.5, lon_max: 127.8}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_SOUTH_WEST
+    analysis_purpose: 전남 남해와 남해서부 수분 유입·수렴대 감시
+
+  # AIFS 0.25° 격자 중심 129.0E는 대한해협에 귀속한다.
+  # 128.875E는 128.75E와 129.0E 격자 중심 사이의 cell-edge이며 공식 예보구역 경계가 아니다.
+  - region_id: MARINE_SOUTH_EAST
+    name_ko: 남해동부
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 33.0, lat_max: 35.1, lon_min: 127.5, lon_max: 128.875}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_SOUTH_EAST
+    analysis_purpose: 경남 남해와 남해동부 해상의 수분 유입·수렴대 및 강수계 접근 감시
+
+  - region_id: MARINE_JEJU
+    name_ko: 제주해상 광역
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 32.5, lat_max: 34.0, lon_min: 125.5, lon_max: 127.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_JEJU
+    analysis_purpose: 제주 주변 수분 유입·강수계 북상 감시
+
+  - region_id: MARINE_EAST_SOUTH
+    name_ko: 동해남부 광역
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 35.0, lat_max: 37.1, lon_min: 129.2, lon_max: 131.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_EAST_SOUTH
+    analysis_purpose: 부산·울산·경북 동해상 강수계와 동풍계 감시
+
+  - region_id: MARINE_EAST_CENTRAL
+    name_ko: 동해중부 광역
+    aliases: []
+    region_role: marine_macro
+    stage: pass1
+    enabled_in_pass1: true
+    eligible_for_risk_rank: true
+    bbox: {lat_min: 37.1, lat_max: 38.6, lon_min: 128.5, lon_max: 132.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_EAST_SEA_NORTH
+    analysis_purpose: 강원 영동·동해중부 강수계와 북동기류 감시
+
+  # ---------------------------------------------------------------------------
+  # 4. Pass2 예약 상세 해상권역 (19개)
+  # ---------------------------------------------------------------------------
+  - region_id: SEA_CAPITAL_COAST
+    name_ko: 수도권 서해 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_WEST_CENTRAL
+    bbox: {lat_min: 36.9, lat_max: 37.8, lon_min: 125.5, lon_max: 126.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_CENTRAL
+
+  - region_id: SEA_CHUNGNAM_COAST
+    name_ko: 충청도 서해 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_WEST_CENTRAL
+    bbox: {lat_min: 35.9, lat_max: 36.9, lon_min: 125.5, lon_max: 126.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_CENTRAL
+
+  - region_id: SEA_JEONBUK_WEST_COAST
+    name_ko: 전북 서해 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_WEST_SOUTH
+    bbox: {lat_min: 35.3, lat_max: 35.9, lon_min: 125.5, lon_max: 126.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_SOUTH
+
+  - region_id: SEA_JEONNAM_WEST_COAST
+    name_ko: 전남 서해 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_WEST_SOUTH
+    bbox: {lat_min: 34.0, lat_max: 35.3, lon_min: 125.0, lon_max: 126.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_SOUTH
+
+  - region_id: SEA_WEST_CENTRAL_OFFSHORE
+    name_ko: 서해중부 먼바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_WEST_CENTRAL
+    bbox: {lat_min: 36.0, lat_max: 38.0, lon_min: 124.0, lon_max: 125.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_CENTRAL
+
+  - region_id: SEA_WEST_SOUTH_OFFSHORE
+    name_ko: 서해남부 먼바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_WEST_SOUTH
+    bbox: {lat_min: 33.0, lat_max: 36.0, lon_min: 123.0, lon_max: 125.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_WEST_SOUTH
+
+  - region_id: SEA_JEONNAM_SOUTH_COAST
+    name_ko: 전남 남해 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_SOUTH_WEST
+    bbox: {lat_min: 34.0, lat_max: 34.7, lon_min: 126.0, lon_max: 127.8}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_SOUTH_WEST
+
+  - region_id: SEA_SOUTH_WEST_OFFSHORE
+    name_ko: 남해서부 먼바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_SOUTH_WEST
+    bbox: {lat_min: 33.0, lat_max: 34.0, lon_min: 125.5, lon_max: 127.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_SOUTH_WEST
+
+  - region_id: SEA_GYEONGNAM_SOUTH_COAST
+    name_ko: 경남 남해 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_SOUTH_EAST
+    bbox: {lat_min: 34.5, lat_max: 35.1, lon_min: 127.8, lon_max: 128.875}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_SOUTH_EAST
+
+  - region_id: SEA_SOUTH_EAST_OFFSHORE
+    name_ko: 남해동부 먼바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_SOUTH_EAST
+    bbox: {lat_min: 33.0, lat_max: 34.5, lon_min: 127.5, lon_max: 128.875}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_SOUTH_EAST
+
+  - region_id: SEA_JEJU_NORTH_COAST
+    name_ko: 제주북부 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_JEJU
+    bbox: {lat_min: 33.5, lat_max: 34.0, lon_min: 126.0, lon_max: 127.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_JEJU
+
+  - region_id: SEA_JEJU_WEST_COAST
+    name_ko: 제주서부 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_JEJU
+    bbox: {lat_min: 33.1, lat_max: 33.5, lon_min: 125.5, lon_max: 126.2}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_JEJU
+
+  - region_id: SEA_JEJU_SOUTH_COAST
+    name_ko: 제주남부 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_JEJU
+    bbox: {lat_min: 32.5, lat_max: 33.2, lon_min: 126.0, lon_max: 127.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_JEJU
+
+  - region_id: SEA_JEJU_EAST_COAST
+    name_ko: 제주동부 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_JEJU
+    bbox: {lat_min: 33.1, lat_max: 33.5, lon_min: 126.9, lon_max: 127.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_JEJU
+
+  - region_id: SEA_GYEONGNAM_EAST_COAST
+    name_ko: 경남 동해 앞바다
+    aliases: [부산울산앞바다]
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_EAST_SOUTH
+    bbox: {lat_min: 35.0, lat_max: 35.6, lon_min: 129.2, lon_max: 129.7}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_EAST_SOUTH
+
+  - region_id: SEA_GYEONGBUK_EAST_COAST
+    name_ko: 경북 동해 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_EAST_SOUTH
+    bbox: {lat_min: 35.6, lat_max: 37.1, lon_min: 129.3, lon_max: 130.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_EAST_SOUTH
+
+  - region_id: SEA_EAST_SOUTH_OFFSHORE
+    name_ko: 동해남부 먼바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_EAST_SOUTH
+    bbox: {lat_min: 35.0, lat_max: 37.1, lon_min: 129.7, lon_max: 131.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_MARINE_EAST_SOUTH
+
+  - region_id: SEA_GANGWON_YEONGDONG_COAST
+    name_ko: 강원 영동 앞바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_EAST_CENTRAL
+    bbox: {lat_min: 37.1, lat_max: 38.6, lon_min: 128.5, lon_max: 129.5}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_EAST_SEA_NORTH
+
+  - region_id: SEA_EAST_CENTRAL_OFFSHORE
+    name_ko: 동해중부 먼바다
+    aliases: []
+    region_role: marine_detail
+    stage: pass2
+    enabled_in_pass1: false
+    eligible_for_risk_rank: false
+    parent_region_id: MARINE_EAST_CENTRAL
+    bbox: {lat_min: 37.1, lat_max: 38.6, lon_min: 129.5, lon_max: 132.0}
+    mask_type: sea
+    mask_fallback: error
+    overlap_group_id: OG_EAST_SEA_NORTH

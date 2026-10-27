@@ -1,0 +1,363 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AIFSHeavyRain Pass2 VLM check-assessment response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "assessments"
+  ],
+  "properties": {
+    "assessments": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "check_id",
+          "assessment",
+          "scope_coverage",
+          "spatial_localization",
+          "precipitation_motion",
+          "findings",
+          "contradictory_findings",
+          "uncertainties",
+          "quantitative_claims",
+          "quantitative_relations"
+        ],
+        "properties": {
+          "check_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "assessment": {
+            "enum": [
+              "observed",
+              "partially_observed",
+              "not_observed",
+              "opposite_observed",
+              "uncertain"
+            ]
+          },
+          "findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/finding"
+            }
+          },
+          "contradictory_findings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/finding"
+            }
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "quantitative_claims": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/quantitative_selector"
+            }
+          },
+          "quantitative_relations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/quantitative_relation"
+            }
+          },
+          "scope_coverage": {
+            "enum": [
+              "complete_expected_scope",
+              "partial_expected_scope",
+              "opposite_expected_scope",
+              "indeterminate"
+            ],
+            "description": "expected_signal이 요구한 공간·시간 범위에서 해당 명제가 얼마나 일관되게 성립했는지 모델이 명시한다. assessment와 함께 Python이 계약 일관성만 검증한다."
+          },
+          "spatial_localization": {
+            "$ref": "#/$defs/spatial_localization"
+          },
+          "precipitation_motion": {
+            "$ref": "#/$defs/precipitation_motion"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "evidence_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "evidence_type",
+        "physical_diagnostic",
+        "feature_id",
+        "forecast_hour"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_type": {
+          "enum": [
+            "image",
+            "quantitative"
+          ]
+        },
+        "physical_diagnostic": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "feature_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "forecast_hour": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "quantitative_selector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "feature_id",
+        "forecast_hour",
+        "region_id",
+        "statistic"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "feature_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "forecast_hour": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "region_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statistic": {
+          "enum": [
+            "min",
+            "max",
+            "mean",
+            "p95"
+          ]
+        }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "statement",
+        "evidence_refs"
+      ],
+      "properties": {
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/evidence_ref"
+          }
+        }
+      }
+    },
+    "spatial_localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "forecast_hour",
+        "confidence",
+        "regions"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "localized",
+            "indeterminate",
+            "not_applicable"
+          ]
+        },
+        "forecast_hour": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "confidence": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "high",
+            "medium",
+            null
+          ]
+        },
+        "regions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/localized_region"
+          }
+        }
+      }
+    },
+    "localized_region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "region_id",
+        "relative_sector"
+      ],
+      "properties": {
+        "region_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relative_sector": {
+          "enum": [
+            "unspecified",
+            "north",
+            "northeast",
+            "east",
+            "southeast",
+            "south",
+            "southwest",
+            "west",
+            "northwest",
+            "central"
+          ]
+        }
+      }
+    },
+    "quantitative_relation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "relation_id",
+        "relation_type",
+        "selectors",
+        "claimed_relation",
+        "claimed_forecast_hour"
+      ],
+      "properties": {
+        "relation_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relation_type": {
+          "enum": [
+            "pairwise_comparison",
+            "temporal_trend",
+            "extremum"
+          ]
+        },
+        "selectors": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 12,
+          "items": {
+            "$ref": "#/$defs/quantitative_selector"
+          }
+        },
+        "claimed_relation": {
+          "enum": [
+            "first_greater_than_second",
+            "first_less_than_second",
+            "approximately_equal",
+            "increasing",
+            "decreasing",
+            "approximately_steady",
+            "non_monotonic",
+            "maximum_at",
+            "minimum_at"
+          ]
+        },
+        "claimed_forecast_hour": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "precipitation_motion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "classification",
+        "origin_region_id",
+        "destination_region_id",
+        "confidence"
+      ],
+      "properties": {
+        "classification": {
+          "enum": [
+            "coherent_movement",
+            "reorganization",
+            "stationary",
+            "indeterminate",
+            "not_applicable"
+          ]
+        },
+        "origin_region_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "destination_region_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        },
+        "confidence": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "high",
+            "medium",
+            null
+          ]
+        }
+      }
+    }
+  }
+}

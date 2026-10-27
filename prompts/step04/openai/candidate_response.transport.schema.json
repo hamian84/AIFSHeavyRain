@@ -1,0 +1,1214 @@
+{
+  "title": "AI Pass1 감시후보 탐색 응답",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "analysis_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coverage_status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "overview_attachment_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "notes": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "coverage_status",
+        "notes",
+        "overview_attachment_count"
+      ]
+    },
+    "run_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "summary_text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "candidate_count",
+        "summary_text"
+      ]
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^CAND_[0-9]{3}$"
+          },
+          "candidate_name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "candidate_area": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "west": {
+                "type": "number"
+              },
+              "east": {
+                "type": "number"
+              },
+              "south": {
+                "type": "number"
+              },
+              "north": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "east",
+              "north",
+              "south",
+              "west"
+            ]
+          },
+          "time_window": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "forecast_hour_start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "forecast_hour_end": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "valid_time_start_utc": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "valid_time_end_utc": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "forecast_hour_end",
+              "forecast_hour_start",
+              "valid_time_end_utc",
+              "valid_time_start_utc"
+            ]
+          },
+          "peak_forecast_hours": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "minItems": 1,
+            "maxItems": 5
+          },
+          "signal_types": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 6
+          },
+          "detection_basis": {
+            "type": "string",
+            "enum": [
+              "direct_precipitation",
+              "precursor_environment",
+              "mixed"
+            ]
+          },
+          "precipitation_signal_status": {
+            "type": "string",
+            "enum": [
+              "present",
+              "weak",
+              "absent",
+              "uncertain"
+            ]
+          },
+          "precursor_signal_categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "moisture_supply",
+                "low_level_forcing",
+                "mid_upper_forcing",
+                "thermodynamic_support",
+                "organization_persistence",
+                "direct_precipitation"
+              ]
+            },
+            "maxItems": 6
+          },
+          "precursor_spatiotemporal_overlap": {
+            "type": "boolean"
+          },
+          "hypothesis": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "statement": {
+                "type": "string",
+                "minLength": 1
+              },
+              "spatiotemporal_overlap": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "spatiotemporal_overlap",
+              "statement"
+            ]
+          },
+          "analysis_envelope_request": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+              "temporal_padding_hours": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 12
+              }
+            },
+            "required": [
+              "temporal_padding_hours"
+            ]
+          },
+          "diagnostic_plan": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "diagnostic_id": {
+                  "type": "string"
+                },
+                "purpose": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "diagnostic_id",
+                "purpose"
+              ]
+            },
+            "maxItems": 6
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "candidate_unit_type": {
+            "type": "string",
+            "enum": [
+              "peak_episode",
+              "precursor_episode"
+            ]
+          },
+          "discovery_order": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "related_product_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 6
+          },
+          "related_overview_asset_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "maxItems": 16
+          },
+          "supporting_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4
+          },
+          "opposing_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3
+          },
+          "uncertainties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3
+          },
+          "separation_reason": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "analysis_envelope_request",
+          "candidate_area",
+          "candidate_id",
+          "candidate_name",
+          "confidence",
+          "detection_basis",
+          "diagnostic_plan",
+          "hypothesis",
+          "opposing_reasons",
+          "peak_forecast_hours",
+          "precipitation_signal_status",
+          "precursor_signal_categories",
+          "precursor_spatiotemporal_overlap",
+          "candidate_unit_type",
+          "discovery_order",
+          "related_overview_asset_ids",
+          "related_product_ids",
+          "signal_types",
+          "supporting_reasons",
+          "time_window",
+          "uncertainties",
+          "separation_reason"
+        ]
+      },
+      "maxItems": 10
+    },
+    "candidate_evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^CAND_[0-9]{3}$"
+          },
+          "evidence_items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "asset_id": {
+                  "type": "string"
+                },
+                "product_id": {
+                  "type": "string"
+                },
+                "forecast_hours": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  }
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "asset_id",
+                "forecast_hours",
+                "product_id",
+                "reason"
+              ]
+            },
+            "maxItems": 12
+          }
+        },
+        "required": [
+          "candidate_id",
+          "evidence_items"
+        ]
+      },
+      "maxItems": 10
+    },
+    "precursor_opportunities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "opportunity_id",
+          "support_asset_ids",
+          "representative_forecast_hours",
+          "support_categories",
+          "qualification",
+          "relation_to_direct",
+          "related_direct_candidate_ids",
+          "relation_basis",
+          "candidate_creation",
+          "created_candidate_id"
+        ],
+        "properties": {
+          "opportunity_id": {
+            "type": "string",
+            "pattern": "^PRC_[0-9]{3}$"
+          },
+          "support_asset_ids": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8
+          },
+          "representative_forecast_hours": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "maxItems": 8
+          },
+          "support_categories": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "moisture_supply",
+                "low_level_forcing",
+                "mid_upper_forcing",
+                "thermodynamic_support",
+                "organization_persistence"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 5
+          },
+          "qualification": {
+            "type": "string",
+            "enum": [
+              "qualified",
+              "not_qualified"
+            ]
+          },
+          "relation_to_direct": {
+            "type": "string",
+            "enum": [
+              "independent",
+              "absorbed_into_direct",
+              "boundary_ambiguous",
+              "not_applicable"
+            ]
+          },
+          "related_direct_candidate_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^CAND_[0-9]{3}$"
+            },
+            "maxItems": 10
+          },
+          "relation_basis": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "time_relation",
+              "spatial_relation",
+              "mechanism_relation",
+              "reason"
+            ],
+            "properties": {
+              "time_relation": {
+                "type": "string"
+              },
+              "spatial_relation": {
+                "type": "string"
+              },
+              "mechanism_relation": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          },
+          "candidate_creation": {
+            "type": "string",
+            "enum": [
+              "created",
+              "not_created"
+            ]
+          },
+          "created_candidate_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^CAND_[0-9]{3}$"
+          }
+        }
+      },
+      "maxItems": 10
+    },
+    "analysis_data_requests": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "request_id": {
+            "type": "string",
+            "pattern": "^REQ_CAND[0-9]{3}_[0-9]{3}$"
+          },
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^CAND_[0-9]{3}$"
+          },
+          "diagnostic_id": {
+            "type": "string",
+            "enum": [
+              "detailed_spatial_map",
+              "accumulated_precipitation",
+              "multivariable_composite",
+              "vertical_cross_section",
+              "time_height_section",
+              "moisture_flux",
+              "horizontal_convergence",
+              "vertical_wind_shear",
+              "temporal_evolution",
+              "system_tracking",
+              "frontogenesis",
+              "q_vector_convergence"
+            ]
+          },
+          "data_type": {
+            "type": "string",
+            "enum": [
+              "spatial_field",
+              "quantitative_excerpt"
+            ]
+          },
+          "product_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              null,
+              "QL_PRECIP_6H",
+              "QL_TCW_WIND850",
+              "QL_CONVERGENCE925_WIND925",
+              "QL_OMEGA700_Z500",
+              "QL_MSLP_WIND10",
+              "QL_JET300_Z300",
+              "MULTIVARIABLE_COMPOSITE_CORE",
+              "VERTICAL_WIND_SHEAR_850_500",
+              "VERTICAL_CROSS_SECTION_CORE",
+              "TIME_HEIGHT_SECTION_CORE"
+            ]
+          },
+          "feature_ids": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_]+$"
+            }
+          },
+          "forecast_hours": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "minItems": 1
+          },
+          "requested_domain": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "west": {
+                "type": "number"
+              },
+              "east": {
+                "type": "number"
+              },
+              "south": {
+                "type": "number"
+              },
+              "north": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "east",
+              "north",
+              "south",
+              "west"
+            ]
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "required",
+              "supplementary"
+            ]
+          },
+          "plan_id": {
+            "type": "string",
+            "pattern": "^PLAN_CAND[0-9]{3}$"
+          },
+          "check_id": {
+            "type": "string",
+            "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "target_id": {
+            "type": "string",
+            "pattern": "^AREA_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "phase_ids": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^PHASE_CAND[0-9]{3}_[0-9]{2}$"
+            },
+            "minItems": 1
+          },
+          "analysis_methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "detailed_map",
+                "regional_statistics",
+                "regional_ranking",
+                "regional_max_location",
+                "temporal_evolution",
+                "variable_cross_check"
+              ]
+            },
+            "minItems": 1
+          },
+          "output_spec": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "statistics": {
+                "type": [
+                  "array",
+                  "null"
+                ],
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "valid_grid_count",
+                    "mean",
+                    "min",
+                    "max",
+                    "p95",
+                    "max_location",
+                    "min_location"
+                  ]
+                }
+              },
+              "ranking_statistic": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  "mean",
+                  "max",
+                  "p95",
+                  null
+                ]
+              },
+              "top_n": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 20
+              },
+              "include_time_series": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
+              "include_max_location": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "include_max_location",
+              "include_time_series",
+              "ranking_statistic",
+              "statistics",
+              "top_n"
+            ]
+          },
+          "cross_section_line": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "start_latitude",
+                  "start_longitude",
+                  "end_latitude",
+                  "end_longitude",
+                  "selection_reason"
+                ],
+                "properties": {
+                  "start_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "start_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "end_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "end_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "selection_reason": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cross_section_strategy": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "enum": [
+              "across_precipitation_band",
+              "along_precipitation_axis",
+              "along_moisture_inflow",
+              null
+            ]
+          },
+          "reference_band_axis": {
+            "anyOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "start_latitude",
+                  "start_longitude",
+                  "end_latitude",
+                  "end_longitude"
+                ],
+                "properties": {
+                  "start_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "start_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  "end_latitude": {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  "end_longitude": {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "analysis_methods",
+          "candidate_id",
+          "check_id",
+          "data_type",
+          "diagnostic_id",
+          "feature_ids",
+          "forecast_hours",
+          "output_spec",
+          "phase_ids",
+          "plan_id",
+          "priority",
+          "product_id",
+          "purpose",
+          "request_id",
+          "requested_domain",
+          "target_id",
+          "cross_section_line",
+          "cross_section_strategy",
+          "reference_band_axis"
+        ]
+      }
+    },
+    "global_uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 6
+    },
+    "pass2_required": {
+      "type": "boolean"
+    },
+    "candidate_analysis_plans": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "pattern": "^PLAN_CAND[0-9]{3}$"
+          },
+          "candidate_id": {
+            "type": "string",
+            "pattern": "^CAND_[0-9]{3}$"
+          },
+          "analysis_objective": {
+            "type": "string",
+            "minLength": 1
+          },
+          "hypotheses": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "hypothesis_id": {
+                  "type": "string",
+                  "pattern": "^H_CAND[0-9]{3}_[0-9]{2}$"
+                },
+                "statement": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "supporting_check_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+                  },
+                  "minItems": 1
+                },
+                "opposing_check_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+                  }
+                }
+              },
+              "required": [
+                "hypothesis_id",
+                "opposing_check_ids",
+                "statement",
+                "supporting_check_ids"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 4
+          },
+          "target_areas": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "target_id": {
+                  "type": "string",
+                  "pattern": "^AREA_CAND[0-9]{3}_[0-9]{2}$"
+                },
+                "target_type": {
+                  "type": "string",
+                  "enum": [
+                    "candidate_domain",
+                    "context_domain",
+                    "operational_regions"
+                  ]
+                },
+                "resolution_method": {
+                  "type": "string",
+                  "enum": [
+                    "explicit_bbox",
+                    "candidate_area_overlap",
+                    "explicit_region_ids"
+                  ]
+                },
+                "requested_domain": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": false,
+                  "properties": {
+                    "west": {
+                      "type": "number"
+                    },
+                    "east": {
+                      "type": "number"
+                    },
+                    "south": {
+                      "type": "number"
+                    },
+                    "north": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "east",
+                    "north",
+                    "south",
+                    "west"
+                  ]
+                },
+                "region_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[A-Z][A-Z0-9_]+$"
+                  }
+                },
+                "purpose": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "purpose",
+                "region_ids",
+                "requested_domain",
+                "resolution_method",
+                "target_id",
+                "target_type"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 3
+          },
+          "analysis_phases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "phase_id": {
+                  "type": "string",
+                  "pattern": "^PHASE_CAND[0-9]{3}_[0-9]{2}$"
+                },
+                "phase_type": {
+                  "type": "string",
+                  "enum": [
+                    "pre_peak",
+                    "peak",
+                    "post_peak",
+                    "context"
+                  ]
+                },
+                "forecast_hours": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "minItems": 1
+                },
+                "purpose": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "required": [
+                "forecast_hours",
+                "phase_id",
+                "phase_type",
+                "purpose"
+              ]
+            },
+            "minItems": 1,
+            "maxItems": 8
+          },
+          "variable_checks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "product_id": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "feature_ids": {
+                  "minItems": 1,
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "diagnostic_id": {
+                  "type": "string",
+                  "enum": [
+                    "detailed_spatial_map",
+                    "accumulated_precipitation",
+                    "multivariable_composite",
+                    "vertical_cross_section",
+                    "time_height_section",
+                    "moisture_flux",
+                    "horizontal_convergence",
+                    "vertical_wind_shear",
+                    "temporal_evolution"
+                  ]
+                },
+                "cross_section_line": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "start_latitude",
+                        "start_longitude",
+                        "end_latitude",
+                        "end_longitude",
+                        "selection_reason"
+                      ],
+                      "properties": {
+                        "start_latitude": {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        },
+                        "start_longitude": {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        },
+                        "end_latitude": {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        },
+                        "end_longitude": {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        },
+                        "selection_reason": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "cross_section_strategy": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "enum": [
+                    "across_precipitation_band",
+                    "along_precipitation_axis",
+                    "along_moisture_inflow",
+                    null
+                  ]
+                },
+                "reference_band_axis": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "start_latitude",
+                        "start_longitude",
+                        "end_latitude",
+                        "end_longitude"
+                      ],
+                      "properties": {
+                        "start_latitude": {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        },
+                        "start_longitude": {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        },
+                        "end_latitude": {
+                          "type": "number",
+                          "minimum": -90,
+                          "maximum": 90
+                        },
+                        "end_longitude": {
+                          "type": "number",
+                          "minimum": -180,
+                          "maximum": 180
+                        }
+                      }
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "check_scope": {
+                  "type": "string",
+                  "enum": [
+                    "single_variable",
+                    "multivariable_alignment",
+                    "temporal_evolution",
+                    "vertical_structure"
+                  ]
+                },
+                "required_signal_components": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "enum": [
+                      "direct_precipitation",
+                      "moisture_supply",
+                      "low_level_forcing",
+                      "mid_upper_forcing",
+                      "thermodynamic_support",
+                      "organization_persistence",
+                      "synoptic_support",
+                      "uncertainty"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "feature_ids",
+                "product_id",
+                "diagnostic_id",
+                "cross_section_line",
+                "cross_section_strategy",
+                "reference_band_axis",
+                "check_scope",
+                "required_signal_components"
+              ]
+            },
+            "minItems": 3
+          },
+          "forecaster_questions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "maxItems": 6
+          }
+        },
+        "required": [
+          "analysis_objective",
+          "analysis_phases",
+          "candidate_id",
+          "forecaster_questions",
+          "hypotheses",
+          "plan_id",
+          "target_areas",
+          "variable_checks"
+        ]
+      }
+    }
+  },
+  "required": [
+    "analysis_coverage",
+    "analysis_data_requests",
+    "candidate_analysis_plans",
+    "candidate_evidence",
+    "candidates",
+    "global_uncertainties",
+    "precursor_opportunities",
+    "package_id",
+    "pass2_required",
+    "run_summary"
+  ]
+}

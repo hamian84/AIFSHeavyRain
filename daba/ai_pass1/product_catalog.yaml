@@ -1,0 +1,61 @@
+available_detail_products:
+  - product_id: P_PRECIP_TIMESERIES
+    name_ko: 후보 권역 강수 시계열
+    description: 후보 권역과 주변 권역의 6시간 강수량 및 누적강수량 변화
+    hazard_types:
+      - heavy_rain
+      - model_uncertainty_watch
+
+  - product_id: P850_MOISTURE_FLUX
+    name_ko: 850hPa 수증기 플럭스
+    description: 850hPa 바람, 수증기, 수증기 플럭스 분포 분석
+    hazard_types:
+      - heavy_rain
+      - convective_potential
+
+  - product_id: P925_MOISTURE_FLUX
+    name_ko: 925hPa 수증기 플럭스
+    description: 925hPa 하층 수분 유입 및 바람장 분석
+    hazard_types:
+      - heavy_rain
+      - snow_potential
+      - fog_low_visibility
+
+  - product_id: P925_CONVERGENCE
+    name_ko: 925hPa 수렴
+    description: 925hPa 하층 수렴·발산 구조 분석
+    hazard_types:
+      - heavy_rain
+      - convective_potential
+
+  - product_id: P700_OMEGA
+    name_ko: 700hPa 상승운동
+    description: 후보 권역의 중층 상승운동 및 강수 신호 중첩 분석
+    hazard_types:
+      - heavy_rain
+      - convective_potential
+      - snow_potential
+
+  - product_id: P500_TROUGH_THERMAL
+    name_ko: 500hPa 기압골·열적 구조
+    description: 500hPa 기압골, 지위고도, 한기, 중층 지원 분석
+    hazard_types:
+      - heavy_rain
+      - snow_potential
+      - convective_potential
+
+  - product_id: P300_UPPER_JET
+    name_ko: 300hPa 상층 제트
+    description: 300hPa 제트 축과 상층 지원 가능성 분석
+    hazard_types:
+      - heavy_rain
+      - convective_potential
+      - strong_wind_potential
+
+  - product_id: P_SURFACE_PRESSURE_WIND
+    name_ko: 지상 기압계·바람
+    description: 지상 저기압, 기압골, 기압경도, 지상풍 구조 분석
+    hazard_types:
+      - heavy_rain
+      - strong_wind_potential
+      - snow_potential

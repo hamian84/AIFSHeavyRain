@@ -1,0 +1,305 @@
+policy_id: ai_discovery_execution_v2
+policy_version: 2.3.3
+package_version: 2.1.0
+schema_version: 2.0.0
+prompt_version: 2.3.1
+output_policy:
+  step03:
+    generate_rule_qa_by_default: false
+    generate_overviews_by_default: true
+    export_csv_by_default: false
+    write_legacy_root_outputs: false
+    write_discovery_tile_summaries_copy: false
+    remove_stale_optional_outputs_on_overwrite: true
+  step04:
+    prepare_manual_by_default: false
+    write_manual_upload_guide: false
+spatial_hierarchy_policy:
+  discovery_order:
+  - neutral_tiles
+  - source_corridors
+  - operational_land_and_marine_mapping
+  neutral_tiles_are_candidate_source: true
+  operational_regions_must_not_preselect_candidates: true
+  source_corridors_eligible_for_final_risk_rank: false
+  operational_land_eligible_for_final_risk_rank: true
+  marine_macro_eligible_for_final_risk_rank: true
+  pass2_reserved_regions_enabled_in_pass1: false
+  expected_region_counts:
+    source_corridor: 7
+    operational_land: 10
+    marine_macro: 8
+    marine_detail: 19
+pass1_product_tiers:
+  temporal_core:
+    required: true
+    cadence_hours: 6
+    product_ids:
+    - QL_PRECIP_6H
+    - QL_TCW_WIND850
+    - QL_CONVERGENCE925_WIND925
+    - QL_OMEGA700_Z500
+    expected_lead_hours:
+    - 6
+    - 12
+    - 18
+    - 24
+    - 30
+    - 36
+    - 42
+    - 48
+    - 54
+    - 60
+    - 66
+    - 72
+    - 78
+    - 84
+    - 90
+    - 96
+    - 102
+    - 108
+    - 114
+    - 120
+    render_domain_id: korea_surrounding
+  synoptic_context:
+    required: true
+    cadence_hours: 12
+    product_ids:
+    - QL_MSLP_WIND10
+    - QL_JET300_Z300
+    expected_lead_hours:
+    - 12
+    - 24
+    - 36
+    - 48
+    - 60
+    - 72
+    - 84
+    - 96
+    - 108
+    - 120
+    render_domain_id: source_tracking_context
+candidate_discovery_policy:
+  analysis_mode: staged_overview_observation_then_candidate_synthesis
+  product_observation_before_synthesis_required: true
+  allow_precursor_only: true
+  precipitation_absence_is_exclusion: false
+  candidate_count_is_signal_driven: true
+  maximum_candidate_count: 10
+  support_axes:
+  - direct_precipitation
+  - moisture_supply
+  - low_level_forcing
+  - mid_upper_forcing
+  - synoptic_context
+  - temporal_persistence
+  - spatial_coherence
+  candidate_area_scope: risk_core_only
+  candidate_area_excludes_context_environment: true
+  separated_peak_gap_hours: 12
+  separated_peak_evidence_required: true
+  later_peak_asset_trace_required: true
+  nested_candidate_shared_peak_forbidden: true
+  duplicate_spatial_overlap_of_smaller_threshold: 0.8
+  adjacent_candidate_time_gap_hours: 6
+  adjacent_candidate_spatial_overlap_of_smaller_threshold: 0.6
+  adjacent_peak_episode_spatial_overlap_of_smaller_threshold: 0.3
+  adjacent_peak_episode_peak_gap_hours: 12
+  adjacent_peak_episode_separation_reason_required: true
+  impact_region_change_by_band_movement_is_valid_separation_reason: true
+  adjacent_candidate_common_precursor_category_minimum: 2
+  adjacent_candidate_separation_reason_required: true
+  adjacent_candidate_ai_repair_before_acceptance: true
+  precursor_environment_rule:
+    minimum_independent_categories: 2
+    require_forcing_category: true
+    require_spatiotemporal_overlap: true
+    categories:
+    - moisture_supply
+    - low_level_forcing
+    - mid_upper_forcing
+pass1_batch:
+  execution_mode: staged_image_observation_then_text_synthesis
+  grouping_strategy: analysis_tier_and_group_id
+  max_images_per_request: 4
+  expected_observation_batch_count: 8
+  final_synthesis_direct_image_input: false
+  required_input_ref_keys:
+  - input_manifest
+  - compact
+  - attachment_manifest
+  - batch_plan
+  - operational_region_catalog
+  - feature_catalog
+  - batch_observation_prompt
+  - candidate_prompt
+  - batch_observation_schema
+  - candidate_response_schema
+
+pass1_analysis_plan_policy:
+  required_per_candidate: true
+  minimum_variable_check_count: 1
+  every_variable_check_must_reference_hypothesis: true
+  unreferenced_check_canonicalization: link_to_best_matching_hypothesis
+  maximum_variable_check_count: 10
+  required_variable_roles:
+  - hazard_magnitude
+  minimum_explanatory_role_count: 0
+  required_targets:
+  - candidate_domain
+  optional_targets:
+  - context_domain
+  conditional_targets:
+    operational_regions: regional_analysis_method_selected
+  peak_phase_required: true
+  explicit_phase_forecast_hours_required: true
+  same_phase_type_disjoint_windows_allowed: true
+  non_context_phase_timeline_disjoint: true
+  non_context_phase_consecutive_cadence_required: true
+  adjacent_same_phase_type_merge_required: true
+  one_peak_phase_per_contiguous_peak_group: true
+  exact_phase_signature_deduplication_only: true
+  separated_peak_gap_hours: 12
+  separated_peak_question_minimum: 3
+  check_text_hour_coverage_required: true
+  multivariable_composite_product_id: MULTIVARIABLE_COMPOSITE_CORE
+  multivariable_composite_spatial_only: true
+  logical_signal_overlap_uses_existing_checks: true
+  adjacent_phase_recommended: true
+  diagnostic_id_contract: true
+  direct_precipitation_confirmation_diagnostic_required: true
+  legacy_analysis_methods_adapter_only: true
+  exact_point_inference_from_overview_forbidden: true
+  vertical_cross_section_line_source: ai_selected_start_end_coordinates
+  vertical_cross_section_python_auto_line_forbidden: true
+  vertical_cross_section_endpoints_within_selected_domain_required: true
+  vertical_cross_section_candidate_intersection_required: true
+  vertical_cross_section_selection_reason_required: true
+  vertical_cross_section_sample_count: 80
+  vertical_wind_shear_fixed_layer_pair_hpa: [850, 500]
+  vertical_diagnostic_source_data_kind: raw_aifs_grib
+
+manual_mode:
+  generate_batch_directory: true
+  generate_batch_metadata: true
+  generate_upload_files_txt: true
+required_pass1_product_count: 6
+expected_pass1_attachment_count: 26
+rule_screened_input_used: false
+domain_comparison_policy:
+  compare_by_geographic_coordinates_not_pixel_position: true
+  cross_domain_absolute_pixel_comparison_forbidden: true
+  same_product_time_comparison_requires_same_render_domain: true
+  temporal_core_role: 한반도 주변 핵심 위험구조의 상세·연속 추적
+  synoptic_context_role: 발원·수송·종관 배경의 광역 추적
+overview_input_policy:
+  enabled: true
+  initial_attachment_role: temporal_overview
+  initial_attachment_count: 26
+  panel_columns: 2
+  maximum_panels_per_overview: 4
+  tiers:
+    temporal_core:
+      expected_overview_count_per_product: 5
+      groups:
+      - group_id: g01
+        forecast_hours:
+        - 6
+        - 12
+        - 18
+        - 24
+      - group_id: g02
+        forecast_hours:
+        - 30
+        - 36
+        - 42
+        - 48
+      - group_id: g03
+        forecast_hours:
+        - 54
+        - 60
+        - 66
+        - 72
+      - group_id: g04
+        forecast_hours:
+        - 78
+        - 84
+        - 90
+        - 96
+      - group_id: g05
+        forecast_hours:
+        - 102
+        - 108
+        - 114
+        - 120
+    synoptic_context:
+      expected_overview_count_per_product: 3
+      groups:
+      - group_id: g01
+        forecast_hours:
+        - 12
+        - 24
+        - 36
+        - 48
+      - group_id: g02
+        forecast_hours:
+        - 60
+        - 72
+        - 84
+        - 96
+      - group_id: g03
+        forecast_hours:
+        - 108
+        - 120
+  pass2_detail_source:
+    request_driven_generation: true
+    selection_basis: pass1_analysis_data_requests
+    threshold_preselection_forbidden: true
+  initial_quantitative_scope:
+    mode: metadata_and_region_catalog_only
+    include_full_feature_timeseries: false
+    include_full_operational_region_timeseries: false
+    pass2_receives_candidate_specific_quantitative_excerpt: true
+  rendering_mode: direct_matplotlib_multipanel
+  shared_colorbar_preferred: true
+  shared_projection_required_within_overview: true
+
+peak_group_segmentation:
+  split_by_peak_group_default: true
+  separated_peak_group_gap_hours: 12
+  allow_multi_peak_single_candidate: false
+  merge_candidates_dividing_one_continuous_peak_group: true
+  continuity_repair_requires_split_or_concrete_justification: true
+  generic_separation_reason_forbidden: true
+  significant_precipitation_coverage_audit: true
+  significant_precipitation_status_requiring_coverage: present
+  require_candidate_window_related_asset_and_evidence_hour: true
+  weak_or_uncertain_precipitation_not_mandatory: true
+  cross_section_strategy_required: true
+  reference_band_axis_required_for_vertical_cross_section: true
+
+candidate_generation_policy:
+  overview_group_is_candidate_boundary: false
+  precipitation_peak_anchor:
+    enabled: true
+    minimum_regional_maximum_6h_mm: 5.0
+    source: operational_region_timeseries.tp_6h_increment_mm
+    metric: 0.40_max_plus_0.45_p95_plus_0.15_mean
+    direct_and_mixed_candidate_peak_must_match_local_maximum: true
+    strongest_local_peak_coverage_required: true
+    one_peak_equals_one_candidate: false
+  precursor_environment_path:
+    enabled: true
+    scan_required: true
+    minimum_candidates_when_qualified: 1
+    candidates_when_not_qualified: 0
+    require_two_independent_categories: true
+    require_dynamical_forcing_category: true
+    require_spatiotemporal_overlap: true
+    duplicate_with_direct_or_mixed_candidate_forbidden: true
+
+precipitation_coverage:
+  require_candidate_window_coverage: true
+  require_related_precipitation_asset: true
+  in_window_evidence_hour_canonicalization: true
+  never_create_or_extend_candidate_during_canonicalization: true

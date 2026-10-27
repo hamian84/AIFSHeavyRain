@@ -1,0 +1,607 @@
+schema_version: 1.2.1
+profile_version: 1.2.1
+default_style:
+  shape_search_dirs:
+  - daba/map
+  - daba/map/admin
+  - daba/map/province
+  - daba/map/boundary
+  - daba/map/borders
+  - daba/map/coastline
+  - daba/map/ne_10m_coastline
+  - daba/map/ne_50m_coastline
+  - daba/map/ne_10m_admin_0_countries
+  - daba/map/ne_10m_admin_1_states_provinces
+  dpi: 150
+  figsize:
+  - 10.5
+  - 7.6
+  colorbar_orientation: vertical
+  wind_stride: 3
+  quiver_scale: 250
+  quiver_width: 0.0026
+  halo_enabled: true
+  halo_foreground: white
+  halo_linewidth_text: 2.6
+  halo_linewidth_line: 2.0
+  contour_linewidth: 0.8
+  contour_halo_linewidth: 3.0
+  contour_label_fontsize: 8
+  contour_label_halo_linewidth: 3.4
+  contour_label_bbox_alpha: 0.72
+  title_fontsize: 13
+  title_pad: 14
+  title_linespacing: 1.12
+  title_loc: left
+  projection_type: equirectangular_lonlat
+  coordinate_reference: longitude_latitude_degrees
+  longitude_axis_label: 경도 (°E)
+  latitude_axis_label: 위도 (°N)
+  tick_degree_symbol: true
+  longitude_tick_interval: 2.5
+  latitude_tick_interval: 2.5
+  include_domain_boundary_ticks: true
+  grid_color: '#B8B8B8'
+  grid_linestyle: --
+  grid_linewidth: 0.5
+  grid_alpha: 0.55
+  coastline_color: '#111111'
+  coastline_linewidth: 0.85
+  coastline_alpha: 0.95
+  coastline_zorder: 13
+  coastline_halo_color: '#FFFFFF'
+  coastline_halo_linewidth: 2.2
+  border_color: '#3A3A3A'
+  border_linewidth: 0.55
+  border_alpha: 0.8
+  border_zorder: 12
+  border_halo_color: '#FFFFFF'
+  border_halo_linewidth: 1.5
+  admin1_color: '#666666'
+  admin1_linewidth: 0.35
+  admin1_alpha: 0.6
+  admin1_zorder: 11
+  admin1_halo_color: '#FFFFFF'
+  admin1_halo_linewidth: 1.0
+  map_halo_enabled: true
+  map_halo_color: '#FFFFFF'
+  map_halo_linewidth: 1.0
+  map_line_color: '#666666'
+  map_linewidth: 0.4
+  map_line_alpha: 0.65
+  map_line_zorder: 10
+style_profiles:
+  QL_PRECIP_6H:
+    levels:
+    - 0.0
+    - 1.0
+    - 1.5
+    - 2.0
+    - 3.0
+    - 4.0
+    - 5.0
+    - 6.0
+    - 7.0
+    - 8.0
+    - 9.0
+    - 10.0
+    - 12.0
+    - 14.0
+    - 16.0
+    - 18.0
+    - 20.0
+    - 25.0
+    - 30.0
+    - 35.0
+    - 40.0
+    - 50.0
+    - 60.0
+    - 70.0
+    - 80.0
+    - 90.0
+    - 100.0
+    ticks:
+    - 1.0
+    - 2.0
+    - 5.0
+    - 10.0
+    - 20.0
+    - 30.0
+    - 50.0
+    - 70.0
+    - 100.0
+    colors:
+    - '#ffffff'
+    - '#b7e67a'
+    - '#7bdc47'
+    - '#50c43a'
+    - '#2fa52d'
+    - '#178420'
+    - '#6195a5'
+    - '#4790af'
+    - '#397faf'
+    - '#306b94'
+    - '#2a5571'
+    - '#778192'
+    - '#535c79'
+    - '#2a3769'
+    - '#1a2359'
+    - '#181f51'
+    - '#c47ad6'
+    - '#a84cc9'
+    - '#8a2bb4'
+    - '#74189f'
+    - '#5c0d86'
+    - '#ff9a70'
+    - '#ef5a3c'
+    - '#cf3f2d'
+    - '#b92b21'
+    - '#781414'
+    extend: max
+    map_halo_enabled: true
+    map_halo_color: '#FFFFFF'
+    map_halo_linewidth: 1.1
+    map_line_color: '#444444'
+    map_linewidth: 0.45
+    map_line_alpha: 0.75
+    map_line_zorder: 10
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 6시간 강수량 (mm; 1.0 mm 미만은 흰색)'
+  QL_TCW_WIND850:
+    levels:
+    - 0
+    - 4
+    - 8
+    - 12
+    - 16
+    - 20
+    - 24
+    - 28
+    - 32
+    - 36
+    - 40
+    - 44
+    - 48
+    - 52
+    - 56
+    - 60
+    - 64
+    - 68
+    - 72
+    - 76
+    - 80
+    - 84
+    - 88
+    - 92
+    - 96
+    - 100
+    ticks:
+    - 0
+    - 20
+    - 40
+    - 60
+    - 80
+    - 100
+    colors:
+    - '#ffffff'
+    - '#fff45a'
+    - '#f6df35'
+    - '#e5c927'
+    - '#d2b61d'
+    - '#b7e67a'
+    - '#7bdc47'
+    - '#50c43a'
+    - '#2fa52d'
+    - '#178420'
+    - '#6195a5'
+    - '#4790af'
+    - '#397faf'
+    - '#306b94'
+    - '#2a5571'
+    - '#c47ad6'
+    - '#a84cc9'
+    - '#8a2bb4'
+    - '#74189f'
+    - '#5c0d86'
+    - '#ff9a70'
+    - '#ef5a3c'
+    - '#cf3f2d'
+    - '#b92b21'
+    - '#781414'
+    extend: max
+    wind_stride: 3
+    quiver_scale: 250
+    quiver_width: 0.0026
+    quiver_calm_threshold_ms: 1.0
+    quiver_min_display_speed_ms: 3.0
+    quiver_max_display_speed_ms: 25.0
+    quiver_key_enabled: false
+    quiver_key_position: none
+    map_halo_enabled: true
+    map_halo_color: '#FFFFFF'
+    map_halo_linewidth: 1.1
+    map_line_color: '#111111'
+    map_linewidth: 0.45
+    map_line_alpha: 0.75
+    map_line_zorder: 10
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 대기 전층 수분량(TCW) (kg m$^{-2}$) | 화살표: 850 hPa 바람'
+  QL_OMEGA700_Z500:
+    levels:
+    - -2.0
+    - -1.8
+    - -1.6
+    - -1.4
+    - -1.2
+    - -1.0
+    - -0.8
+    - -0.6
+    - -0.4
+    - -0.2
+    - 0.0
+    - 0.2
+    - 0.4
+    - 0.6
+    - 0.8
+    - 1.0
+    - 1.2
+    - 1.4
+    - 1.6
+    - 1.8
+    - 2.0
+    ticks:
+    - -2.0
+    - -1.5
+    - -1.0
+    - -0.5
+    - 0.0
+    - 0.5
+    - 1.0
+    - 1.5
+    - 2.0
+    colors:
+    - '#08306b'
+    - '#08306b'
+    - '#08519c'
+    - '#2171b5'
+    - '#4292c6'
+    - '#6baed6'
+    - '#9ecae1'
+    - '#c6dbef'
+    - '#deebf7'
+    - '#eff3ff'
+    - '#f7f7f7'
+    - '#fff5f0'
+    - '#fee0d2'
+    - '#fcbba1'
+    - '#fc9272'
+    - '#fb6a4a'
+    - '#ef3b2c'
+    - '#de2d26'
+    - '#cb181d'
+    - '#a50f15'
+    - '#67000d'
+    - '#67000d'
+    extend: both
+    contour_levels:
+    - 5400
+    - 5440
+    - 5480
+    - 5520
+    - 5560
+    - 5600
+    - 5640
+    - 5680
+    - 5720
+    - 5760
+    - 5800
+    - 5840
+    - 5880
+    - 5920
+    - 5960
+    contour_color: '#4A3426'
+    contour_linewidth: 1.05
+    contour_halo_color: '#FFFFFF'
+    contour_halo_linewidth: 2.4
+    map_halo_enabled: true
+    map_halo_color: '#FFFFFF'
+    map_halo_linewidth: 1.1
+    map_line_color: '#444444'
+    map_linewidth: 0.45
+    map_line_alpha: 0.75
+    map_line_zorder: 10
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 700 hPa 기압 연직속도 ω (Pa s$^{-1}$; 음수=상승, 양수=하강) | 등치선: 500 hPa 지위고도 (gpm)'
+  QL_MSLP_WIND10:
+    contour_levels:
+    - 960
+    - 964
+    - 968
+    - 972
+    - 976
+    - 980
+    - 984
+    - 988
+    - 992
+    - 996
+    - 1000
+    - 1004
+    - 1008
+    - 1012
+    - 1016
+    - 1020
+    - 1024
+    - 1028
+    - 1032
+    - 1036
+    - 1040
+    contour_color: '#4A3426'
+    contour_linewidth: 1.05
+    contour_halo_color: '#FFFFFF'
+    contour_halo_linewidth: 2.4
+    wind_stride: 3
+    quiver_scale: 250
+    quiver_width: 0.0026
+    quiver_calm_threshold_ms: 0.5
+    quiver_min_display_speed_ms: 2.0
+    quiver_max_display_speed_ms: 20.0
+    quiver_key_enabled: true
+    quiver_key_position: axes
+    quiver_key_x: 0.8
+    quiver_key_y: 0.04
+    quiver_key_coordinates: axes
+    quiver_key_labelpos: E
+    quiver_key_length: 10
+    quiver_key_label: 10 m s$^{-1}$
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '등치선: 해면기압 (hPa) | 화살표: 10 m 바람'
+  QL_CONVERGENCE925_WIND925:
+    levels:
+    - -12
+    - -10
+    - -8
+    - -6
+    - -4
+    - -2
+    - 0
+    - 2
+    - 4
+    - 6
+    - 8
+    - 10
+    - 12
+    ticks:
+    - -12
+    - -8
+    - -4
+    - 0
+    - 4
+    - 8
+    - 12
+    colors:
+    - '#053061'
+    - '#2166ac'
+    - '#4393c3'
+    - '#92c5de'
+    - '#d1e5f0'
+    - '#edf8fb'
+    - '#f7f7f7'
+    - '#f7f7f7'
+    - '#fee0d2'
+    - '#f4a582'
+    - '#d6604d'
+    - '#b2182b'
+    - '#67001f'
+    - '#67001f'
+    extend: both
+    wind_stride: 3
+    quiver_scale: 250
+    quiver_width: 0.0026
+    quiver_calm_threshold_ms: 1.0
+    quiver_min_display_speed_ms: 3.0
+    quiver_max_display_speed_ms: 25.0
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 925 hPa 수평수렴 (10$^{-5}$ s$^{-1}$; 양수=수렴) | 화살표: 925 hPa 바람'
+  QL_JET300_Z300:
+    levels:
+    - 0
+    - 5
+    - 10
+    - 15
+    - 20
+    - 25
+    - 30
+    - 35
+    - 40
+    - 45
+    - 50
+    - 55
+    - 60
+    - 65
+    - 70
+    - 75
+    - 80
+    - 85
+    - 90
+    ticks:
+    - 0
+    - 20
+    - 40
+    - 60
+    - 80
+    - 90
+    colors:
+    - '#f7f7f7'
+    - '#e8f1fa'
+    - '#d5e8f5'
+    - '#b9d9ec'
+    - '#92c5de'
+    - '#6baed6'
+    - '#4393c3'
+    - '#2b8cbe'
+    - '#0868ac'
+    - '#084081'
+    - '#fff7bc'
+    - '#fee391'
+    - '#fec44f'
+    - '#fe9929'
+    - '#ec7014'
+    - '#cc4c02'
+    - '#d7301f'
+    - '#b2182b'
+    - '#7f0000'
+    extend: max
+    contour_levels:
+    - 8800
+    - 8900
+    - 9000
+    - 9100
+    - 9200
+    - 9300
+    - 9400
+    - 9500
+    - 9600
+    - 9700
+    - 9800
+    - 9900
+    - 10000
+    contour_color: '#4A3426'
+    contour_linewidth: 1.05
+    contour_halo_color: '#FFFFFF'
+    contour_halo_linewidth: 2.4
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 300 hPa 풍속 (m s$^{-1}$) | 등치선: 300 hPa 지위고도 (gpm)'
+  QL_PAIRED_WIND_SPEED_850:
+    levels:
+    - 0
+    - 2
+    - 4
+    - 6
+    - 8
+    - 10
+    - 12
+    - 14
+    - 16
+    - 18
+    - 20
+    ticks:
+    - 0
+    - 2
+    - 4
+    - 6
+    - 8
+    - 10
+    - 12
+    - 14
+    - 16
+    - 20
+    colors:
+    - '#f7f7f7'
+    - '#fff7bc'
+    - '#fee391'
+    - '#fec44f'
+    - '#fe9929'
+    - '#ec7014'
+    - '#cc4c02'
+    - '#993404'
+    - '#d7301f'
+    - '#b2182b'
+    - '#7f0000'
+    extend: max
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 850 hPa 풍속 (m s$^{-1}$)'
+  QL_MOISTURE_FLUX850_WIND850:
+    levels:
+    - 0
+    - 25
+    - 50
+    - 75
+    - 100
+    - 125
+    - 150
+    - 175
+    - 200
+    - 250
+    - 300
+    - 350
+    ticks:
+    - 0
+    - 50
+    - 100
+    - 150
+    - 200
+    - 250
+    - 300
+    - 350
+    colors:
+    - '#f7fcf5'
+    - '#e5f5e0'
+    - '#c7e9c0'
+    - '#a1d99b'
+    - '#74c476'
+    - '#41ab5d'
+    - '#238b45'
+    - '#006d2c'
+    - '#fff7bc'
+    - '#fec44f'
+    - '#fe9929'
+    - '#cc4c02'
+    extend: max
+    wind_stride: 3
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 850 hPa 수증기 플럭스 크기 (g kg$^{-1}$ m s$^{-1}$) | 화살표: 850 hPa 바람'
+  QL_T500_Z500:
+    levels:
+    - -40
+    - -35
+    - -30
+    - -25
+    - -20
+    - -15
+    - -10
+    - -5
+    - 0
+    ticks:
+    - -40
+    - -30
+    - -20
+    - -10
+    - 0
+    colors:
+    - '#313695'
+    - '#4575b4'
+    - '#74add1'
+    - '#abd9e9'
+    - '#e0f3f8'
+    - '#fee090'
+    - '#fdae61'
+    - '#f46d43'
+    - '#d73027'
+    extend: both
+    contour_levels:
+    - 5400
+    - 5440
+    - 5480
+    - 5520
+    - 5560
+    - 5600
+    - 5640
+    - 5680
+    - 5720
+    - 5760
+    - 5800
+    - 5840
+    - 5880
+    - 5920
+    - 5960
+    title_info_lines:
+    - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
+    - '음영: 500 hPa 기온 (°C) | 등치선: 500 hPa 지위고도 (gpm)'

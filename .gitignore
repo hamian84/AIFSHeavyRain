@@ -1,0 +1,40 @@
+# API 인증정보 및 운영환경 설정
+/envi/
+.env
+.env.*
+
+# 실행 결과 및 로그
+/daio/
+/tmp/
+/logs/
+/outputs/
+/artifacts/
+/results/
+
+# Python 자동 생성 파일
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# 기상 원시자료
+*.grib
+*.grib2
+*.grb
+*.grb2
+*.nc
+
+# 임시 파일
+*.log
+*.bak
+*.backup
+
+# AIFS 입력 및 생성자료
+/dain/
+/daou/
+
+# 웹 게시 디렉터리 심볼릭 링크
+/html
+
+# 테스트용 파이프라인 실행 스크립트
+/scripts/zrun_pipeline.ksh
+/scripts/zzrun_pipeline.ksh

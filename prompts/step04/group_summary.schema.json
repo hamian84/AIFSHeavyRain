@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/ai_pass1_group_summary.schema.json",
+  "title": "AI Pass1 그룹 관찰 요약",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "package_id",
+    "summary_id",
+    "analysis_tier",
+    "group_id",
+    "source_batch_ids",
+    "source_asset_ids",
+    "source_product_ids",
+    "forecast_hours",
+    "valid_time_range",
+    "direct_precipitation_audit",
+    "integrated_observations",
+    "cross_product_relationships",
+    "uncertainty",
+    "omitted_or_unresolved_signals"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary_id": {
+      "type": "string",
+      "pattern": "^PASS1_SUMMARY_(TEMPORAL_CORE|SYNOPTIC_CONTEXT)_G[0-9]{2}$"
+    },
+    "analysis_tier": {
+      "type": "string",
+      "enum": [
+        "temporal_core",
+        "synoptic_context"
+      ]
+    },
+    "group_id": {
+      "type": "string",
+      "pattern": "^[gG][0-9]{2}$"
+    },
+    "source_batch_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "source_asset_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "source_product_ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "forecast_hours": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "valid_time_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_utc",
+        "end_utc"
+      ],
+      "properties": {
+        "start_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "end_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "integrated_observations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source_batch_id",
+          "asset_id",
+          "product_id",
+          "forecast_hours",
+          "observed_signals",
+          "spatial_pattern",
+          "temporal_evolution",
+          "confidence",
+          "limitations",
+          "direct_precipitation_signal"
+        ],
+        "properties": {
+          "source_batch_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "asset_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "product_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "forecast_hours": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "observed_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "spatial_pattern": {
+            "type": "string"
+          },
+          "temporal_evolution": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "direct_precipitation_signal": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "significant_forecast_hours",
+              "rationale"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "not_applicable",
+                  "absent",
+                  "weak",
+                  "present",
+                  "uncertain"
+                ]
+              },
+              "significant_forecast_hours": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "uniqueItems": true
+              },
+              "rationale": {
+                "type": "string",
+                "maxLength": 220
+              }
+            }
+          }
+        }
+      }
+    },
+    "cross_product_relationships": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "uncertainty": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "omitted_or_unresolved_signals": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "direct_precipitation_audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "source_asset_ids",
+        "significant_forecast_hours",
+        "rationale"
+      ],
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_applicable",
+            "absent",
+            "weak",
+            "present",
+            "uncertain"
+          ]
+        },
+        "source_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "significant_forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "maxLength": 220
+        }
+      }
+    }
+  }
+}

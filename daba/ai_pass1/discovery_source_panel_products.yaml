@@ -1,0 +1,282 @@
+schema_version: 1.3.1
+render_style_file: daba/ai_pass1/broad_map_render_styles.yaml
+render_domain_id: korea_surrounding
+render_domain_name_ko: 한반도 주변 핵심 분석영역
+default_domain:
+  lon_min: 120.0
+  lon_max: 135.0
+  lat_min: 30.0
+  lat_max: 43.0
+products:
+- product_id: QL_PRECIP_6H
+  style_profile_id: QL_PRECIP_6H
+  product_tier: temporal_core
+  required_for_pass1: true
+  cadence_hours: 6
+  lead_hours:
+  - 6
+  - 12
+  - 18
+  - 24
+  - 30
+  - 36
+  - 42
+  - 48
+  - 54
+  - 60
+  - 66
+  - 72
+  - 78
+  - 84
+  - 90
+  - 96
+  - 102
+  - 108
+  - 114
+  - 120
+  enabled: true
+  display_title: AIFS 6시간 강수량
+  plot_type: shaded_feature
+  shaded_feature_id: tp_6h_increment_mm
+  unit_label: 6시간 강수량 (mm)
+  meaning: 누적강수량을 6시간 차분한 강수량
+  render_domain_id: korea_surrounding
+- product_id: QL_TCW_WIND850
+  style_profile_id: QL_TCW_WIND850
+  product_tier: temporal_core
+  required_for_pass1: true
+  cadence_hours: 6
+  lead_hours:
+  - 6
+  - 12
+  - 18
+  - 24
+  - 30
+  - 36
+  - 42
+  - 48
+  - 54
+  - 60
+  - 66
+  - 72
+  - 78
+  - 84
+  - 90
+  - 96
+  - 102
+  - 108
+  - 114
+  - 120
+  enabled: true
+  display_title: AIFS 대기 전층 수분량(TCW)·850 hPa 바람
+  plot_type: shaded_feature_plus_raw_vector
+  shaded_feature_id: tcw_kg_m2
+  vector_field:
+    u_short_name: u
+    v_short_name: v
+    level: 850
+  unit_label: 대기 전층 수분량(TCW) (kg m$^{-2}$)
+  vector_unit_label: 850 hPa 바람
+  meaning: 대기 전층 수분량(TCW) 음영과 850 hPa 바람 벡터
+  render_domain_id: korea_surrounding
+- product_id: QL_CONVERGENCE925_WIND925
+  style_profile_id: QL_CONVERGENCE925_WIND925
+  product_tier: temporal_core
+  required_for_pass1: true
+  cadence_hours: 6
+  lead_hours:
+  - 6
+  - 12
+  - 18
+  - 24
+  - 30
+  - 36
+  - 42
+  - 48
+  - 54
+  - 60
+  - 66
+  - 72
+  - 78
+  - 84
+  - 90
+  - 96
+  - 102
+  - 108
+  - 114
+  - 120
+  enabled: true
+  display_title: AIFS 925 hPa 수평수렴·바람
+  plot_type: shaded_feature_plus_raw_vector
+  shaded_feature_id: convergence925_1e5_s
+  vector_field:
+    u_short_name: u
+    v_short_name: v
+    level: 925
+  unit_label: 수평수렴 (10$^{-5}$ s$^{-1}$; 양수=수렴)
+  vector_unit_label: 925 hPa 바람
+  meaning: 양수는 수렴, 음수는 발산
+  render_domain_id: korea_surrounding
+- product_id: QL_OMEGA700_Z500
+  style_profile_id: QL_OMEGA700_Z500
+  product_tier: temporal_core
+  required_for_pass1: true
+  cadence_hours: 6
+  lead_hours:
+  - 6
+  - 12
+  - 18
+  - 24
+  - 30
+  - 36
+  - 42
+  - 48
+  - 54
+  - 60
+  - 66
+  - 72
+  - 78
+  - 84
+  - 90
+  - 96
+  - 102
+  - 108
+  - 114
+  - 120
+  enabled: true
+  display_title: AIFS 700 hPa 기압연직속도(ω)·500 hPa 지위고도
+  plot_type: raw_shaded_plus_raw_contour
+  shaded_field:
+    short_name: w
+    level: 700
+  contour_field:
+    short_name: z
+    level: 500
+    conversion: geopotential_height_gpm
+  unit_label: 700 hPa 기압연직속도 ω (Pa s$^{-1}$; 음수=상승, 양수=하강)
+  contour_label: 500 hPa 지위고도 (gpm)
+  meaning: 기압좌표계 기압연직속도(ω)는 음수가 상승운동, 양수가 하강운동
+  render_domain_id: korea_surrounding
+- product_id: QL_MSLP_WIND10
+  style_profile_id: QL_MSLP_WIND10
+  product_tier: synoptic_context
+  required_for_pass1: true
+  cadence_hours: 12
+  lead_hours:
+  - 12
+  - 24
+  - 36
+  - 48
+  - 60
+  - 72
+  - 84
+  - 96
+  - 108
+  - 120
+  enabled: true
+  display_title: AIFS 해면기압·10 m 바람
+  plot_type: raw_contour_plus_raw_vector
+  contour_field:
+    short_name: msl
+    level: null
+    conversion: pressure_hpa
+  vector_field:
+    u_short_name: 10u
+    v_short_name: 10v
+    level: null
+  contour_label: 해면기압 (hPa)
+  vector_unit_label: 10 m 바람
+  meaning: 해면기압 hPa 등치선과 10m 바람 벡터
+  render_domain_id: source_tracking_context
+- product_id: QL_JET300_Z300
+  style_profile_id: QL_JET300_Z300
+  product_tier: synoptic_context
+  required_for_pass1: true
+  cadence_hours: 12
+  lead_hours:
+  - 12
+  - 24
+  - 36
+  - 48
+  - 60
+  - 72
+  - 84
+  - 96
+  - 108
+  - 120
+  enabled: true
+  display_title: AIFS 300 hPa 제트·지위고도
+  plot_type: raw_wind_speed_plus_raw_contour
+  vector_field:
+    u_short_name: u
+    v_short_name: v
+    level: 300
+  contour_field:
+    short_name: z
+    level: 300
+    conversion: geopotential_height_gpm
+  unit_label: 300 hPa 풍속 (m s$^{-1}$)
+  contour_label: 300 hPa 지위고도 (gpm)
+  meaning: 제트 풍속은 m s$^{-1}$, 등치선은 300 hPa 지위고도
+  render_domain_id: source_tracking_context
+- product_id: QL_PAIRED_WIND_SPEED_850
+  style_profile_id: QL_PAIRED_WIND_SPEED_850
+  product_tier: supplementary
+  required_for_pass1: false
+  enabled: false
+  display_title: AIFS 850 hPa 풍속
+  plot_type: raw_wind_speed_shaded
+  vector_field:
+    u_short_name: u
+    v_short_name: v
+    level: 850
+  unit_label: 850 hPa wind speed (m s$^{-1}$)
+  render_domain_id: korea_surrounding
+- product_id: QL_MOISTURE_FLUX850_WIND850
+  style_profile_id: QL_MOISTURE_FLUX850_WIND850
+  product_tier: supplementary
+  required_for_pass1: false
+  enabled: false
+  display_title: AIFS 850 hPa 수증기 플럭스·바람
+  plot_type: shaded_feature_plus_raw_vector
+  shaded_feature_id: moisture_flux850
+  vector_field:
+    u_short_name: u
+    v_short_name: v
+    level: 850
+  unit_label: 수증기 플럭스 크기 q x wind speed (g kg$^{-1}$ m s$^{-1}$)
+  vector_unit_label: 850 hPa wind, 10 m s$^{-1}$
+  render_domain_id: korea_surrounding
+- product_id: QL_T500_Z500
+  style_profile_id: QL_T500_Z500
+  product_tier: supplementary
+  required_for_pass1: false
+  enabled: false
+  display_title: AIFS 500 hPa 기온·지위고도
+  plot_type: raw_shaded_plus_raw_contour
+  shaded_field:
+    short_name: t
+    level: 500
+    conversion: temperature_c
+  contour_field:
+    short_name: z
+    level: 500
+    conversion: geopotential_height_gpm
+  unit_label: 500 hPa temperature (°C)
+  contour_label: 500 hPa geopotential height (gpm)
+  render_domain_id: korea_surrounding
+render_domains:
+  korea_surrounding:
+    name_ko: 한반도 주변 핵심 분석영역
+    lon_min: 120.0
+    lon_max: 135.0
+    lat_min: 30.0
+    lat_max: 43.0
+    projection_type: equirectangular_lonlat
+  source_tracking_context:
+    name_ko: 발원·유입경로 종관 배경영역
+    lon_min: 117.5
+    lon_max: 135.0
+    lat_min: 28.0
+    lat_max: 43.0
+    projection_type: equirectangular_lonlat

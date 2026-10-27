@@ -1,0 +1,149 @@
+{
+  "title": "AI Pass1 배치 관찰",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "batch_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "analysis_tier": {
+      "type": "string",
+      "enum": [
+        "temporal_core",
+        "synoptic_context"
+      ]
+    },
+    "group_id": {
+      "type": "string",
+      "pattern": "^[gG][0-9]{2}$"
+    },
+    "observed_attachment_count": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 4
+    },
+    "attachment_observations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "asset_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "product_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "forecast_hours": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "integer",
+              "minimum": 0
+            }
+          },
+          "observed_signals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "spatial_pattern": {
+            "type": "string"
+          },
+          "temporal_evolution": {
+            "type": "string"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high"
+            ]
+          },
+          "limitations": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "direct_precipitation_signal": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "status",
+              "significant_forecast_hours",
+              "rationale"
+            ],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "not_applicable",
+                  "absent",
+                  "weak",
+                  "present",
+                  "uncertain"
+                ]
+              },
+              "significant_forecast_hours": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "rationale": {
+                "type": "string",
+                "maxLength": 220
+              }
+            }
+          }
+        },
+        "required": [
+          "asset_id",
+          "confidence",
+          "forecast_hours",
+          "limitations",
+          "observed_signals",
+          "product_id",
+          "spatial_pattern",
+          "temporal_evolution",
+          "direct_precipitation_signal"
+        ]
+      }
+    },
+    "cross_product_synthesis": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "batch_uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "analysis_tier",
+    "attachment_observations",
+    "batch_id",
+    "batch_uncertainties",
+    "cross_product_synthesis",
+    "group_id",
+    "observed_attachment_count",
+    "package_id"
+  ]
+}

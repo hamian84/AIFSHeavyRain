@@ -1,0 +1,287 @@
+# Step05-only figure/layout overrides. Product levels, ticks, map layers, and
+# field calculations remain in the existing Step02 contracts.
+figure:
+  figsize_inches: [10.5, 7.5]
+  minimum_height_inches: 6.3
+  dpi: 180
+  outer_padding_mm: 2.0
+axes:
+  rect: [0.085, 0.075, 0.745, 0.825]
+  bottom: 0.075
+  top: 0.900
+colorbar:
+  rect: [0.850, 0.075, 0.032, 0.825]
+  label_fontsize: 10
+  label_pad: 7
+  tick_fontsize: 9
+missing:
+  bad_color: '#8C8C8C'
+  # This label is added to the colorbar only when the rendered input contains NaN.
+  label: 'gray: Missing (NaN)'
+title:
+  x: 0.085
+  main_y: 0.990
+  info_y: 0.960
+  main_fontsize: 13
+  main_weight: normal
+  info_fontsize: 11
+map_style_override:
+  title_fontsize: 10
+  title_pad: 6
+  longitude_tick_interval: 1.0
+  latitude_tick_interval: 1.0
+vector_sampling:
+  # Step05-only adaptive sampling changes only which cropped U/V grid cells are
+  # drawn. Actual U/V, crop-local sampling phase, quiver magnitude, and scale
+  # remain unchanged.
+  mode: adaptive_pixel_spacing
+  target_min_spacing_px: 60.0
+  # Verified against the actual 21x15 boundary and 71x61 broad domains.
+  # It retains 315 detail-domain vectors while reducing the 504-vector broad
+  # case to 288 with crop-local stride 4.
+  max_rendered_vectors: 320
+  product_ids:
+    - QL_TCW_WIND850
+    - QL_CONVERGENCE925_WIND925
+    - QL_MOISTURE_FLUX850_WIND850
+product_style_overrides:
+  QL_TCW_WIND850:
+    # Fallback only when adaptive Step05 sampling is disabled.
+    wind_stride: 4
+    # Preserve every non-zero, finite sampled U/V vector at its actual magnitude.
+    # The existing renderer cannot draw an exactly zero-length arrow, but no
+    # calm threshold or display-magnitude clipping is applied in Step05.
+    quiver_calm_threshold_ms: 0.0
+    quiver_min_display_speed_ms:
+    quiver_max_display_speed_ms:
+    # Step05-only draw order: map lines (10) remain identifiable while the
+    # actual-vector shaft is no longer hidden by their white halo.
+    coastline_zorder: 10
+    border_zorder: 10
+    admin1_zorder: 10
+    quiver_zorder: 11
+    longitude_tick_interval: 2.0
+    latitude_tick_interval: 2.0
+  QL_CONVERGENCE925_WIND925:
+    # Fallback only when adaptive Step05 sampling is disabled.
+    wind_stride: 3
+    quiver_calm_threshold_ms: 0.0
+    quiver_min_display_speed_ms:
+    quiver_max_display_speed_ms:
+    coastline_zorder: 10
+    border_zorder: 10
+    admin1_zorder: 10
+    quiver_zorder: 11
+    longitude_tick_interval: 1.0
+    latitude_tick_interval: 1.0
+  QL_MOISTURE_FLUX850_WIND850:
+    # 11 scalar intervals plus one extend color from a fixed cividis sample.
+    colors: ['#002D68', '#233C6E', '#3E4B6C', '#535A6D', '#666970', '#797977', '#8E8978', '#A39A74', '#BAAC6D', '#D1BF61', '#E9D34E', '#FEE838']
+    # Fallback only when adaptive Step05 sampling is disabled.
+    wind_stride: 4
+    quiver_calm_threshold_ms: 0.0
+    quiver_min_display_speed_ms:
+    quiver_max_display_speed_ms:
+    coastline_zorder: 10
+    border_zorder: 10
+    admin1_zorder: 10
+    quiver_zorder: 11
+    longitude_tick_interval: 2.0
+    latitude_tick_interval: 2.0
+product_presentation:
+  QL_CONVERGENCE925_WIND925:
+    colorbar_label: '925 hPa 수평수렴 (10$^{-5}$ s$^{-1}$; 양수=수렴, 음수=발산)'
+  QL_OMEGA700_Z500:
+    contour_annotation:
+      text: '등치선: 500 hPa 지위고도 (gpm)'
+      x: 0.845
+      y: 0.925
+      ha: left
+      va: bottom
+      fontsize: 8.5
+  QL_MOISTURE_FLUX850_WIND850:
+    display_title: 'AIFS 850 hPa 수증기 플럭스 크기·850 hPa 바람'
+    colorbar_label: '850 hPa 수증기 플럭스 크기 q×|V| (g kg$^{-1}$ m s$^{-1}$)'
+palette_metadata:
+  QL_MOISTURE_FLUX850_WIND850:
+    palette_type: sequential_discrete
+    source_colormap: cividis
+diagnostic_palettes:
+  specific_humidity_q:
+    # Shared fixed contract for the time-height and cross-section q products.
+    palette_type: discrete_sequential
+    palette_id: step05_specific_humidity_ylgnbu_discrete_v1
+    palette_name: YlGnBu
+    levels: [0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+    ticks: [0, 1, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+    # Eleven fixed q intervals followed by the >20 g kg^-1 extension color.
+    colors: ['#F7FCC6', '#E7F6B1', '#CDEBB4', '#A2DBB8', '#73C8BD', '#48B9C3', '#2CA1C2', '#1E83BA', '#2260A9', '#24439B', '#1B2C80', '#081D58']
+    extend: max
+    missing_color: '#8C8C8C'
+  signed_omega:
+    # Raw omega is intentionally signed: negative is ascent and positive is descent.
+    palette_type: discrete_diverging
+    palette_id: step05_signed_omega_rdbu_discrete_v1
+    palette_name: RdBu_r
+    levels: [-1.0, -0.5, -0.25, -0.1, -0.05, -0.02, 0.0, 0.02, 0.05, 0.1, 0.25, 0.5, 1.0]
+    ticks: [-1.0, -0.5, -0.25, -0.1, -0.05, 0.0, 0.05, 0.1, 0.25, 0.5, 1.0]
+    # Twelve bounded intervals plus both extension bins require fourteen colors.
+    colors: ['#053061', '#2166AC', '#4393C3', '#92C5DE', '#D1E5F0', '#F7F7F7', '#F7F7F7', '#FDDBC7', '#F4A582', '#D6604D', '#B2182B', '#67001F', '#67001F', '#67001F']
+    extend: both
+    missing_color: '#8C8C8C'
+  signed_along_section_wind:
+    # Positive is explicitly A-to-B along the declared or derived reference axis.
+    palette_type: discrete_diverging
+    palette_id: step05_signed_along_section_wind_rdbu_discrete_v1
+    palette_name: RdBu_r
+    levels: [-60, -50, -40, -30, -20, -15, -10, -5, 0, 5, 10, 15, 20, 30, 40, 50, 60]
+    ticks: [-60, -40, -20, -10, 0, 10, 20, 40, 60]
+    # Sixteen bounded intervals plus both extension bins require eighteen colors.
+    # Weak negative (-5 to 0) and weak positive (0 to +5) bins remain very light
+    # but use distinct blue/red tints so the sign is still visible near zero.
+    colors: ['#053061', '#053061', '#2166AC', '#4393C3', '#92C5DE', '#D1E5F0', '#E6F1F5', '#EDF5F8', '#F4F9FB', '#FDF2EE', '#F4A582', '#D6604D', '#B2182B', '#8A0712', '#67001F', '#67001F', '#67001F', '#67001F']
+    extend: both
+    missing_color: '#8C8C8C'
+  wind_speed:
+    palette_type: discrete_sequential
+    palette_id: step05_wind_speed_viridis_discrete_v1
+    palette_name: viridis
+    levels: [0, 5, 10, 15, 20, 25, 30, 35, 40, 50, 60]
+    ticks: [0, 5, 10, 15, 20, 25, 30, 40, 50, 60]
+    colors: ['#440154', '#482878', '#3E4989', '#31688E', '#26828E', '#1F9E89', '#35B779', '#6DCD59', '#B4DE2C', '#FDE725', '#FDE725']
+    extend: max
+    missing_color: '#8C8C8C'
+  vertical_wind_shear:
+    palette_type: discrete_sequential
+    palette_id: step05_vertical_wind_shear_viridis_discrete_v1
+    palette_name: viridis
+    levels: [0, 2, 4, 6, 8, 10, 12, 15, 20, 25, 30]
+    ticks: [0, 2, 4, 6, 8, 10, 12, 15, 20, 25, 30]
+    # Ten fixed shear intervals followed by the >30 m s^-1 extension color.
+    colors: ['#481769', '#453581', '#3B518B', '#306A8E', '#26818E', '#1F978B', '#27AD81', '#4CC26C', '#81D34D', '#C0DF25', '#FDE725']
+    extend: max
+    missing_color: '#8C8C8C'
+special_layout:
+  vertical_wind_shear:
+    # Keep the requested-domain map aspect, while reducing only unused
+    # figure space around the title, reference vector, and colorbar.
+    figure_size_inches: [10.0, 5.52]
+    axes_rect: [0.085, 0.077, 0.745, 0.820]
+    colorbar_rect: [0.850, 0.077, 0.032, 0.820]
+    text:
+      title: {x: 0.085, y: 0.987}
+      metadata: {x: 0.085, y: 0.950}
+      reference: {x: 0.550, y: 0.915}
+    # A narrow dark core plus a white halo preserves coastline/boundary
+    # contrast over both dark and bright shear shading without covering data.
+    map_style:
+      map_halo_enabled: true
+      coastline_color: '#18232F'
+      coastline_linewidth: 0.62
+      coastline_alpha: 0.98
+      coastline_zorder: 13
+      coastline_halo_color: '#FFFFFF'
+      coastline_halo_linewidth: 1.70
+      border_color: '#4D5A66'
+      border_linewidth: 0.42
+      border_alpha: 0.95
+      border_zorder: 12
+      border_halo_color: '#FFFFFF'
+      border_halo_linewidth: 1.25
+  temporal_precipitation:
+    figure_size_inches: [9.6, 5.1]
+    subplot_adjust: {left: 0.100, right: 0.950, bottom: 0.140, top: 0.905}
+    text:
+      title: {x: 0.100, y: 0.987}
+      metadata: {x: 0.100, y: 0.950}
+  time_height_specific_humidity:
+    figure_size_inches: [9.6, 5.7]
+    axes_rect: [0.105, 0.120, 0.715, 0.785]
+    colorbar_rect: [0.855, 0.120, 0.028, 0.785]
+    text:
+      title: {x: 0.105, y: 0.987}
+      metadata: {x: 0.105, y: 0.950}
+  time_height_signed_omega:
+    figure_size_inches: [9.6, 5.7]
+    axes_rect: [0.105, 0.120, 0.715, 0.785]
+    colorbar_rect: [0.855, 0.120, 0.028, 0.785]
+    text:
+      title: {x: 0.105, y: 0.987}
+      metadata: {x: 0.105, y: 0.950}
+  time_height_wind_speed:
+    figure_size_inches: [9.6, 5.7]
+    axes_rect: [0.105, 0.120, 0.715, 0.785]
+    colorbar_rect: [0.855, 0.120, 0.028, 0.785]
+    text:
+      title: {x: 0.105, y: 0.987}
+      metadata: {x: 0.105, y: 0.950}
+  time_height_along_section_wind:
+    figure_size_inches: [9.6, 5.7]
+    # Reserve a dedicated axis-description lane above the plotted data.
+    axes_rect: [0.105, 0.120, 0.715, 0.760]
+    colorbar_rect: [0.855, 0.120, 0.028, 0.760]
+    text:
+      title: {x: 0.105, y: 0.987}
+      metadata: {x: 0.105, y: 0.950}
+      axis: {x: 0.105, y: 0.918}
+  vertical_cross_section_specific_humidity:
+    figure_size_inches: [9.6, 5.7]
+    axes_rect: [0.100, 0.115, 0.720, 0.765]
+    colorbar_rect: [0.855, 0.115, 0.028, 0.765]
+    text:
+      title: {x: 0.100, y: 0.989}
+      metadata: {x: 0.100, y: 0.951}
+      section: {x: 0.100, y: 0.918}
+  vertical_cross_section_signed_omega:
+    figure_size_inches: [9.6, 5.7]
+    axes_rect: [0.100, 0.115, 0.720, 0.765]
+    colorbar_rect: [0.855, 0.115, 0.028, 0.765]
+    text:
+      title: {x: 0.100, y: 0.989}
+      metadata: {x: 0.100, y: 0.951}
+      section: {x: 0.100, y: 0.918}
+  vertical_cross_section_wind_speed:
+    figure_size_inches: [9.6, 5.7]
+    axes_rect: [0.100, 0.115, 0.720, 0.765]
+    colorbar_rect: [0.855, 0.115, 0.028, 0.765]
+    text:
+      title: {x: 0.100, y: 0.989}
+      metadata: {x: 0.100, y: 0.951}
+      section: {x: 0.100, y: 0.918}
+  vertical_cross_section_along_section_wind:
+    figure_size_inches: [9.6, 5.7]
+    axes_rect: [0.100, 0.115, 0.720, 0.765]
+    colorbar_rect: [0.855, 0.115, 0.028, 0.765]
+    text:
+      title: {x: 0.100, y: 0.989}
+      metadata: {x: 0.100, y: 0.951}
+      section: {x: 0.100, y: 0.918}
+vector_reference:
+  QL_TCW_WIND850:
+    enabled: true
+    value_ms: 10.0
+    label: '10 m s$^{-1}$'
+    # Figure coordinates reserve a legend lane above the map, outside map data.
+    coordinates: figure
+    x: 0.84
+    y: 0.925
+    label_position: E
+    fontsize: 8.5
+  QL_CONVERGENCE925_WIND925:
+    enabled: true
+    value_ms: 10.0
+    label: '10 m s$^{-1}$'
+    coordinates: figure
+    x: 0.84
+    y: 0.925
+    label_position: E
+    fontsize: 8.5
+  QL_MOISTURE_FLUX850_WIND850:
+    enabled: true
+    value_ms: 10.0
+    label: '850 hPa 바람: 10 m s$^{-1}$'
+    coordinates: figure
+    x: 0.72
+    y: 0.925
+    label_position: E
+    fontsize: 8.5

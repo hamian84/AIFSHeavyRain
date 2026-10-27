@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "llm_wiki_explanation_response.schema.json",
+  "title": "AIFSHeavyRain LLM Wiki v1 explanation response",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "overall_summary",
+    "maintained_judgments",
+    "changed_judgments",
+    "evidence_changes",
+    "contradictions_and_uncertainties",
+    "forecaster_attention",
+    "limitations"
+  ],
+  "properties": {
+    "overall_summary": {"type": "string", "minLength": 1},
+    "maintained_judgments": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/explanation_item"}
+    },
+    "changed_judgments": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/change_item"}
+    },
+    "evidence_changes": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"$ref": "#/$defs/explanation_item"}
+    },
+    "contradictions_and_uncertainties": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/explanation_item"}
+    },
+    "forecaster_attention": {
+      "type": "array",
+      "maxItems": 6,
+      "items": {"$ref": "#/$defs/explanation_item"}
+    },
+    "limitations": {
+      "type": "array",
+      "maxItems": 8,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "evidence_ref": {
+      "type": "string",
+      "enum": [
+        "comparability",
+        "mandatory_direct_signal",
+        "step04.precursor",
+        "step04.candidates",
+        "step04_provenance.before",
+        "step04_provenance.after",
+        "step07",
+        "step08",
+        "step09",
+        "step10"
+      ]
+    },
+    "explanation_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topic", "explanation", "evidence_refs"],
+      "properties": {
+        "topic": {"type": "string", "minLength": 1},
+        "explanation": {"type": "string", "minLength": 1},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/evidence_ref"}
+        }
+      }
+    },
+    "change_item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["topic", "change_type", "explanation", "evidence_refs"],
+      "properties": {
+        "topic": {"type": "string", "minLength": 1},
+        "change_type": {
+          "type": "string",
+          "enum": ["changed", "added", "removed", "uncertain", "condition_changed"]
+        },
+        "explanation": {"type": "string", "minLength": 1},
+        "evidence_refs": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {"$ref": "#/$defs/evidence_ref"}
+        }
+      }
+    }
+  }
+}

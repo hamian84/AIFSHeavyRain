@@ -1,0 +1,668 @@
+catalog_version: 3.8.0
+capability_contract_version: 1.1.0
+regional_statistics:
+  aggregation_method: regional_mask_area_weighted_statistics
+  field_scope: every_requested_spatial_field
+  representative_field_selection: variable_specific_ranking_contract
+  ranking_metric: variable_specific
+  fields: [area_weighted_mean, maximum, minimum, p05, p95, median, standard_deviation, maximum_location, candidate_overlap_fraction, valid_data_fraction, region_coverage_fraction]
+regional_ranking_contracts:
+  tp_accumulation_mm: {representative_variable: tp_accumulation_mm, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  tp_6h_increment_mm: {representative_variable: tp_6h_increment_mm, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  tcw: {representative_variable: tcw, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  convergence925: {representative_variable: convergence925, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  moisture_flux850: {representative_variable: moisture_flux850, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  moisture_flux_convergence: {representative_variable: moisture_flux_convergence, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  w: {representative_variable: w, statistic: p05, tail: lower, sort_direction: ascending, time_reducer: minimum, score_transform: negate}
+  omega700_upward: {representative_variable: omega700_upward, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  msl: {representative_variable: msl, statistic: p05, tail: lower, sort_direction: ascending, time_reducer: minimum, score_transform: negate}
+  wind_speed: {representative_variable: wind_speed, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  vertical_wind_shear: {representative_variable: vertical_wind_shear, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+  signal_overlap_count: {representative_variable: signal_overlap_count, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
+diagnostics:
+  - diagnostic_id: detailed_spatial_map
+    description: 후보 영역의 단일 시각 수평장과 기본 영역 통계를 생성한다.
+    signal_categories: [direct_precipitation, moisture_supply, low_level_forcing, mid_upper_forcing]
+    required_variables: [tp]
+    required_levels: []
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    calculation_version: 1.0.0
+  - diagnostic_id: accumulated_precipitation
+    description: 선택 시각의 6시간 강수량을 mm 단위로 계산하고, 필요 시 초기시각부터의 누적강수량을 별도 정량값으로 제공한다.
+    signal_categories: [direct_precipitation]
+    required_variables: [tp]
+    required_levels: []
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: at_least_two_forecast_hours
+    maturity: operational
+    calculation_version: 1.0.0
+  - diagnostic_id: multivariable_composite
+    description: 강수, 가강수량과 850 hPa 바람, 925 hPa 수렴과 바람, 700 hPa 상승운동과 500 hPa 고도를 같은 시각에 함께 제시한다.
+    signal_categories: [direct_precipitation, moisture_supply, low_level_forcing, mid_upper_forcing]
+    required_variables: [tp, tcw, u, v, w, z]
+    required_levels: [850, 925, 700, 500]
+    output_types: [png]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    calculation_version: 2.0.0
+  - diagnostic_id: multi_time_spatial_map
+    description: A single configured product is shown for every requested forecast hour; this is not a multi-variable composite.
+    signal_categories: [direct_precipitation, moisture_supply, mid_upper_forcing]
+    required_variables: [tp, tcw, w]
+    required_levels: [700]
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    calculation_version: 2.0.0
+  - diagnostic_id: vertical_cross_section
+    description: AI가 지정한 시작점-종료점 단면선을 따라 AIFS 원시 GRIB의 비습, 바람 및 연직운동 연직구조를 생성한다.
+    signal_categories: [moisture_supply, mid_upper_forcing, organization_persistence]
+    required_variables: [t, q, u, v, z]
+    optional_variables: [w]
+    required_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    motion_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    output_types: [png, quantitative_json]
+    spatial_requirement: ai_selected_start_end_line_intersecting_candidate_area
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    execution_stage: step05_planned
+    source_data_kind: raw_aifs_grib
+    calculation_version: 2.1.0
+  - diagnostic_id: time_height_section
+    description: candidate discovery에서 AI가 지정한 candidate_area 전체의 공간평균 비습, 바람 및 연직운동 시간-기압 단면을 AIFS 원시 GRIB에서 생성한다.
+    signal_categories: [moisture_supply, mid_upper_forcing, organization_persistence]
+    required_variables: [t, q, u, v, z]
+    optional_variables: [w]
+    required_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    motion_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    output_types: [png, quantitative_json]
+    spatial_requirement: ai_selected_candidate_area_mean
+    temporal_requirement: at_least_two_forecast_hours
+    maturity: operational
+    execution_stage: step05_planned
+    source_data_kind: raw_aifs_grib
+    calculation_version: 2.1.0
+  - diagnostic_id: moisture_flux
+    description: 850 hPa 비습과 수평바람으로 수증기 플럭스 벡터 및 크기를 계산한다.
+    signal_categories: [moisture_supply]
+    required_variables: [q, u, v]
+    required_levels: [850]
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    calculation_version: 1.0.0
+  - diagnostic_id: moisture_flux_convergence
+    description: 850 hPa 수증기 플럭스의 수평 수렴을 계산한다.
+    signal_categories: [moisture_supply, low_level_forcing]
+    required_variables: [q, u, v]
+    required_levels: [850]
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: experimental
+    calculation_version: 1.0.0
+  - diagnostic_id: horizontal_convergence
+    description: 925 hPa 수평 바람 수렴을 SI 단위로 계산한다.
+    signal_categories: [low_level_forcing]
+    required_variables: [u, v]
+    required_levels: [925]
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    calculation_version: 1.0.0
+  - diagnostic_id: vertical_wind_shear
+    description: AIFS 원시 GRIB의 850 hPa와 500 hPa 수평바람 벡터 차이와 그 크기만 계산한다.
+    signal_categories: [organization_persistence]
+    required_variables: [u, v]
+    required_levels: [850, 500]
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    execution_stage: step05_planned
+    source_data_kind: raw_aifs_grib
+    fixed_layer_pair_hpa: [850, 500]
+    calculation_version: 2.1.0
+  - diagnostic_id: temporal_evolution
+    description: 후보영역과 겹치는 운영권역별 정량 시계열을 계산하고 AI가 선택한 대표 비교시각에는 같은 물리량의 공간장을 함께 제공한다.
+    signal_categories: [direct_precipitation, organization_persistence]
+    required_variables: [tp, tcw]
+    required_levels: []
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: at_least_two_forecast_hours
+    maturity: operational
+    calculation_version: 1.0.0
+  - diagnostic_id: signal_overlap
+    description: 강수, 수증기, 중층 상승 신호가 같은 격자에 동시 존재하는 정도를 계산한다.
+    signal_categories: [direct_precipitation, moisture_supply, mid_upper_forcing]
+    required_variables: [tp, tcw, w]
+    required_levels: [700]
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: experimental
+    calculation_version: 1.0.0
+  - diagnostic_id: system_tracking
+    description: 객체 정의와 연결 규칙이 승인된 경우에만 수행할 수 있는 시스템 추적 진단이다.
+    signal_categories: [organization_persistence]
+    required_variables: [tp]
+    required_levels: []
+    output_types: [quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: at_least_two_forecast_hours
+    maturity: experimental
+    calculation_version: 0.1.0
+  - diagnostic_id: frontogenesis
+    description: 전선생성은 과학적 정의와 독립 검증이 완료되기 전까지 자동 실행하지 않는다.
+    signal_categories: [mid_upper_forcing]
+    required_variables: [t, u, v]
+    required_levels: [850]
+    output_types: [quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: experimental
+    calculation_version: 0.1.0
+  - diagnostic_id: q_vector_convergence
+    description: Q-vector 수렴은 과학적 정의와 독립 검증이 완료되기 전까지 자동 실행하지 않는다.
+    signal_categories: [mid_upper_forcing]
+    required_variables: [t, z, u, v]
+    required_levels: [700, 500]
+    output_types: [quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: experimental
+    calculation_version: 0.1.0
+  - diagnostic_id: jet_streak_diagnostics
+    description: 제트 출구·입구 영역의 연직 순환과 발산 결합 정의가 검증되기 전까지 자동 실행하지 않는 진단입니다.
+    signal_categories: [mid_upper_forcing]
+    required_variables: [u, v, z]
+    required_levels: [300]
+    output_types: [quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: experimental
+    calculation_version: 0.1.0
+  - diagnostic_id: full_instability_diagnostics
+    description: 불안정도 지수의 물리 정의, 연직 보간, 단위 검증이 완료되기 전까지 자동 실행하지 않는 진단입니다.
+    signal_categories: [thermodynamic_support]
+    required_variables: [t, q]
+    required_levels: [1000, 925, 850, 700, 500]
+    output_types: [quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: experimental
+    calculation_version: 0.1.0
+
+# Diagnostic compatibility is explicit. A request is never silently converted to
+# a different product or diagnostic when this registry rejects the pair.
+product_contracts:
+  QL_PRECIP_6H:
+    signal_components: [direct_precipitation]
+    signal_component_requirements:
+      direct_precipitation:
+        any_physical_diagnostics: [QL_PRECIP_6H, TEMPORAL_EVOLUTION]
+        any_feature_ids: [tp_6h_increment_mm, tp_accum_mm]
+    requested_variables: [tp]
+    requested_pressure_levels: []
+    produced_variables: [tp_6h_increment_mm, tp]
+    calculator: precipitation_increment
+    increment_hours: 6
+    raw_fields:
+      precipitation: {short_name: tp, level: null}
+  QL_TCW_WIND850:
+    signal_components: [moisture_supply]
+    signal_component_requirements:
+      moisture_supply:
+        any_physical_diagnostics: [QL_TCW_WIND850, QL_MOISTURE_FLUX850_WIND850, TEMPORAL_EVOLUTION]
+        any_feature_ids: [tcw_kg_m2, q850_gkg, moisture_flux850]
+    requested_variables: [tcw, u, v]
+    requested_pressure_levels: [850]
+    produced_variables: [tcw, u, v]
+    calculator: tcw_wind
+    raw_fields:
+      tcw: {short_name: tcw, level: null}
+      q: {short_name: q, level: 850}
+      u: {short_name: u, level: 850}
+      v: {short_name: v, level: 850}
+    vertical: {mode: wind_speed}
+  QL_OMEGA700_Z500:
+    signal_components: [mid_upper_forcing]
+    signal_component_requirements:
+      mid_upper_forcing:
+        any_physical_diagnostics: [QL_OMEGA700_Z500, TEMPORAL_EVOLUTION]
+        any_feature_ids: [omega700_upward]
+    requested_variables: [w, z]
+    requested_pressure_levels: [700, 500]
+    produced_variables: [omega700_upward, z500_gpm, w, z]
+    calculator: omega_height
+    raw_fields:
+      w: {short_name: w, level: 700}
+      z: {short_name: z, level: 500}
+    vertical: {mode: omega, short_name: w}
+  QL_CONVERGENCE925_WIND925:
+    signal_components: [low_level_forcing]
+    signal_component_requirements:
+      low_level_forcing:
+        any_physical_diagnostics: [QL_CONVERGENCE925_WIND925, TEMPORAL_EVOLUTION]
+        any_feature_ids: [convergence925_1e5_s]
+    requested_variables: [convergence925, u, v]
+    requested_pressure_levels: [925]
+    produced_variables: [convergence925, u, v]
+    calculator: convergence_wind
+    raw_fields:
+      u: {short_name: u, level: 925}
+      v: {short_name: v, level: 925}
+    vertical: {mode: wind_speed}
+  QL_MSLP_WIND10:
+    signal_components: [synoptic_support]
+    signal_component_requirements:
+      synoptic_support:
+        any_physical_diagnostics: [QL_MSLP_WIND10, TEMPORAL_EVOLUTION]
+        any_feature_ids: [msl_hpa, wind10_ms]
+    requested_variables: [msl, 10u, 10v]
+    requested_pressure_levels: []
+    produced_variables: [msl, 10u, 10v]
+    calculator: mslp_wind10
+    raw_fields:
+      msl: {short_name: msl, level: null}
+      u: {short_name: 10u, level: null}
+      v: {short_name: 10v, level: null}
+  QL_JET300_Z300:
+    signal_components: [synoptic_support]
+    signal_component_requirements:
+      synoptic_support:
+        any_physical_diagnostics: [QL_JET300_Z300]
+        any_feature_ids: [upper_jet300_ms]
+    requested_variables: [u, v, z]
+    requested_pressure_levels: [300]
+    produced_variables: [upper_jet300_ms, z300_gpm, u, v, z]
+    calculator: jet300_height
+    raw_fields:
+      u: {short_name: u, level: 300}
+      v: {short_name: v, level: 300}
+      z: {short_name: z, level: 300}
+  MULTIVARIABLE_COMPOSITE_CORE:
+    signal_components: [direct_precipitation, moisture_supply, low_level_forcing, mid_upper_forcing]
+    signal_component_requirements:
+      direct_precipitation: {any_physical_diagnostics: [QL_PRECIP_6H]}
+      moisture_supply: {any_physical_diagnostics: [QL_TCW_WIND850]}
+      low_level_forcing: {any_physical_diagnostics: [QL_CONVERGENCE925_WIND925]}
+      mid_upper_forcing: {any_physical_diagnostics: [QL_OMEGA700_Z500]}
+    requested_variables: [tp, tcw, u, v, w, z]
+    requested_pressure_levels: [850, 925, 700, 500]
+    produced_variables: [tp_6h_increment_mm, tcw, convergence925, omega700_upward, z500_gpm]
+    quantitative_excerpt_supported: false
+    displayed_variables: [tp_6h_increment_mm, tcw, u850, v850, convergence925, u925, v925, omega700_upward, z500_gpm]
+    calculator: multivariable_composite
+    raw_fields:
+      precipitation: {short_name: tp, level: null}
+      tcw: {short_name: tcw, level: null}
+      u850: {short_name: u, level: 850}
+      v850: {short_name: v, level: 850}
+      u925: {short_name: u, level: 925}
+      v925: {short_name: v, level: 925}
+      w700: {short_name: w, level: 700}
+      z500: {short_name: z, level: 500}
+  VERTICAL_WIND_SHEAR_850_500:
+    signal_components: [organization_persistence]
+    signal_component_requirements:
+      organization_persistence: {any_physical_diagnostics: [VERTICAL_WIND_SHEAR_850_500]}
+    source_data_kind: raw_aifs_grib
+    requested_variables: [u, v]
+    requested_pressure_levels: [850, 500]
+    produced_variables: [vertical_wind_shear, shear_u_850_500, shear_v_850_500]
+    quantitative_excerpt_supported: false
+    calculator: vertical_wind_shear_850_500
+    raw_fields:
+      u850: {short_name: u, level: 850}
+      v850: {short_name: v, level: 850}
+      u500: {short_name: u, level: 500}
+      v500: {short_name: v, level: 500}
+    vertical: {lower_level_hpa: 850, upper_level_hpa: 500, mode: vector_difference}
+  VERTICAL_CROSS_SECTION_CORE:
+    signal_components: [moisture_supply, mid_upper_forcing, organization_persistence]
+    signal_component_requirements:
+      moisture_supply: {any_physical_diagnostics: [specific_humidity_cross_section]}
+      mid_upper_forcing: {any_physical_diagnostics: [omega_cross_section]}
+      organization_persistence: {any_physical_diagnostics: [wind_speed_cross_section, along_section_wind_cross_section]}
+    source_data_kind: raw_aifs_grib
+    cross_section_line_source: ai_selected_start_end_coordinates
+    requested_variables: [t, q, u, v, w, z]
+    requested_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    motion_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    produced_variables: [temperature_cross_section, specific_humidity_cross_section, relative_humidity_cross_section, along_section_wind_cross_section, normal_wind_cross_section, wind_speed_cross_section, omega_cross_section, geopotential_height_cross_section]
+    quantitative_excerpt_supported: false
+    calculator: vertical_cross_section_core
+    raw_fields:
+      t: {short_name: t, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      q: {short_name: q, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      u: {short_name: u, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      v: {short_name: v, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      w: {short_name: w, levels: [1000, 925, 850, 700, 600, 500, 400, 300]}
+      z: {short_name: z, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+    vertical: {coordinate: pressure_hpa, horizontal_axis: distance_km_along_ai_selected_line, interpolation: bilinear_horizontal_per_pressure_level, sample_count: 80}
+  TIME_HEIGHT_SECTION_CORE:
+    signal_components: [moisture_supply, mid_upper_forcing, organization_persistence]
+    signal_component_requirements:
+      moisture_supply: {any_physical_diagnostics: [specific_humidity_time_height]}
+      mid_upper_forcing: {any_physical_diagnostics: [omega_time_height]}
+      organization_persistence: {any_physical_diagnostics: [wind_speed_time_height, along_section_wind_time_height]}
+    source_data_kind: raw_aifs_grib
+    profile_domain_source: candidate_area_ai_selected
+    requested_variables: [t, q, u, v, w, z]
+    requested_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    produced_variables: [temperature_time_height, specific_humidity_time_height, relative_humidity_time_height, wind_speed_time_height, omega_time_height, geopotential_height_time_height]
+    quantitative_excerpt_supported: false
+    calculator: time_height_section_core
+    raw_fields:
+      t: {short_name: t, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      q: {short_name: q, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      u: {short_name: u, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      v: {short_name: v, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+      w: {short_name: w, levels: [1000, 925, 850, 700, 600, 500, 400, 300]}
+      z: {short_name: z, levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]}
+    vertical: {coordinate: pressure_hpa, aggregation: ai_selected_candidate_area_mean, time_axis: forecast_hours}
+
+# Step04 overview evidence and calculation definitions are deliberately
+# separate.  Native compatible pairs use the compatibility registry below;
+# only non-native pairs need an explicit calculation contract here.
+calculation_contracts:
+  MULTIVARIABLE_COMPOSITE_CORE:
+    diagnostic_ids: [multivariable_composite]
+    calculation_product_id: MULTIVARIABLE_COMPOSITE_CORE
+    source_product_ids: [QL_PRECIP_6H, QL_TCW_WIND850, QL_CONVERGENCE925_WIND925, QL_OMEGA700_Z500]
+    input_variables: [tp, tcw, u, v, w, z]
+    pressure_levels: [850, 925, 700, 500]
+    produced_variables: [tp_6h_increment_mm, tcw, convergence925, omega700_upward, z500_gpm]
+    displayed_variables: [tp_6h_increment_mm, tcw, u850, v850, convergence925, u925, v925, omega700_upward, z500_gpm]
+    compatible_evidence_products: [QL_PRECIP_6H, QL_TCW_WIND850, QL_OMEGA700_Z500, QL_CONVERGENCE925_WIND925, QL_MSLP_WIND10]
+    implementation_status: implemented
+  VERTICAL_WIND_SHEAR_850_500:
+    diagnostic_ids: [vertical_wind_shear]
+    calculation_product_id: VERTICAL_WIND_SHEAR_850_500
+    source_data_kind: raw_aifs_grib
+    availability_anchor_product_ids: [QL_TCW_WIND850, QL_OMEGA700_Z500]
+    raw_data_profile_ref: daba/collection/aifs_download_namelist.yaml
+    required_pressure_level_fields:
+      u: [850, 500]
+      v: [850, 500]
+    fixed_layer_pair_hpa: [850, 500]
+    input_variables: [u, v]
+    pressure_levels: [850, 500]
+    produced_variables: [vertical_wind_shear, shear_u_850_500, shear_v_850_500]
+    compatible_evidence_products: [QL_TCW_WIND850, QL_OMEGA700_Z500, QL_PRECIP_6H]
+    implementation_status: step05_planned
+  VERTICAL_CROSS_SECTION_CORE:
+    diagnostic_ids: [vertical_cross_section]
+    calculation_product_id: VERTICAL_CROSS_SECTION_CORE
+    source_data_kind: raw_aifs_grib
+    availability_anchor_product_ids: [QL_TCW_WIND850, QL_OMEGA700_Z500]
+    raw_data_profile_ref: daba/collection/aifs_download_namelist.yaml
+    cross_section_line_source: ai_selected_start_end_coordinates
+    cross_section_endpoints_within_selected_domain: true
+    cross_section_must_intersect_candidate_area: true
+    cross_section_sample_count: 80
+    required_pressure_level_fields:
+      t: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      q: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      u: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      v: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      z: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      w: [1000, 925, 850, 700, 600, 500, 400, 300]
+    input_variables: [t, q, u, v, w, z]
+    pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    motion_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    produced_variables: [temperature_cross_section, specific_humidity_cross_section, relative_humidity_cross_section, along_section_wind_cross_section, normal_wind_cross_section, wind_speed_cross_section, omega_cross_section, geopotential_height_cross_section]
+    compatible_evidence_products: [QL_PRECIP_6H, QL_TCW_WIND850, QL_CONVERGENCE925_WIND925, QL_OMEGA700_Z500]
+    implementation_status: step05_planned
+  TIME_HEIGHT_SECTION_CORE:
+    diagnostic_ids: [time_height_section]
+    calculation_product_id: TIME_HEIGHT_SECTION_CORE
+    source_data_kind: raw_aifs_grib
+    availability_anchor_product_ids: [QL_TCW_WIND850, QL_OMEGA700_Z500]
+    raw_data_profile_ref: daba/collection/aifs_download_namelist.yaml
+    profile_domain_source: candidate_area_ai_selected
+    required_pressure_level_fields:
+      t: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      q: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      u: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      v: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      z: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+      w: [1000, 925, 850, 700, 600, 500, 400, 300]
+    input_variables: [t, q, u, v, w, z]
+    pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    motion_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    produced_variables: [temperature_time_height, specific_humidity_time_height, relative_humidity_time_height, wind_speed_time_height, omega_time_height, geopotential_height_time_height]
+    compatible_evidence_products: [QL_TCW_WIND850, QL_OMEGA700_Z500, QL_CONVERGENCE925_WIND925, QL_PRECIP_6H]
+    implementation_status: step05_planned
+
+compatibility:
+  detailed_spatial_map:
+    supported_verification_modes: [spatial_distribution, regional_intensity, spatial_evolution]
+    semantic_profiles:
+      QL_PRECIP_6H: {execution_product_id: QL_PRECIP_6H, signal_components: [direct_precipitation], observable_ids: [precipitation_6h_increment]}
+      QL_TCW_WIND850: {execution_product_id: QL_TCW_WIND850, signal_components: [moisture_supply], observable_ids: [total_column_water, wind_vector_850]}
+      QL_OMEGA700_Z500: {execution_product_id: QL_OMEGA700_Z500, signal_components: [mid_upper_forcing], observable_ids: [omega_700, geopotential_height_500]}
+      QL_CONVERGENCE925_WIND925: {execution_product_id: QL_CONVERGENCE925_WIND925, signal_components: [low_level_forcing], observable_ids: [horizontal_convergence_925, wind_vector_925]}
+    required_variables: []
+    optional_variables: []
+    produced_variables: [product_primary_field]
+    supported_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    temporal_form: multi_panel_map
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [QL_PRECIP_6H, QL_TCW_WIND850, QL_OMEGA700_Z500, QL_CONVERGENCE925_WIND925]
+    compatible_question_types: [spatial_field]
+    renderer: map_panel_grid
+    style_id: product
+  accumulated_precipitation:
+    supported_verification_modes: [precipitation_amount]
+    semantic_profiles:
+      QL_PRECIP_6H: {execution_product_id: QL_PRECIP_6H, signal_components: [direct_precipitation], observable_ids: [precipitation_6h_increment, precipitation_accumulation]}
+    required_variables: [tp]
+    optional_variables: []
+    produced_variables: [tp_accumulation_mm, tp_6h_increment_mm]
+    supported_pressure_levels: []
+    temporal_form: interval_accumulation_with_requested_time_panels
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [QL_PRECIP_6H]
+    compatible_question_types: [spatial_field]
+    renderer: map_panel_grid
+    style_id: precipitation
+  multivariable_composite:
+    supported_verification_modes: [multivariable_alignment]
+    semantic_profiles:
+      MULTIVARIABLE_COMPOSITE_CORE:
+        execution_product_id: MULTIVARIABLE_COMPOSITE_CORE
+        signal_components: [direct_precipitation, moisture_supply, low_level_forcing, mid_upper_forcing]
+        observable_ids: [precipitation_6h_increment, total_column_water, wind_vector_850, horizontal_convergence_925, wind_vector_925, omega_700, geopotential_height_500]
+    required_variables: [tp, tcw, u, v, w, z]
+    optional_variables: []
+    produced_variables: [tp_6h_increment_mm, tcw, convergence925, omega700_upward, z500_gpm]
+    displayed_variables: [tp_6h_increment_mm, tcw, u850, v850, convergence925, u925, v925, omega700_upward, z500_gpm]
+    supported_pressure_levels: [850, 925, 700, 500]
+    temporal_form: four_physical_panels_per_requested_time
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [MULTIVARIABLE_COMPOSITE_CORE]
+    compatible_question_types: [spatial_field]
+    renderer: multivariable_composite
+    style_id: multivariable_composite
+  multi_time_spatial_map:
+    supported_verification_modes: [spatial_evolution]
+    semantic_profiles:
+      QL_TCW_WIND850: {execution_product_id: QL_TCW_WIND850, signal_components: [moisture_supply], observable_ids: [total_column_water, wind_vector_850]}
+      QL_OMEGA700_Z500: {execution_product_id: QL_OMEGA700_Z500, signal_components: [mid_upper_forcing], observable_ids: [omega_700, geopotential_height_500]}
+      QL_CONVERGENCE925_WIND925: {execution_product_id: QL_CONVERGENCE925_WIND925, signal_components: [low_level_forcing], observable_ids: [horizontal_convergence_925, wind_vector_925]}
+    required_variables: []
+    optional_variables: [u, v, z, tcw]
+    produced_variables: [product_primary_field]
+    supported_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    temporal_form: multi_panel_map
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [QL_TCW_WIND850, QL_OMEGA700_Z500, QL_CONVERGENCE925_WIND925]
+    compatible_question_types: [spatial_field]
+    renderer: map_panel_grid
+    style_id: product
+  vertical_cross_section:
+    supported_verification_modes: [vertical_structure]
+    semantic_profiles:
+      VERTICAL_CROSS_SECTION_CORE:
+        execution_product_id: VERTICAL_CROSS_SECTION_CORE
+        signal_components: [moisture_supply, mid_upper_forcing, organization_persistence]
+        observable_ids: [specific_humidity_vertical_profile, omega_vertical_profile, wind_speed_vertical_profile, section_parallel_wind_vertical_profile]
+    required_variables: [t, q, u, v, z]
+    optional_variables: [w]
+    produced_variables: [temperature_cross_section, specific_humidity_cross_section, relative_humidity_cross_section, along_section_wind_cross_section, normal_wind_cross_section, wind_speed_cross_section, omega_cross_section, geopotential_height_cross_section]
+    supported_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    motion_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    temporal_form: one_cross_section_per_requested_time
+    spatial_form: ai_selected_start_end_line_intersecting_candidate_area
+    compatible_product_ids: [VERTICAL_CROSS_SECTION_CORE]
+    compatible_question_types: [spatial_field]
+    renderer: vertical_cross_section
+    style_id: vertical_cross_section_core
+    cross_section_sample_count: 80
+  time_height_section:
+    supported_verification_modes: [vertical_time_evolution]
+    semantic_profiles:
+      TIME_HEIGHT_SECTION_CORE:
+        execution_product_id: TIME_HEIGHT_SECTION_CORE
+        signal_components: [moisture_supply, mid_upper_forcing, organization_persistence]
+        observable_ids: [specific_humidity_time_height, omega_time_height, wind_speed_time_height, section_parallel_wind_time_height]
+    required_variables: [t, q, u, v, z]
+    optional_variables: [w]
+    produced_variables: [temperature_time_height, specific_humidity_time_height, relative_humidity_time_height, wind_speed_time_height, omega_time_height, geopotential_height_time_height]
+    supported_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    motion_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    temporal_form: requested_time_pressure_matrix
+    spatial_form: ai_selected_candidate_area_mean
+    compatible_product_ids: [TIME_HEIGHT_SECTION_CORE]
+    compatible_question_types: [spatial_field]
+    renderer: time_height_section
+    style_id: time_height_core
+  moisture_flux:
+    supported_verification_modes: [spatial_distribution, regional_intensity, spatial_evolution]
+    semantic_profiles:
+      QL_TCW_WIND850: {execution_product_id: QL_MOISTURE_FLUX850_WIND850, signal_components: [moisture_supply], observable_ids: [moisture_flux_magnitude_850, wind_vector_850]}
+    required_variables: [q, u, v]
+    optional_variables: []
+    produced_variables: [moisture_flux850, q, u, v]
+    supported_pressure_levels: [850]
+    temporal_form: multi_panel_map
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [QL_TCW_WIND850]
+    compatible_question_types: [spatial_field]
+    renderer: map_panel_grid
+    style_id: moisture_flux850
+  moisture_flux_convergence:
+    required_variables: [q, u, v]
+    optional_variables: []
+    produced_variables: [moisture_flux_convergence, convergence925, q, u, v]
+    supported_pressure_levels: [925, 850]
+    temporal_form: multi_panel_map
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [QL_TCW_WIND850]
+    compatible_question_types: [spatial_field]
+    renderer: map_panel_grid
+    style_id: moisture_flux_convergence
+    product_overrides:
+      QL_TCW_WIND850: {style_id: moisture_flux_convergence, calculator: moisture_flux_convergence, requested_variables: [q, u, v], requested_pressure_levels: [850]}
+  horizontal_convergence:
+    supported_verification_modes: [spatial_distribution, regional_intensity, spatial_evolution]
+    semantic_profiles:
+      QL_CONVERGENCE925_WIND925: {execution_product_id: QL_CONVERGENCE925_WIND925, signal_components: [low_level_forcing], observable_ids: [horizontal_convergence_925, wind_vector_925]}
+    description: 925 hPa 수평 바람 수렴을 SI 단위로 계산한다.
+    signal_categories: [low_level_forcing]
+    required_variables: [u, v]
+    required_levels: [925]
+    output_types: [png, quantitative_json]
+    spatial_requirement: analysis_envelope
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    calculation_version: 1.0.0
+    compatible_product_ids: [QL_CONVERGENCE925_WIND925]
+    compatible_question_types: [spatial_field]
+    renderer: map_panel_grid
+    style_id: convergence925
+    optional_variables: []
+    produced_variables: [convergence925]
+    supported_pressure_levels: [925]
+    temporal_form: multi_panel_map
+    spatial_form: analysis_envelope_map
+    product_overrides:
+      QL_CONVERGENCE925_WIND925: {style_id: convergence925, calculator: horizontal_convergence, requested_variables: [convergence925, u, v], requested_pressure_levels: [925]}
+  vertical_wind_shear:
+    supported_verification_modes: [spatial_distribution, spatial_evolution]
+    semantic_profiles:
+      VERTICAL_WIND_SHEAR_850_500: {execution_product_id: VERTICAL_WIND_SHEAR_850_500, signal_components: [organization_persistence], observable_ids: [vertical_wind_shear_magnitude_850_500, wind_vector_difference_850_500]}
+    required_variables: [u, v]
+    optional_variables: []
+    produced_variables: [vertical_wind_shear, shear_u_850_500, shear_v_850_500]
+    supported_pressure_levels: [850, 500]
+    temporal_form: multi_panel_map
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [VERTICAL_WIND_SHEAR_850_500]
+    compatible_question_types: [spatial_field]
+    renderer: map_panel_grid
+    style_id: vertical_wind_shear_850_500
+  temporal_evolution:
+    supported_verification_modes: [temporal_change]
+    semantic_profiles:
+      QL_PRECIP_6H:
+        execution_product_id: TEMPORAL_EVOLUTION
+        signal_components: [direct_precipitation]
+        field_product_id: QL_PRECIP_6H
+        observable_ids: [candidate_mean_precipitation_6h_increment_time_series, precipitation_6h_increment]
+        quantitative_feature_ids: [tp_6h_increment_mm]
+      QL_TCW_WIND850:
+        execution_product_id: TEMPORAL_EVOLUTION
+        field_product_id: QL_MOISTURE_FLUX850_WIND850
+        signal_components: [moisture_supply]
+        observable_ids: [candidate_mean_moisture_flux_magnitude_850_time_series, moisture_flux_magnitude_850, wind_vector_850]
+        quantitative_feature_ids: [moisture_flux850]
+      QL_OMEGA700_Z500:
+        execution_product_id: TEMPORAL_EVOLUTION
+        field_product_id: QL_OMEGA700_Z500
+        signal_components: [mid_upper_forcing]
+        observable_ids: [candidate_mean_omega_700_time_series, omega_700, geopotential_height_500]
+        quantitative_feature_ids: [omega700_upward]
+      QL_CONVERGENCE925_WIND925:
+        execution_product_id: TEMPORAL_EVOLUTION
+        field_product_id: QL_CONVERGENCE925_WIND925
+        signal_components: [low_level_forcing]
+        observable_ids: [candidate_mean_horizontal_convergence_925_time_series, horizontal_convergence_925, wind_vector_925]
+        quantitative_feature_ids: [convergence925_1e5_s]
+    required_variables: []
+    optional_variables: []
+    produced_variables: [product_primary_field]
+    supported_pressure_levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    temporal_form: requested_time_series_with_ai_selected_representative_maps
+    spatial_form: representative_analysis_envelope_maps
+    compatible_product_ids: [QL_PRECIP_6H, QL_TCW_WIND850, QL_OMEGA700_Z500, QL_CONVERGENCE925_WIND925]
+    compatible_question_types: [spatial_field]
+    renderer: time_series
+    style_id: product
+  signal_overlap:
+    required_variables: [tp, tcw]
+    optional_variables: [w, convergence925, msl]
+    produced_variables: [signal_overlap_count]
+    supported_pressure_levels: [925, 850, 700, 500]
+    temporal_form: multi_panel_map
+    spatial_form: analysis_envelope_map
+    compatible_product_ids: [QL_TCW_WIND850, QL_OMEGA700_Z500, QL_CONVERGENCE925_WIND925, QL_MSLP_WIND10]
+    compatible_question_types: [spatial_field]
+    renderer: categorical_map
+    style_id: signal_overlap
+    product_overrides:
+      QL_TCW_WIND850: {requested_variables: [tp, tcw, u, v], requested_pressure_levels: [850]}
+      QL_OMEGA700_Z500: {requested_variables: [tp, tcw, w, z], requested_pressure_levels: [700, 500]}
+      QL_CONVERGENCE925_WIND925: {requested_variables: [tp, tcw, convergence925, u, v], requested_pressure_levels: [925]}
+      QL_MSLP_WIND10: {requested_variables: [tp, tcw, msl, 10u, 10v], requested_pressure_levels: []}

@@ -1,0 +1,88 @@
+collection_profile:
+  profile_id: heavy_rain_discovery_vertical_v2
+  profile_version: 2.2.0
+  forecast_hour_start: 0
+  forecast_hour_end: 120
+  forecast_hour_interval: 6
+
+defaults:
+  model: aifs-single
+  type: fc
+  steps: [0, 6, 12, 18, 24, 30, 36, 42, 48, 54, 60, 66, 72, 78, 84, 90, 96, 102, 108, 114, 120]
+  overwrite: false
+  split_by_param: true
+  continue_on_error: true
+  include_request_name_in_filename: true
+
+requests:
+  - name: precip
+    levtype: sfc
+    params: [tp, cp]
+    required_for_discovery: true
+    required_for_rule_qa: true
+    optional: false
+
+  - name: pressure_moisture
+    levtype: sfc
+    params: [msl, tcw]
+    required_for_discovery: true
+    required_for_rule_qa: true
+    optional: false
+
+  # 모델 지형정보는 정적 자료이므로 초기시각(F000)에서 한 번만 수집
+  - name: surface_geopotential
+    levtype: sfc
+    params: [z]
+    steps: [0]
+    required_for_discovery: false
+    required_for_rule_qa: false
+    optional: false
+
+  # Step02 종관장 및 상세 바람 진단에 필요한 지상바람
+  - name: surface_wind10
+    levtype: sfc
+    params: [10u, 10v]
+    required_for_discovery: false
+    required_for_rule_qa: false
+    optional: false
+
+  # 향후 열역학/지상 프로파일 확장용 자료. 현재 Step02~10 핵심 계약에는 필수 아님.
+  - name: surface_thermo_anchor
+    levtype: sfc
+    params: [2t, 2d]
+    required_for_discovery: false
+    required_for_rule_qa: false
+    optional: true
+
+  # 지상 이하 기압면 마스킹 및 향후 지상 경계조건용 선택자료
+  - name: surface_pressure
+    levtype: sfc
+    params: [sp]
+    required_for_discovery: false
+    required_for_rule_qa: false
+    optional: true
+
+  - name: cloud
+    levtype: sfc
+    params: [tcc]
+    required_for_discovery: false
+    required_for_rule_qa: false
+    optional: true
+
+  # 연직단면, 연직시계열 및 단열선도 공통 핵심 프로파일
+  - name: vertical_profile_core
+    levtype: pl
+    levels: [1000, 925, 850, 700, 600, 500, 400, 300, 250, 200, 150, 100]
+    params: [z, t, q, u, v]
+    required_for_discovery: true
+    required_for_rule_qa: true
+    optional: false
+
+  # 강수·대류 분석에 필요한 연직운동은 대류권 하·중층 중심으로 제한
+  - name: vertical_profile_motion
+    levtype: pl
+    levels: [1000, 925, 850, 700, 600, 500, 400, 300]
+    params: [w]
+    required_for_discovery: true
+    required_for_rule_qa: true
+    optional: false

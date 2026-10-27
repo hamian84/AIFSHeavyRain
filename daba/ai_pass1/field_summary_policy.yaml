@@ -1,0 +1,45 @@
+# AI가 참조할 수 있는 field 요약으로 feature 표 행을 선택하는 정책입니다.
+
+summary_statistics:
+  include:
+    - mean
+    - max
+    - p95
+
+signal_levels:
+  tp_6h_increment_mm:
+    high_p95: 30.0
+    medium_p95: 15.0
+  tp_accum_mm:
+    high_p95: 80.0
+    medium_p95: 40.0
+  cp_6h_increment_mm:
+    high_p95: 20.0
+    medium_p95: 10.0
+  tcw_kg_m2:
+    high_p95: 60.0
+    medium_p95: 50.0
+  q925_gkg:
+    high_p95: 16.0
+    medium_p95: 12.0
+  q850_gkg:
+    high_p95: 12.0
+    medium_p95: 9.0
+  moisture_flux925:
+    high_p95: 250.0
+    medium_p95: 180.0
+  moisture_flux850:
+    high_p95: 250.0
+    medium_p95: 180.0
+  omega700_upward:
+    high_p95: 0.4
+    medium_p95: 0.2
+  omega500_upward:
+    high_p95: 0.3
+    medium_p95: 0.15
+
+field_summary_selection:
+  include_signal_levels:
+    - high
+    - medium
+  include_features_without_threshold: false

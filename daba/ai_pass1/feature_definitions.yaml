@@ -1,0 +1,241 @@
+# AIFSHeavyRain Step03 feature 정의
+#
+# 이 파일은 Step03에서 생산할 정량 feature 목록을 정의합니다.
+# Python 코드를 수정하지 않고 feature_id, 이름, 단위, 고도면, 입력 변수, 계산 builder를 조정할 수 있습니다.
+# 단, builder는 func/step02/registry에 등록된 허용 builder만 사용할 수 있습니다.
+#
+# 허용 builder:
+# - single_tp_mm          : tp 누적강수량을 mm로 변환
+# - increment_tp_mm       : tp 6시간 증분강수량
+# - single_cp_mm          : cp 누적대류강수량을 mm로 변환
+# - increment_cp_mm       : cp 6시간 증분대류강수량
+# - single_msl_hpa        : msl을 hPa로 변환
+# - single_raw            : 원자료 값을 그대로 사용
+# - q_gkg                 : q를 g kg-1로 변환
+# - wind_speed            : u/v 풍속 계산
+# - moisture_flux         : q(g kg-1)와 풍속의 곱
+# - omega_upward          : 기압 연직속도의 상승 성분만 양수화
+# - temp_c                : K를 degC로 변환
+# - geopotential_height   : 지위고도를 gpm으로 변환
+# - horizontal_convergence: u/v로 수평 수렴 계산(양수=수렴, 1e-5 s-1)
+
+features:
+  - feature_id: tp_accum_mm
+    name_ko: 누적강수량
+    units: mm
+    kind: sfc
+    level: null
+    required_inputs:
+      - short_name: tp
+        level: null
+    builder: single_tp_mm
+
+  - feature_id: tp_6h_increment_mm
+    name_ko: 6시간 강수량
+    units: mm
+    kind: sfc
+    level: null
+    required_inputs:
+      - short_name: tp
+        level: null
+    builder: increment_tp_mm
+
+  - feature_id: cp_accum_mm
+    name_ko: 누적대류강수량
+    units: mm
+    kind: sfc
+    level: null
+    required_inputs:
+      - short_name: cp
+        level: null
+    builder: single_cp_mm
+
+  - feature_id: cp_6h_increment_mm
+    name_ko: 6시간 대류강수량
+    units: mm
+    kind: sfc
+    level: null
+    required_inputs:
+      - short_name: cp
+        level: null
+    builder: increment_cp_mm
+
+  - feature_id: msl_hpa
+    name_ko: 해면기압
+    units: hPa
+    kind: sfc
+    level: null
+    required_inputs:
+      - short_name: msl
+        level: null
+    builder: single_msl_hpa
+
+  - feature_id: tcw_kg_m2
+    name_ko: 대기 전층 수분량(TCW)
+    units: kg m-2
+    kind: sfc
+    level: null
+    required_inputs:
+      - short_name: tcw
+        level: null
+    builder: single_raw
+
+  - feature_id: wind10_ms
+    name_ko: 10m 풍속
+    units: m s-1
+    kind: sfc
+    level: null
+    required_inputs:
+      - short_name: 10u
+        level: null
+      - short_name: 10v
+        level: null
+    builder: wind_speed
+
+  - feature_id: wind925_ms
+    name_ko: 925hPa 풍속
+    units: m s-1
+    kind: pl
+    level: 925
+    required_inputs:
+      - short_name: u
+        level: 925
+      - short_name: v
+        level: 925
+    builder: wind_speed
+
+  - feature_id: wind850_ms
+    name_ko: 850hPa 풍속
+    units: m s-1
+    kind: pl
+    level: 850
+    required_inputs:
+      - short_name: u
+        level: 850
+      - short_name: v
+        level: 850
+    builder: wind_speed
+
+  - feature_id: convergence925_1e5_s
+    name_ko: 925hPa 수평 수렴
+    units: 1e-5 s-1
+    kind: pl
+    level: 925
+    required_inputs:
+      - short_name: u
+        level: 925
+      - short_name: v
+        level: 925
+    builder: horizontal_convergence
+
+  - feature_id: q925_gkg
+    name_ko: 925hPa 비습
+    units: g kg-1
+    kind: pl
+    level: 925
+    required_inputs:
+      - short_name: q
+        level: 925
+    builder: q_gkg
+
+  - feature_id: q850_gkg
+    name_ko: 850hPa 비습
+    units: g kg-1
+    kind: pl
+    level: 850
+    required_inputs:
+      - short_name: q
+        level: 850
+    builder: q_gkg
+
+  - feature_id: moisture_flux925
+    name_ko: 925hPa 수증기 플럭스 크기
+    units: g kg-1 m s-1
+    kind: pl
+    level: 925
+    required_inputs:
+      - short_name: q
+        level: 925
+      - short_name: u
+        level: 925
+      - short_name: v
+        level: 925
+    builder: moisture_flux
+
+  - feature_id: moisture_flux850
+    name_ko: 850hPa 수증기 플럭스 크기
+    units: g kg-1 m s-1
+    kind: pl
+    level: 850
+    required_inputs:
+      - short_name: q
+        level: 850
+      - short_name: u
+        level: 850
+      - short_name: v
+        level: 850
+    builder: moisture_flux
+
+  - feature_id: omega700_upward
+    name_ko: 700hPa 상승운동 강도
+    units: Pa s-1
+    kind: pl
+    level: 700
+    required_inputs:
+      - short_name: w
+        level: 700
+    builder: omega_upward
+
+  - feature_id: omega500_upward
+    name_ko: 500hPa 상승운동 강도
+    units: Pa s-1
+    kind: pl
+    level: 500
+    required_inputs:
+      - short_name: w
+        level: 500
+    builder: omega_upward
+
+  - feature_id: t500_c
+    name_ko: 500hPa 기온
+    units: degC
+    kind: pl
+    level: 500
+    required_inputs:
+      - short_name: t
+        level: 500
+    builder: temp_c
+
+  - feature_id: z500_gpm
+    name_ko: 500hPa 지위고도
+    units: gpm
+    kind: pl
+    level: 500
+    required_inputs:
+      - short_name: z
+        level: 500
+    builder: geopotential_height
+
+  - feature_id: upper_jet300_ms
+    name_ko: 300hPa 제트 풍속
+    units: m s-1
+    kind: pl
+    level: 300
+    required_inputs:
+      - short_name: u
+        level: 300
+      - short_name: v
+        level: 300
+    builder: wind_speed
+
+  - feature_id: upper_jet250_ms
+    name_ko: 250hPa 제트 풍속
+    units: m s-1
+    kind: pl
+    level: 250
+    required_inputs:
+      - short_name: u
+        level: 250
+      - short_name: v
+        level: 250
+    builder: wind_speed

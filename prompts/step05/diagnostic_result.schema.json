@@ -1,0 +1,803 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AIFSHeavyRain Step05 diagnostic result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "request_id",
+    "candidate_id",
+    "diagnostic_id",
+    "data_type",
+    "status",
+    "forecast_hours",
+    "target_id",
+    "selected_domain",
+    "features",
+    "generated_images",
+    "available_signal_components",
+    "failure_code",
+    "failure_message"
+  ],
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidate_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "diagnostic_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "data_type": {
+      "enum": [
+        "spatial_field",
+        "quantitative_excerpt"
+      ]
+    },
+    "status": {
+      "enum": [
+        "success",
+        "failed"
+      ]
+    },
+    "forecast_hours": {
+      "type": "array",
+      "items": {
+        "type": "integer",
+        "minimum": 0
+      },
+      "uniqueItems": true
+    },
+    "target_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "selected_domain": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "west",
+            "east",
+            "south",
+            "north"
+          ],
+          "properties": {
+            "west": {
+              "type": "number"
+            },
+            "east": {
+              "type": "number"
+            },
+            "south": {
+              "type": "number"
+            },
+            "north": {
+              "type": "number"
+            }
+          }
+        }
+      ]
+    },
+    "features": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "units",
+          "finite_count",
+          "nan_count",
+          "per_forecast_hour"
+        ],
+        "properties": {
+          "units": {
+            "type": "string",
+            "minLength": 1
+          },
+          "finite_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nan_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "per_forecast_hour": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "forecast_hour"
+              ],
+              "properties": {
+                "forecast_hour": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "statistics": {
+                  "type": "object"
+                },
+                "regional_statistics": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "region_id",
+                      "region_name",
+                      "statistics"
+                    ],
+                    "properties": {
+                      "region_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "region_name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "statistics": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              },
+              "oneOf": [
+                {
+                  "required": [
+                    "statistics"
+                  ]
+                },
+                {
+                  "required": [
+                    "regional_statistics"
+                  ]
+                }
+              ]
+            }
+          },
+          "time_series": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          },
+          "regional_ranking": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    "generated_images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "physical_diagnostic",
+          "forecast_hour",
+          "units",
+          "finite_count",
+          "nan_count",
+          "min",
+          "max"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[^\\\\]+$"
+          },
+          "physical_diagnostic": {
+            "type": "string",
+            "minLength": 1
+          },
+          "forecast_hour": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "minimum": 0
+          },
+          "units": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "finite_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "nan_count": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "min": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "max": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "operational_scope_field_value_summary": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+              "finite_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "nan_count": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minimum": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "maximum": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              }
+            }
+          },
+          "operational_scope_region_summaries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "region_id",
+                "region_name",
+                "maximum_6h_mm"
+              ],
+              "properties": {
+                "region_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "region_name": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "maximum_6h_mm": {
+                  "type": "number"
+                },
+                "region_role": {
+                  "type": "string",
+                  "enum": [
+                    "operational_land",
+                    "marine_macro"
+                  ]
+                },
+                "region_bbox": {
+                  "$ref": "#/$defs/bbox"
+                },
+                "mean_6h_mm": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "p95_6h_mm": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "max_location": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": false,
+                  "required": [
+                    "latitude",
+                    "longitude",
+                    "value"
+                  ],
+                  "properties": {
+                    "latitude": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "longitude": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "value": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                },
+                "valid_grid_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "full_region_grid_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "precip_ge_1mm_grid_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "candidate_precip_coverage_fraction": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "region_precip_coverage_fraction": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "precip_ge_1mm_centroid": {
+                  "type": [
+                    "object",
+                    "null"
+                  ],
+                  "additionalProperties": false,
+                  "required": [
+                    "latitude",
+                    "longitude"
+                  ],
+                  "properties": {
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "precip_ge_1mm_bbox": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/bbox"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "precipitation_object_policy": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "required": [
+              "version",
+              "threshold_6h_mm",
+              "connectivity"
+            ],
+            "properties": {
+              "version": {
+                "type": "string"
+              },
+              "threshold_6h_mm": {
+                "type": "number",
+                "minimum": 0
+              },
+              "connectivity": {
+                "type": "integer",
+                "enum": [
+                  8
+                ]
+              }
+            }
+          },
+          "precipitation_objects": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "object_id",
+                "grid_count",
+                "maximum_6h_mm",
+                "mean_6h_mm",
+                "p95_6h_mm",
+                "precipitation_sum_mm",
+                "centroid",
+                "bbox",
+                "operational_overlap_grid_count",
+                "operational_overlap_fraction",
+                "operational_precipitation_sum_mm",
+                "operational_maximum_6h_mm",
+                "region_overlaps"
+              ],
+              "properties": {
+                "object_id": {
+                  "type": "string",
+                  "pattern": "^P[0-9]{3}$"
+                },
+                "grid_count": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "maximum_6h_mm": {
+                  "type": "number"
+                },
+                "mean_6h_mm": {
+                  "type": "number"
+                },
+                "p95_6h_mm": {
+                  "type": "number"
+                },
+                "precipitation_sum_mm": {
+                  "type": "number"
+                },
+                "centroid": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "latitude",
+                    "longitude"
+                  ],
+                  "properties": {
+                    "latitude": {
+                      "type": "number"
+                    },
+                    "longitude": {
+                      "type": "number"
+                    }
+                  }
+                },
+                "bbox": {
+                  "$ref": "#/$defs/bbox"
+                },
+                "operational_overlap_grid_count": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "operational_overlap_fraction": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "operational_precipitation_sum_mm": {
+                  "type": "number",
+                  "minimum": 0
+                },
+                "operational_maximum_6h_mm": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "region_overlaps": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "required": [
+                      "region_id",
+                      "region_name",
+                      "region_role",
+                      "region_bbox",
+                      "overlap_grid_count",
+                      "object_overlap_fraction",
+                      "object_share_of_region_precip",
+                      "region_precip_coverage_fraction",
+                      "region_precip_grid_count",
+                      "overlap_precipitation_sum_mm",
+                      "overlap_maximum_6h_mm",
+                      "overlap_centroid",
+                      "full_region_grid_count",
+                      "object_region_coverage_fraction"
+                    ],
+                    "properties": {
+                      "region_id": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "region_name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "region_role": {
+                        "type": "string",
+                        "enum": [
+                          "operational_land",
+                          "marine_macro"
+                        ]
+                      },
+                      "region_bbox": {
+                        "$ref": "#/$defs/bbox"
+                      },
+                      "overlap_grid_count": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "object_overlap_fraction": {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "object_share_of_region_precip": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "region_precip_coverage_fraction": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 1
+                      },
+                      "region_precip_grid_count": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "overlap_precipitation_sum_mm": {
+                        "type": "number",
+                        "minimum": 0
+                      },
+                      "overlap_maximum_6h_mm": {
+                        "type": "number"
+                      },
+                      "overlap_centroid": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "required": [
+                          "latitude",
+                          "longitude"
+                        ],
+                        "properties": {
+                          "latitude": {
+                            "type": "number"
+                          },
+                          "longitude": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "full_region_grid_count": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "object_region_coverage_fraction": {
+                        "type": [
+                          "number",
+                          "null"
+                        ],
+                        "minimum": 0,
+                        "maximum": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "required": [
+                "operational_scope_field_value_summary"
+              ]
+            },
+            "then": {
+              "required": [
+                "operational_scope_region_summaries",
+                "precipitation_object_policy",
+                "precipitation_objects"
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "failure_code": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "failure_message": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "available_signal_components": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "enum": [
+          "direct_precipitation",
+          "moisture_supply",
+          "low_level_forcing",
+          "mid_upper_forcing",
+          "thermodynamic_support",
+          "organization_persistence",
+          "synoptic_support",
+          "uncertainty"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "success"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "failure_code": {
+            "type": "null"
+          },
+          "failure_message": {
+            "type": "null"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "failed"
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "features": {
+            "maxProperties": 0
+          },
+          "generated_images": {
+            "maxItems": 0
+          },
+          "failure_code": {
+            "type": "string",
+            "minLength": 1
+          },
+          "failure_message": {
+            "type": "string",
+            "minLength": 1
+          },
+          "available_signal_components": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "success"
+          },
+          "data_type": {
+            "const": "quantitative_excerpt"
+          }
+        },
+        "required": [
+          "status",
+          "data_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "features": {
+            "minProperties": 1
+          },
+          "generated_images": {
+            "maxItems": 0
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "success"
+          },
+          "data_type": {
+            "const": "spatial_field"
+          }
+        },
+        "required": [
+          "status",
+          "data_type"
+        ]
+      },
+      "then": {
+        "properties": {
+          "features": {
+            "maxProperties": 0
+          },
+          "generated_images": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "bbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "west",
+        "east",
+        "south",
+        "north"
+      ],
+      "properties": {
+        "west": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "north": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

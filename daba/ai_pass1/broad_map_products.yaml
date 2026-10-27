@@ -1,0 +1,58 @@
+render_style_file: daba/ai_pass1/broad_map_render_styles.yaml
+default_domain:
+  lon_min: 120.0
+  lon_max: 135.0
+  lat_min: 30.0
+  lat_max: 43.0
+default_lead_hours: [6]
+broad_map_generation:
+  mode: hybrid
+  anchor_lead_hours: [6, 24, 48, 72, 96, 120]
+  triggered_lead_policy:
+    enabled: true
+    include_signal_levels: [high, medium]
+    include_neighbor_hours: [-6, 0, 6]
+    min_lead_hour: 6
+    max_lead_hour: 120
+    max_leads_per_product: 12
+products:
+  - product_id: QL_PRECIP_6H
+    style_profile_id: QL_PRECIP_6H
+    enabled: true
+    trigger_feature_id: tp_6h_increment_mm
+    trigger_feature_ids: [tp_6h_increment_mm, tp_accum_mm, cp_6h_increment_mm]
+    plot_type: shaded_feature
+    shaded_feature_id: tp_6h_increment_mm
+    unit_label: 6h precipitation (mm)
+    display_title: AIFS 6h Precipitation
+  - product_id: QL_TCW_WIND850
+    style_profile_id: QL_TCW_WIND850
+    enabled: true
+    trigger_feature_id: tcw_kg_m2
+    trigger_feature_ids: [tcw_kg_m2, q850_gkg, moisture_flux850]
+    plot_type: shaded_feature_plus_raw_vector
+    shaded_feature_id: tcw_kg_m2
+    vector_field: {u_short_name: u, v_short_name: v, level: 850}
+    unit_label: Total column water (kg m-2)
+    vector_unit_label: 850 hPa wind, 10 m s-1
+    display_title: AIFS TCW + 850 hPa Wind
+  - product_id: QL_OMEGA700_Z500
+    style_profile_id: QL_OMEGA700_Z500
+    enabled: true
+    trigger_feature_id: omega700_upward
+    trigger_feature_ids: [omega700_upward, omega500_upward, z500_gpm]
+    plot_type: raw_shaded_plus_raw_contour
+    shaded_field: {short_name: w, level: 700}
+    contour_field: {short_name: z, level: 500, conversion: geopotential_height_gpm}
+    unit_label: 700 hPa omega (Pa s-1; negative=upward, positive=downward)
+    contour_label: 500 hPa geopotential height (gpm)
+    display_title: AIFS 700 hPa Omega + 500 hPa Height
+  - product_id: QL_PAIRED_WIND_SPEED_850
+    style_profile_id: QL_PAIRED_WIND_SPEED_850
+    enabled: true
+    trigger_feature_id: wind850_ms
+    trigger_feature_ids: [wind850_ms, moisture_flux850]
+    plot_type: raw_wind_speed_shaded
+    vector_field: {u_short_name: u, v_short_name: v, level: 850}
+    unit_label: 850 hPa wind speed (m s-1)
+    display_title: AIFS 850 hPa Wind Speed

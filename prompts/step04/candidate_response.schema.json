@@ -1,0 +1,1673 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/ai_discovery_candidate_response.schema.json",
+  "title": "AI Pass1 감시후보 탐색 응답",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "package_id",
+    "analysis_coverage",
+    "run_summary",
+    "candidates",
+    "candidate_evidence",
+    "candidate_analysis_plans",
+    "analysis_data_requests",
+    "global_uncertainties",
+    "pass2_required"
+  ],
+  "properties": {
+    "package_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "analysis_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "coverage_status",
+        "overview_attachment_count"
+      ],
+      "properties": {
+        "coverage_status": {
+          "type": "string",
+          "enum": [
+            "complete",
+            "partial"
+          ]
+        },
+        "overview_attachment_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "notes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "run_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "summary_text"
+      ],
+      "properties": {
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "summary_text": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      },
+      "maxItems": 10
+    },
+    "candidate_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidateEvidence"
+      },
+      "maxItems": 10
+    },
+    "precursor_opportunities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/precursorOpportunity"
+      },
+      "maxItems": 10
+    },
+    "analysis_data_requests": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/analysisDataRequest"
+      }
+    },
+    "global_uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 6
+    },
+    "pass2_required": {
+      "type": "boolean"
+    },
+    "candidate_analysis_plans": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidateAnalysisPlan"
+      }
+    },
+    "precursor_candidate_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_status",
+        "qualified_opportunity_count",
+        "source_asset_ids",
+        "forecast_hours",
+        "dismissed_precursor_groups",
+        "rationale"
+      ],
+      "properties": {
+        "assessment_status": {
+          "type": "string",
+          "enum": [
+            "qualified_independent_signal",
+            "no_qualified_independent_signal"
+          ]
+        },
+        "qualified_opportunity_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "source_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        },
+        "dismissed_precursor_groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "dismissed_group_id",
+              "dismissal_basis",
+              "source_asset_ids",
+              "forecast_hours",
+              "precursor_signal_categories",
+              "overlapping_candidate_ids",
+              "dismissal_reason"
+            ],
+            "properties": {
+              "dismissed_group_id": {
+                "type": "string",
+                "pattern": "^DPG_[0-9]{3}$"
+              },
+              "dismissal_basis": {
+                "type": "string",
+                "enum": [
+                  "absorbed_into_direct_or_mixed_candidate",
+                  "insufficient_spatiotemporal_overlap",
+                  "insufficient_forcing_support",
+                  "weak_or_transient_signal"
+                ]
+              },
+              "source_asset_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "minItems": 2,
+                "maxItems": 8,
+                "uniqueItems": true
+              },
+              "forecast_hours": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "minItems": 1,
+                "maxItems": 8,
+                "uniqueItems": true
+              },
+              "precursor_signal_categories": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "moisture_supply",
+                    "low_level_forcing",
+                    "mid_upper_forcing",
+                    "thermodynamic_support",
+                    "organization_persistence"
+                  ]
+                },
+                "minItems": 2,
+                "maxItems": 5,
+                "uniqueItems": true
+              },
+              "overlapping_candidate_ids": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^CAND_[0-9]{3}$"
+                },
+                "maxItems": 3,
+                "uniqueItems": true
+              },
+              "dismissal_reason": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 400
+              }
+            }
+          },
+          "maxItems": 10
+        }
+      }
+    }
+  },
+  "$defs": {
+    "precursorOpportunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opportunity_id",
+        "support_asset_ids",
+        "representative_forecast_hours",
+        "support_categories",
+        "qualification",
+        "relation_to_direct",
+        "related_direct_candidate_ids",
+        "relation_basis",
+        "candidate_creation",
+        "created_candidate_id"
+      ],
+      "properties": {
+        "opportunity_id": {
+          "type": "string",
+          "pattern": "^PRC_[0-9]{3}$"
+        },
+        "support_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "representative_forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "support_categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing",
+              "thermodynamic_support",
+              "organization_persistence"
+            ]
+          },
+          "minItems": 1,
+          "maxItems": 5,
+          "uniqueItems": true
+        },
+        "qualification": {
+          "type": "string",
+          "enum": [
+            "qualified",
+            "not_qualified"
+          ]
+        },
+        "relation_to_direct": {
+          "type": "string",
+          "enum": [
+            "independent",
+            "absorbed_into_direct",
+            "boundary_ambiguous",
+            "not_applicable"
+          ]
+        },
+        "related_direct_candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CAND_[0-9]{3}$"
+          },
+          "maxItems": 10,
+          "uniqueItems": true
+        },
+        "relation_basis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "time_relation",
+            "spatial_relation",
+            "mechanism_relation",
+            "reason"
+          ],
+          "properties": {
+            "time_relation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "spatial_relation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "mechanism_relation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
+        },
+        "candidate_creation": {
+          "type": "string",
+          "enum": [
+            "created",
+            "not_created"
+          ]
+        },
+        "created_candidate_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^CAND_[0-9]{3}$"
+        }
+      }
+    },
+    "bbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "west",
+        "east",
+        "south",
+        "north"
+      ],
+      "properties": {
+        "west": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "north": {
+          "type": "number"
+        }
+      }
+    },
+    "timeWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecast_hour_start",
+        "forecast_hour_end"
+      ],
+      "properties": {
+        "forecast_hour_start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "forecast_hour_end": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "valid_time_start_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valid_time_end_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "candidate_name",
+        "candidate_area",
+        "time_window",
+        "peak_forecast_hours",
+        "signal_types",
+        "detection_basis",
+        "precipitation_signal_status",
+        "precursor_signal_categories",
+        "precursor_spatiotemporal_overlap",
+        "hypothesis",
+        "analysis_envelope_request",
+        "diagnostic_plan",
+        "confidence",
+        "candidate_unit_type",
+        "discovery_order",
+        "related_product_ids",
+        "related_overview_asset_ids",
+        "supporting_reasons",
+        "opposing_reasons",
+        "uncertainties",
+        "separation_reason"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^CAND_[0-9]{3}$"
+        },
+        "candidate_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "candidate_area": {
+          "$ref": "#/$defs/bbox"
+        },
+        "time_window": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "peak_forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 5
+        },
+        "signal_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "maxItems": 6
+        },
+        "detection_basis": {
+          "type": "string",
+          "enum": [
+            "direct_precipitation",
+            "precursor_environment",
+            "mixed"
+          ]
+        },
+        "precipitation_signal_status": {
+          "type": "string",
+          "enum": [
+            "present",
+            "weak",
+            "absent",
+            "uncertain"
+          ]
+        },
+        "precursor_signal_categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing",
+              "thermodynamic_support",
+              "organization_persistence",
+              "direct_precipitation"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 6
+        },
+        "precursor_spatiotemporal_overlap": {
+          "type": "boolean"
+        },
+        "hypothesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "statement",
+            "spatiotemporal_overlap"
+          ],
+          "properties": {
+            "statement": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "spatiotemporal_overlap": {
+              "type": "boolean"
+            }
+          }
+        },
+        "analysis_envelope_request": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "temporal_padding_hours"
+          ],
+          "properties": {
+            "temporal_padding_hours": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12
+            }
+          }
+        },
+        "diagnostic_plan": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "diagnostic_id",
+              "purpose"
+            ],
+            "properties": {
+              "diagnostic_id": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              }
+            }
+          },
+          "maxItems": 6
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "candidate_unit_type": {
+          "type": "string",
+          "enum": [
+            "peak_episode",
+            "precursor_episode"
+          ]
+        },
+        "discovery_order": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "related_product_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 6
+        },
+        "related_overview_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 16
+        },
+        "supporting_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "maxItems": 4
+        },
+        "opposing_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "maxItems": 3
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "maxItems": 3
+        },
+        "separation_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "candidateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "evidence_items"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^CAND_[0-9]{3}$"
+        },
+        "evidence_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "asset_id",
+              "product_id",
+              "forecast_hours",
+              "reason"
+            ],
+            "properties": {
+              "asset_id": {
+                "type": "string"
+              },
+              "product_id": {
+                "type": "string"
+              },
+              "forecast_hours": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "reason": {
+                "type": "string",
+                "maxLength": 160
+              }
+            }
+          },
+          "maxItems": 12
+        }
+      }
+    },
+    "analysisDataRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "candidate_id",
+        "plan_id",
+        "diagnostic_id",
+        "data_type",
+        "forecast_hours",
+        "check_id",
+        "target_id",
+        "phase_ids",
+        "analysis_methods",
+        "purpose",
+        "priority",
+        "cross_section_line",
+        "cross_section_strategy",
+        "reference_band_axis"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "pattern": "^REQ_CAND[0-9]{3}_[0-9]{3}$"
+        },
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^CAND_[0-9]{3}$"
+        },
+        "diagnostic_id": {
+          "type": "string",
+          "enum": [
+            "detailed_spatial_map",
+            "accumulated_precipitation",
+            "multivariable_composite",
+            "vertical_cross_section",
+            "time_height_section",
+            "moisture_flux",
+            "horizontal_convergence",
+            "vertical_wind_shear",
+            "temporal_evolution",
+            "system_tracking",
+            "frontogenesis",
+            "q_vector_convergence"
+          ]
+        },
+        "data_type": {
+          "type": "string",
+          "enum": [
+            "spatial_field",
+            "quantitative_excerpt"
+          ]
+        },
+        "product_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "QL_PRECIP_6H",
+            "QL_TCW_WIND850",
+            "QL_CONVERGENCE925_WIND925",
+            "QL_OMEGA700_Z500",
+            "QL_MSLP_WIND10",
+            "QL_JET300_Z300",
+            "MULTIVARIABLE_COMPOSITE_CORE",
+            "VERTICAL_WIND_SHEAR_850_500",
+            "VERTICAL_CROSS_SECTION_CORE",
+            "TIME_HEIGHT_SECTION_CORE"
+          ]
+        },
+        "feature_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+$"
+          },
+          "uniqueItems": true
+        },
+        "forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "requested_domain": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/bbox"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "required",
+            "supplementary"
+          ]
+        },
+        "plan_id": {
+          "type": "string",
+          "pattern": "^PLAN_CAND[0-9]{3}$"
+        },
+        "check_id": {
+          "type": "string",
+          "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+        },
+        "target_id": {
+          "type": "string",
+          "pattern": "^AREA_CAND[0-9]{3}_[0-9]{2}$"
+        },
+        "phase_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^PHASE_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "analysis_methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "detailed_map",
+              "regional_statistics",
+              "regional_ranking",
+              "regional_max_location",
+              "temporal_evolution",
+              "variable_cross_check"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "output_spec": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "statistics": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "valid_grid_count",
+                  "mean",
+                  "min",
+                  "max",
+                  "p95",
+                  "max_location",
+                  "min_location"
+                ]
+              },
+              "uniqueItems": true
+            },
+            "ranking_statistic": {
+              "type": "string",
+              "enum": [
+                "mean",
+                "max",
+                "p95"
+              ]
+            },
+            "top_n": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 20
+            },
+            "include_time_series": {
+              "type": "boolean"
+            },
+            "include_max_location": {
+              "type": "boolean"
+            }
+          }
+        },
+        "source_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "cross_section_line": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/crossSectionLine"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cross_section_strategy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "across_precipitation_band",
+            "along_precipitation_axis",
+            "along_moisture_inflow",
+            null
+          ]
+        },
+        "reference_band_axis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/referenceBandAxis"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "data_type": {
+                "const": "spatial_field"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "product_id",
+              "requested_domain"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "data_type": {
+                "const": "quantitative_excerpt"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "feature_ids"
+            ]
+          }
+        }
+      ]
+    },
+    "analysisHypothesis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "hypothesis_id",
+        "statement",
+        "supporting_check_ids",
+        "opposing_check_ids"
+      ],
+      "properties": {
+        "hypothesis_id": {
+          "type": "string",
+          "pattern": "^H_CAND[0-9]{3}_[0-9]{2}$"
+        },
+        "statement": {
+          "type": "string",
+          "minLength": 1
+        },
+        "supporting_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "opposing_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "uniqueItems": true
+        }
+      }
+    },
+    "analysisTargetArea": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target_id",
+        "target_type",
+        "resolution_method",
+        "requested_domain",
+        "region_ids",
+        "purpose"
+      ],
+      "properties": {
+        "target_id": {
+          "type": "string",
+          "pattern": "^AREA_CAND[0-9]{3}_[0-9]{2}$"
+        },
+        "target_type": {
+          "type": "string",
+          "enum": [
+            "candidate_domain",
+            "context_domain",
+            "operational_regions"
+          ]
+        },
+        "resolution_method": {
+          "type": "string",
+          "enum": [
+            "explicit_bbox",
+            "candidate_area_overlap",
+            "explicit_region_ids"
+          ]
+        },
+        "requested_domain": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/bbox"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "region_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Z][A-Z0-9_]+$"
+          },
+          "uniqueItems": true
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "analysisPhase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "phase_id",
+        "phase_type",
+        "forecast_hours",
+        "purpose"
+      ],
+      "properties": {
+        "phase_id": {
+          "type": "string",
+          "pattern": "^PHASE_CAND[0-9]{3}_[0-9]{2}$"
+        },
+        "phase_type": {
+          "type": "string",
+          "enum": [
+            "pre_peak",
+            "peak",
+            "post_peak",
+            "context"
+          ]
+        },
+        "forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "variableCheck": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "variable_role",
+        "required_signal_components",
+        "check_scope",
+        "diagnostic_id",
+        "product_id",
+        "feature_ids",
+        "target_ids",
+        "phase_ids",
+        "analysis_methods",
+        "expected_signal",
+        "decision_relevance",
+        "priority",
+        "cross_section_line",
+        "cross_section_strategy",
+        "reference_band_axis"
+      ],
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "pattern": "^CHK_CAND[0-9]{3}_[0-9]{2}$"
+        },
+        "variable_role": {
+          "type": "string",
+          "enum": [
+            "hazard_magnitude",
+            "moisture_supply",
+            "low_level_forcing",
+            "midlevel_forcing",
+            "synoptic_support",
+            "uncertainty",
+            "organization_persistence",
+            "thermodynamic_support"
+          ]
+        },
+        "product_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            null,
+            "QL_PRECIP_6H",
+            "QL_TCW_WIND850",
+            "QL_CONVERGENCE925_WIND925",
+            "QL_OMEGA700_Z500",
+            "QL_MSLP_WIND10",
+            "QL_JET300_Z300",
+            "MULTIVARIABLE_COMPOSITE_CORE",
+            "VERTICAL_WIND_SHEAR_850_500",
+            "VERTICAL_CROSS_SECTION_CORE",
+            "TIME_HEIGHT_SECTION_CORE"
+          ]
+        },
+        "feature_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+$"
+          },
+          "uniqueItems": true
+        },
+        "target_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^AREA_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "phase_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^PHASE_CAND[0-9]{3}_[0-9]{2}$"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "analysis_methods": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "detailed_map",
+              "regional_statistics",
+              "regional_ranking",
+              "regional_max_location",
+              "temporal_evolution",
+              "variable_cross_check"
+            ]
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "expected_signal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decision_relevance": {
+          "type": "string",
+          "minLength": 1
+        },
+        "priority": {
+          "type": "string",
+          "enum": [
+            "required",
+            "supplementary"
+          ]
+        },
+        "diagnostic_id": {
+          "type": "string",
+          "enum": [
+            "detailed_spatial_map",
+            "accumulated_precipitation",
+            "multivariable_composite",
+            "vertical_cross_section",
+            "time_height_section",
+            "moisture_flux",
+            "horizontal_convergence",
+            "vertical_wind_shear",
+            "temporal_evolution"
+          ]
+        },
+        "cross_section_line": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/crossSectionLine"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "cross_section_strategy": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "across_precipitation_band",
+            "along_precipitation_axis",
+            "along_moisture_inflow",
+            null
+          ]
+        },
+        "reference_band_axis": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/referenceBandAxis"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "check_scope": {
+          "type": "string",
+          "enum": [
+            "single_variable",
+            "multivariable_alignment",
+            "temporal_evolution",
+            "vertical_structure"
+          ]
+        },
+        "required_signal_components": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "enum": [
+              "direct_precipitation",
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing",
+              "thermodynamic_support",
+              "organization_persistence",
+              "synoptic_support",
+              "uncertainty"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "intent_contract": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "contract_version",
+            "check_id",
+            "source_check_key",
+            "signal_components",
+            "verification_mode",
+            "domain_scope",
+            "source_phase_keys",
+            "phase_ids",
+            "direct_precipitation_anchor",
+            "expected_signal",
+            "decision_relevance",
+            "purpose",
+            "priority",
+            "evidence_role",
+            "coverage_roles",
+            "cross_section_line",
+            "cross_section_strategy",
+            "reference_band_axis",
+            "source_intents",
+            "merged_source_intent_count"
+          ],
+          "properties": {
+            "contract_version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "check_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_check_key": {
+              "type": "string"
+            },
+            "signal_components": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "verification_mode": {
+              "type": "string",
+              "minLength": 1
+            },
+            "domain_scope": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source_phase_keys": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "phase_ids": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "direct_precipitation_anchor": {
+              "type": "boolean"
+            },
+            "representative_spatial_hours": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "uniqueItems": true
+            },
+            "expected_signal": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "decision_relevance": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "purpose": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "priority": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "evidence_role": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "coverage_roles": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            },
+            "cross_section_line": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "cross_section_strategy": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "reference_band_axis": {
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "source_intents": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "minItems": 1
+            },
+            "merged_source_intent_count": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "spatial_relation_scope": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "enum": [
+                "candidate_interior",
+                "candidate_boundary_crossing",
+                "candidate_external_context",
+                "not_applicable",
+                null
+              ]
+            }
+          }
+        },
+        "intent_hash": {
+          "type": "string",
+          "minLength": 16
+        },
+        "capability_profile": {
+          "type": "object"
+        },
+        "capability_validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "status",
+            "warning_codes"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "shadow"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "warning"
+              ]
+            },
+            "warning_codes": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "uniqueItems": true
+            }
+          }
+        },
+        "atomic_claim_contract": {
+          "type": "object"
+        },
+        "atomic_claim_hash": {
+          "type": "string",
+          "minLength": 16
+        },
+        "atomic_claim_validation": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "mode",
+            "status",
+            "warning_codes"
+          ],
+          "properties": {
+            "mode": {
+              "type": "string",
+              "enum": [
+                "shadow"
+              ]
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "pass",
+                "warning"
+              ]
+            },
+            "warning_codes": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "spatial_relation_scope": {
+          "type": "string",
+          "enum": [
+            "candidate_interior",
+            "candidate_boundary_crossing",
+            "candidate_external_context",
+            "not_applicable"
+          ]
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "product_id": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "properties": {
+            "feature_ids": {
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "candidateAnalysisPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "plan_id",
+        "candidate_id",
+        "analysis_objective",
+        "hypotheses",
+        "target_areas",
+        "analysis_phases",
+        "variable_checks",
+        "forecaster_questions"
+      ],
+      "properties": {
+        "plan_id": {
+          "type": "string",
+          "pattern": "^PLAN_CAND[0-9]{3}$"
+        },
+        "candidate_id": {
+          "type": "string",
+          "pattern": "^CAND_[0-9]{3}$"
+        },
+        "analysis_objective": {
+          "type": "string",
+          "minLength": 1
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/analysisHypothesis"
+          },
+          "minItems": 1,
+          "maxItems": 4
+        },
+        "target_areas": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/analysisTargetArea"
+          },
+          "minItems": 1,
+          "maxItems": 3
+        },
+        "analysis_phases": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/analysisPhase"
+          },
+          "minItems": 1,
+          "maxItems": 8
+        },
+        "variable_checks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/variableCheck"
+          },
+          "minItems": 3
+        },
+        "forecaster_questions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "maxItems": 6
+        }
+      }
+    },
+    "crossSectionLine": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_latitude",
+        "start_longitude",
+        "end_latitude",
+        "end_longitude",
+        "selection_reason"
+      ],
+      "properties": {
+        "start_latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "start_longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "end_latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "end_longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "selection_reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "referenceBandAxis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "start_latitude",
+        "start_longitude",
+        "end_latitude",
+        "end_longitude"
+      ],
+      "properties": {
+        "start_latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "start_longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        },
+        "end_latitude": {
+          "type": "number",
+          "minimum": -90,
+          "maximum": 90
+        },
+        "end_longitude": {
+          "type": "number",
+          "minimum": -180,
+          "maximum": 180
+        }
+      }
+    }
+  }
+}

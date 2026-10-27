@@ -1,0 +1,1917 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "forecaster_product.schema.json",
+  "title": "AIFSHeavyRain Step10 Forecaster Product",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "init",
+    "generated_at_utc",
+    "product_status",
+    "summary",
+    "surfaced_candidates",
+    "non_surfaced_candidates",
+    "assets",
+    "provenance"
+  ],
+  "properties": {
+    "schema_version": {
+      "enum": [
+        "step10-forecaster-product-v3",
+        "step10-forecaster-product-v4"
+      ]
+    },
+    "init": {
+      "type": "string",
+      "pattern": "^[0-9]{10}$"
+    },
+    "generated_at_utc": {
+      "type": "string",
+      "minLength": 1
+    },
+    "product_status": {
+      "enum": [
+        "published",
+        "no_surface_candidates"
+      ]
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "surfaced_candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/surfaced_candidate"
+      }
+    },
+    "non_surfaced_candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/non_surfaced_candidate"
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/asset"
+      }
+    },
+    "provenance": {
+      "$ref": "#/$defs/provenance"
+    },
+    "minority_report_assets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/minority_report_asset_entry"
+      }
+    }
+  },
+  "$defs": {
+    "area": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "west",
+        "east",
+        "south",
+        "north"
+      ],
+      "properties": {
+        "west": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "north": {
+          "type": "number"
+        }
+      }
+    },
+    "time_window": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecast_hour_start",
+        "forecast_hour_end",
+        "valid_time_start_utc",
+        "valid_time_end_utc"
+      ],
+      "properties": {
+        "forecast_hour_start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "forecast_hour_end": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "valid_time_start_utc": {
+          "type": "string",
+          "minLength": 1
+        },
+        "valid_time_end_utc": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "surfaced_candidate_count",
+        "non_surfaced_candidate_count"
+      ],
+      "properties": {
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "surfaced_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "non_surfaced_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "forecaster_question": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecaster_question_id",
+        "question",
+        "answer",
+        "evidence_check_ids",
+        "uncertainties"
+      ],
+      "properties": {
+        "forecaster_question_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "resolved_location": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "latitude",
+        "longitude"
+      ],
+      "properties": {
+        "latitude": {
+          "type": "number"
+        },
+        "longitude": {
+          "type": "number"
+        }
+      }
+    },
+    "quantitative_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "feature_id",
+        "forecast_hour",
+        "region_id",
+        "region_name",
+        "statistic",
+        "resolved_value",
+        "units",
+        "resolved_location"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "feature_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "forecast_hour": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "region_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "region_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "statistic": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolved_value": {
+          "type": "number"
+        },
+        "units": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resolved_location": {
+          "$ref": "#/$defs/resolved_location"
+        }
+      }
+    },
+    "scope_context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "decision_axis",
+        "check_scope",
+        "forecast_hours",
+        "region_ids",
+        "target_ids",
+        "phase_ids",
+        "domain_scope",
+        "spatial_relation_scope"
+      ],
+      "properties": {
+        "decision_axis": {
+          "type": "string",
+          "minLength": 1
+        },
+        "check_scope": {
+          "type": "string"
+        },
+        "forecast_hours": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "region_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "target_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "phase_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "domain_scope": {
+          "type": "string"
+        },
+        "spatial_relation_scope": {
+          "type": "string"
+        }
+      },
+      "description": "Step04/06/07의 구조화된 시간·공간 범위를 보존하여 Step10 신호체인의 지지/제한 근거 병합 가능성을 검증하기 위한 메타데이터."
+    },
+    "evidence_block": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "expected_signal",
+        "assessment",
+        "roles",
+        "scope_context",
+        "findings",
+        "contradictory_findings",
+        "uncertainties",
+        "quantitative_evidence",
+        "asset_ids",
+        "ensemble_consensus"
+      ],
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "expected_signal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "assessment": {
+          "enum": [
+            "observed",
+            "partially_observed",
+            "not_observed",
+            "opposite_observed",
+            "uncertain",
+            "insufficient_evidence"
+          ]
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "scope_context": {
+          "$ref": "#/$defs/scope_context"
+        },
+        "findings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "contradictory_findings": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "quantitative_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quantitative_evidence"
+          }
+        },
+        "quantitative_time_series": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/quantitative_evidence"
+          }
+        },
+        "asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^AST_[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "ensemble_consensus": {
+          "$ref": "#/$defs/ensemble_consensus"
+        },
+        "decision_relevance": {
+          "type": "string"
+        },
+        "decision_meanings": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision_meaning"
+          }
+        },
+        "majority_aggregation": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/majority_aggregation"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "operational_guidance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_action",
+        "next_check",
+        "interpretation_limit",
+        "evidence_check_ids"
+      ],
+      "properties": {
+        "current_action": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_check": {
+          "type": "string",
+          "minLength": 1
+        },
+        "interpretation_limit": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "surfaced_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "candidate_name",
+        "source_candidate_name",
+        "effective_area",
+        "effective_time_window",
+        "peak_forecast_hours",
+        "signal_class",
+        "candidate_type",
+        "display_tier",
+        "direct_precipitation_status",
+        "environment_support_status",
+        "environment_persistence_status",
+        "environment_persistence_evidence_check_ids",
+        "should_surface",
+        "final_assessment",
+        "direct_precipitation_assessment",
+        "precursor_environment_assessment",
+        "validated_precursor_categories",
+        "validated_spatiotemporal_alignment",
+        "contradictory_evidence",
+        "uncertainties",
+        "forecaster_question_answers",
+        "publication_check_ids",
+        "evidence_blocks",
+        "monitoring_emphasis",
+        "mechanism_evidence",
+        "monitoring_evidence",
+        "physical_consistency_status",
+        "physical_mechanism_summary",
+        "monitoring_value",
+        "operational_surface_reason",
+        "final_spatial_identity"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effective_area": {
+          "$ref": "#/$defs/area"
+        },
+        "effective_time_window": {
+          "$ref": "#/$defs/time_window"
+        },
+        "peak_forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "uniqueItems": true
+        },
+        "signal_class": {
+          "enum": [
+            "direct_environment_supported",
+            "direct_environment_conditional",
+            "direct_environment_unsupported",
+            "direct_environment_unresolved",
+            "precursor_watch",
+            "partially_supported",
+            "rejected",
+            "insufficient_evidence"
+          ]
+        },
+        "direct_precipitation_status": {
+          "enum": [
+            "confirmed",
+            "partial",
+            "not_confirmed",
+            "insufficient_evidence"
+          ]
+        },
+        "environment_support_status": {
+          "enum": [
+            "confirmed",
+            "partial",
+            "not_confirmed",
+            "insufficient_evidence"
+          ]
+        },
+        "should_surface": {
+          "const": true
+        },
+        "final_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operational_guidance": {
+          "$ref": "#/$defs/operational_guidance"
+        },
+        "direct_precipitation_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "precursor_environment_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "validated_precursor_categories": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing",
+              "thermodynamic_support",
+              "organization_persistence",
+              "direct_precipitation"
+            ]
+          },
+          "uniqueItems": true
+        },
+        "validated_spatiotemporal_alignment": {
+          "type": "boolean"
+        },
+        "contradictory_evidence": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forecaster_question_answers": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/forecaster_question"
+          }
+        },
+        "publication_check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "evidence_blocks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidence_block"
+          },
+          "minItems": 1
+        },
+        "monitoring_emphasis": {
+          "enum": [
+            "priority",
+            "standard"
+          ]
+        },
+        "physical_consistency_status": {
+          "enum": [
+            "coherent",
+            "conditionally_coherent",
+            "incoherent",
+            "insufficient_evidence"
+          ]
+        },
+        "physical_mechanism_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "monitoring_value": {
+          "enum": [
+            "meaningful",
+            "marginal",
+            "low",
+            "undetermined"
+          ]
+        },
+        "operational_surface_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "mechanism_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision_evidence"
+          }
+        },
+        "monitoring_evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision_evidence"
+          }
+        },
+        "environment_localization": {
+          "$ref": "#/$defs/environment_localization"
+        },
+        "environment_persistence_status": {
+          "enum": [
+            "confirmed",
+            "limited",
+            "insufficient_evidence",
+            "not_applicable"
+          ],
+          "description": "핵심시각 환경 존재와 분리된 환경의 시간적 지속·강화 상태. confirmed=지속/강화 확인, limited=약화·분리 등 지속성 제한, insufficient_evidence=판단 근거 부족, not_applicable=환경 존재 판단 대상이 아님."
+        },
+        "environment_persistence_evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "description": "환경 지속성 판단에 실제 사용한 Step07 시간변화/지속성 Check ID."
+        },
+        "operational_brief": {
+          "$ref": "#/$defs/operational_brief"
+        },
+        "source_candidate_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Step04에서 처음 탐색된 원본 후보명. candidate_name은 최종 사용자 표시명일 수 있음."
+        },
+        "final_spatial_identity": {
+          "$ref": "#/$defs/final_spatial_identity"
+        },
+        "minority_question_links": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/minority_question_link"
+          },
+          "uniqueItems": true,
+          "description": "예보관 질문에서 Step07 마이너리티 리포트로 이어지는 추적 링크 메타데이터."
+        },
+        "candidate_type": {
+          "enum": [
+            "direct_precipitation",
+            "precursor_environment"
+          ]
+        },
+        "display_tier": {
+          "enum": [
+            "priority",
+            "elevated",
+            "general",
+            "hidden"
+          ]
+        }
+      }
+    },
+    "non_surfaced_candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "candidate_name",
+        "source_candidate_name",
+        "effective_area",
+        "effective_time_window",
+        "signal_class",
+        "candidate_type",
+        "display_tier",
+        "direct_precipitation_status",
+        "environment_support_status",
+        "environment_persistence_status",
+        "environment_persistence_evidence_check_ids",
+        "validation_status",
+        "should_surface",
+        "validation_reason",
+        "final_assessment",
+        "operational_surface_decision",
+        "physical_consistency_status",
+        "physical_mechanism_summary",
+        "monitoring_value",
+        "operational_surface_reason",
+        "final_spatial_identity"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidate_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effective_area": {
+          "$ref": "#/$defs/area"
+        },
+        "effective_time_window": {
+          "$ref": "#/$defs/time_window"
+        },
+        "signal_class": {
+          "enum": [
+            "direct_environment_supported",
+            "direct_environment_conditional",
+            "direct_environment_unsupported",
+            "direct_environment_unresolved",
+            "precursor_watch",
+            "partially_supported",
+            "rejected",
+            "insufficient_evidence"
+          ]
+        },
+        "direct_precipitation_status": {
+          "enum": [
+            "confirmed",
+            "partial",
+            "not_confirmed",
+            "insufficient_evidence"
+          ]
+        },
+        "environment_support_status": {
+          "enum": [
+            "confirmed",
+            "partial",
+            "not_confirmed",
+            "insufficient_evidence"
+          ]
+        },
+        "validation_status": {
+          "const": "valid"
+        },
+        "should_surface": {
+          "const": false
+        },
+        "validation_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "final_assessment": {
+          "type": "string",
+          "minLength": 1
+        },
+        "operational_guidance": {
+          "$ref": "#/$defs/operational_guidance"
+        },
+        "operational_surface_decision": {
+          "enum": [
+            "surface",
+            "do_not_surface",
+            "not_applicable"
+          ]
+        },
+        "physical_consistency_status": {
+          "enum": [
+            "coherent",
+            "conditionally_coherent",
+            "incoherent",
+            "insufficient_evidence"
+          ]
+        },
+        "physical_mechanism_summary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "monitoring_value": {
+          "enum": [
+            "meaningful",
+            "marginal",
+            "low",
+            "undetermined"
+          ]
+        },
+        "operational_surface_reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment_persistence_status": {
+          "enum": [
+            "confirmed",
+            "limited",
+            "insufficient_evidence",
+            "not_applicable"
+          ],
+          "description": "핵심시각 환경 존재와 분리된 환경의 시간적 지속·강화 상태. confirmed=지속/강화 확인, limited=약화·분리 등 지속성 제한, insufficient_evidence=판단 근거 부족, not_applicable=환경 존재 판단 대상이 아님."
+        },
+        "environment_persistence_evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string"
+          },
+          "description": "환경 지속성 판단에 실제 사용한 Step07 시간변화/지속성 Check ID."
+        },
+        "operational_brief": {
+          "$ref": "#/$defs/operational_brief"
+        },
+        "source_candidate_name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Step04에서 처음 탐색된 원본 후보명. candidate_name은 최종 사용자 표시명일 수 있음."
+        },
+        "final_spatial_identity": {
+          "$ref": "#/$defs/final_spatial_identity"
+        },
+        "related_image_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true,
+          "description": "비표출 감시후보에 함께 보여줄 관련 이미지 asset_id 목록."
+        },
+        "candidate_type": {
+          "enum": [
+            "direct_precipitation",
+            "precursor_environment"
+          ]
+        },
+        "display_tier": {
+          "enum": [
+            "priority",
+            "elevated",
+            "general",
+            "hidden"
+          ]
+        }
+      }
+    },
+    "source_ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "request_id",
+        "physical_diagnostic",
+        "forecast_hour"
+      ],
+      "properties": {
+        "request_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "physical_diagnostic": {
+          "type": "string",
+          "minLength": 1
+        },
+        "forecast_hour": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        }
+      }
+    },
+    "asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "asset_id",
+        "relative_path",
+        "media_type",
+        "sha256",
+        "candidate_ids",
+        "check_ids",
+        "source_refs"
+      ],
+      "properties": {
+        "asset_id": {
+          "type": "string",
+          "pattern": "^AST_[0-9a-f]{12}$"
+        },
+        "relative_path": {
+          "type": "string",
+          "pattern": "^assets/[^/]+$"
+        },
+        "media_type": {
+          "const": "image/png"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "source_refs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_ref"
+          },
+          "minItems": 1
+        }
+      }
+    },
+    "source_file_hash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "sha256"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "step04_pass1_result",
+            "step07_check_results",
+            "step07_minority_report",
+            "step08_pass2_result",
+            "step09_operational_result"
+          ]
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_files",
+        "schema_sha256",
+        "generator_version",
+        "template_sha256"
+      ],
+      "properties": {
+        "source_files": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/source_file_hash"
+          },
+          "minItems": 4,
+          "maxItems": 5
+        },
+        "schema_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        },
+        "generator_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "template_sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "decision_evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "check_id",
+        "effect",
+        "reason"
+      ],
+      "properties": {
+        "check_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effect": {
+          "enum": [
+            "supporting",
+            "limiting",
+            "mixed",
+            "context"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "environment_localization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "forecast_hour",
+        "confidence",
+        "evidence_check_id",
+        "signal_components",
+        "regions",
+        "source"
+      ],
+      "properties": {
+        "status": {
+          "const": "localized"
+        },
+        "forecast_hour": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confidence": {
+          "enum": [
+            "high",
+            "medium"
+          ]
+        },
+        "evidence_check_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "regions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/localized_region"
+          }
+        },
+        "source": {
+          "const": "step07_validated_spatial_localization"
+        },
+        "signal_components": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "direct_precipitation",
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing"
+            ]
+          },
+          "description": "해당 위치 판독 Check가 실제로 요구한 모델 강수 및 환경요소. 표출할 기상장 집합을 결정한다."
+        }
+      }
+    },
+    "localized_region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "region_id",
+        "relative_sector"
+      ],
+      "properties": {
+        "region_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "relative_sector": {
+          "enum": [
+            "unspecified",
+            "north",
+            "northeast",
+            "east",
+            "southeast",
+            "south",
+            "southwest",
+            "west",
+            "northwest",
+            "central"
+          ]
+        },
+        "coverage_class": {
+          "enum": [
+            "broad",
+            "partial",
+            "local"
+          ]
+        },
+        "object_relation": {
+          "enum": [
+            "interior",
+            "edge",
+            "adjacent"
+          ]
+        },
+        "region_role": {
+          "enum": [
+            "operational_land",
+            "marine_macro"
+          ]
+        },
+        "precip_coverage_fraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "object_overlap_fraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "overlap_grid_count": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "region_precip_grid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "full_region_grid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "object_share_of_region_precip": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "broad_name_allowed": {
+          "type": "boolean"
+        },
+        "local_name_supported": {
+          "type": "boolean"
+        }
+      }
+    },
+    "assessment_vote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment",
+        "count"
+      ],
+      "properties": {
+        "assessment": {
+          "enum": [
+            "observed",
+            "partially_observed",
+            "not_observed",
+            "opposite_observed",
+            "uncertain",
+            "insufficient_evidence"
+          ]
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 3
+        }
+      }
+    },
+    "ensemble_consensus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "mode",
+        "member_count",
+        "assessment_agreement",
+        "consensus_assessment",
+        "selected_member_index",
+        "vote_counts",
+        "localization_agreement",
+        "disagreement_severity",
+        "disagreement_dimensions"
+      ],
+      "properties": {
+        "contract_version": {
+          "enum": [
+            "step07-ensemble-consensus-v1",
+            "step07-ensemble-consensus-v2",
+            "step07-ensemble-consensus-v3"
+          ]
+        },
+        "mode": {
+          "enum": [
+            "llm_ensemble",
+            "deterministic_insufficient_evidence"
+          ]
+        },
+        "member_count": {
+          "enum": [
+            0,
+            3
+          ]
+        },
+        "assessment_agreement": {
+          "enum": [
+            "unanimous",
+            "majority",
+            "unresolved",
+            "not_applicable"
+          ]
+        },
+        "consensus_assessment": {
+          "enum": [
+            "observed",
+            "partially_observed",
+            "not_observed",
+            "opposite_observed",
+            "uncertain",
+            "insufficient_evidence"
+          ]
+        },
+        "selected_member_index": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 3
+        },
+        "vote_counts": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 3,
+          "items": {
+            "$ref": "#/$defs/assessment_vote"
+          }
+        },
+        "localization_agreement": {
+          "enum": [
+            "unanimous",
+            "majority",
+            "unresolved",
+            "not_applicable"
+          ]
+        },
+        "disagreement_severity": {
+          "enum": [
+            "none",
+            "minor",
+            "material"
+          ]
+        },
+        "disagreement_dimensions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "assessment",
+              "localization"
+            ]
+          }
+        },
+        "precipitation_motion_agreement": {
+          "enum": [
+            "unanimous",
+            "majority",
+            "unresolved",
+            "not_applicable"
+          ]
+        },
+        "consensus_precipitation_motion_classification": {
+          "enum": [
+            "coherent_movement",
+            "reorganization",
+            "stationary",
+            "indeterminate",
+            "not_applicable"
+          ]
+        },
+        "precipitation_motion_selected_member_index": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 1,
+          "maximum": 3
+        },
+        "precipitation_motion_vote_counts": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 3,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "classification",
+              "count"
+            ],
+            "properties": {
+              "classification": {
+                "enum": [
+                  "coherent_movement",
+                  "reorganization",
+                  "stationary",
+                  "indeterminate",
+                  "not_applicable"
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 3
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "contract_version": {
+                "const": "step07-ensemble-consensus-v3"
+              }
+            },
+            "required": [
+              "contract_version"
+            ]
+          },
+          "then": {
+            "required": [
+              "precipitation_motion_agreement",
+              "consensus_precipitation_motion_classification",
+              "precipitation_motion_selected_member_index",
+              "precipitation_motion_vote_counts"
+            ]
+          }
+        }
+      ]
+    },
+    "decision_meaning": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "axis",
+        "axis_label",
+        "effect",
+        "effect_label",
+        "reason"
+      ],
+      "properties": {
+        "axis": {
+          "enum": [
+            "mechanism_evidence",
+            "monitoring_evidence"
+          ]
+        },
+        "axis_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "effect": {
+          "enum": [
+            "supporting",
+            "limiting",
+            "mixed",
+            "context"
+          ]
+        },
+        "effect_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "majority_region_value": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecast_hour",
+        "resolved_value",
+        "units"
+      ],
+      "properties": {
+        "forecast_hour": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "resolved_value": {
+          "type": "number"
+        },
+        "units": {
+          "type": "string"
+        }
+      }
+    },
+    "majority_region": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "region_id",
+        "region_name",
+        "physical_transition",
+        "strengthening",
+        "values"
+      ],
+      "properties": {
+        "region_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "region_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "physical_transition": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "strengthening": {
+          "type": "boolean"
+        },
+        "values": {
+          "type": "array",
+          "minItems": 2,
+          "items": {
+            "$ref": "#/$defs/majority_region_value"
+          }
+        }
+      }
+    },
+    "majority_aggregation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "feature_id",
+        "statistic",
+        "forecast_hours",
+        "total_regions",
+        "not_strengthening_count",
+        "strengthening_count",
+        "not_strengthening_regions",
+        "strengthening_regions",
+        "regions"
+      ],
+      "properties": {
+        "contract_version": {
+          "const": "candidate-overlap-majority-v1"
+        },
+        "feature_id": {
+          "const": "convergence925_1e5_s"
+        },
+        "statistic": {
+          "const": "mean"
+        },
+        "forecast_hours": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "total_regions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "not_strengthening_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "strengthening_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "not_strengthening_regions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "strengthening_regions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "regions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/majority_region"
+          }
+        }
+      }
+    },
+    "operational_brief": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key_signal",
+        "key_limitation",
+        "next_check",
+        "evidence_check_ids"
+      ],
+      "properties": {
+        "key_signal": {
+          "type": "string",
+          "minLength": 1
+        },
+        "key_limitation": {
+          "type": "string",
+          "minLength": 1
+        },
+        "next_check": {
+          "type": "string",
+          "minLength": 1
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    },
+    "final_spatial_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "forecast_hour",
+        "confidence",
+        "evidence_check_ids",
+        "regions",
+        "source"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "localized",
+            "precipitation_object",
+            "discovery_envelope"
+          ]
+        },
+        "forecast_hour": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "confidence": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "enum": [
+            "high",
+            "medium",
+            null
+          ]
+        },
+        "evidence_check_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "regions": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/localized_region"
+          }
+        },
+        "source": {
+          "enum": [
+            "step07_validated_spatial_localization",
+            "system_precipitation_object",
+            "step04_candidate_area"
+          ]
+        },
+        "precipitation_object_id": {
+          "type": "string"
+        },
+        "object_grid_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "object_centroid": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "additionalProperties": false,
+          "required": [
+            "latitude",
+            "longitude"
+          ],
+          "properties": {
+            "latitude": {
+              "type": "number"
+            },
+            "longitude": {
+              "type": "number"
+            }
+          }
+        },
+        "object_bbox": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/bbox"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "operational_overlap_fraction": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "localized"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "forecast_hour": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "confidence": {
+                "enum": [
+                  "high",
+                  "medium"
+                ]
+              },
+              "evidence_check_ids": {
+                "minItems": 1
+              },
+              "regions": {
+                "minItems": 1
+              },
+              "source": {
+                "const": "step07_validated_spatial_localization"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "precipitation_object"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "forecast_hour": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "confidence": {
+                "enum": [
+                  "high",
+                  "medium"
+                ]
+              },
+              "evidence_check_ids": {
+                "minItems": 1
+              },
+              "regions": {
+                "minItems": 1,
+                "maxItems": 2,
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/localized_region"
+                    },
+                    {
+                      "required": [
+                        "coverage_class",
+                        "object_relation",
+                        "region_role",
+                        "precip_coverage_fraction",
+                        "object_overlap_fraction",
+                        "overlap_grid_count"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "source": {
+                "const": "system_precipitation_object"
+              }
+            },
+            "required": []
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "discovery_envelope"
+              }
+            },
+            "required": [
+              "status"
+            ]
+          },
+          "then": {
+            "properties": {
+              "forecast_hour": {
+                "type": "null"
+              },
+              "confidence": {
+                "type": "null"
+              },
+              "evidence_check_ids": {
+                "maxItems": 0
+              },
+              "regions": {
+                "maxItems": 0
+              },
+              "source": {
+                "const": "step04_candidate_area"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "minority_report_member_asset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "member_index",
+        "asset_ids"
+      ],
+      "properties": {
+        "member_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        }
+      }
+    },
+    "minority_report_asset_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_id",
+        "check_id",
+        "member_assets"
+      ],
+      "properties": {
+        "candidate_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "check_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "member_assets": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/minority_report_member_asset"
+          }
+        }
+      }
+    },
+    "minority_question_link": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecaster_question_id",
+        "check_ids",
+        "link_type"
+      ],
+      "properties": {
+        "forecaster_question_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "check_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "link_type": {
+          "type": "string",
+          "enum": [
+            "unresolved",
+            "dissent"
+          ]
+        }
+      }
+    },
+    "bbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "west",
+        "east",
+        "south",
+        "north"
+      ],
+      "properties": {
+        "west": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "north": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

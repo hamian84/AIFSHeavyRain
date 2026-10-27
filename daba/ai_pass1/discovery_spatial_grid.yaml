@@ -1,0 +1,21 @@
+grid_id: korea_surrounding_neutral_tiles_v1
+grid_version: 1.1.0
+role: neutral_discovery
+hierarchy_level: 0
+source_of_truth: discovery_spatial_grid
+domain:
+  lon_min: 120.0
+  lon_max: 135.0
+  lat_min: 30.0
+  lat_max: 43.0
+tile_size_degrees:
+  longitude: 5.0
+  latitude: 5.0
+tile_id_format: TILE_LAT{lat_min}_{lat_max}_LON{lon_min}_{lon_max}
+candidate_discovery_order:
+  - neutral_tiles
+  - source_corridors
+  - operational_land_and_marine_mapping
+operational_regions_ref: daba/ai_pass1/discovery_operational_regions.yaml
+pass2_reserved_regions_ref: daba/ai_pass1/discovery_operational_regions.yaml
+candidate_limitation: neutral_tiles_are_discovery_space; operational_regions_are_projection_and_context_only

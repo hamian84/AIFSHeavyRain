@@ -1,0 +1,544 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/schemas/ai_pass1_candidate_discovery.schema.json",
+  "title": "AI Pass1 후보 탐색 단계",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "candidates",
+    "candidate_evidence",
+    "global_uncertainties",
+    "precursor_candidate_assessment"
+  ],
+  "properties": {
+    "candidates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      },
+      "maxItems": 10
+    },
+    "candidate_evidence": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidateEvidence"
+      },
+      "maxItems": 10
+    },
+    "precursor_opportunities": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/precursorOpportunity"
+      },
+      "maxItems": 10
+    },
+    "global_uncertainties": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "maxLength": 200
+      },
+      "maxItems": 6
+    },
+    "package_id": {
+      "type": "string"
+    },
+    "analysis_coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "coverage_status": {
+          "type": "string"
+        },
+        "overview_attachment_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "run_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "candidate_count": {
+          "type": "integer"
+        }
+      }
+    },
+    "pass2_required": {
+      "type": "boolean"
+    },
+    "precursor_candidate_assessment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "assessment_status",
+        "qualified_opportunity_count",
+        "source_asset_ids",
+        "forecast_hours",
+        "rationale"
+      ],
+      "properties": {
+        "assessment_status": {
+          "type": "string",
+          "enum": [
+            "qualified_independent_signal",
+            "no_qualified_independent_signal"
+          ]
+        },
+        "qualified_opportunity_count": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 5
+        },
+        "source_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 400
+        }
+      }
+    }
+  },
+  "$defs": {
+    "precursorOpportunity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "opportunity_id",
+        "support_asset_ids",
+        "representative_forecast_hours",
+        "support_categories",
+        "qualification",
+        "relation_to_direct",
+        "related_direct_candidate_ids",
+        "relation_basis",
+        "candidate_creation",
+        "created_candidate_id"
+      ],
+      "properties": {
+        "opportunity_id": {
+          "type": "string",
+          "pattern": "^PRC_[0-9]{3}$"
+        },
+        "support_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "representative_forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "maxItems": 8,
+          "uniqueItems": true
+        },
+        "support_categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing",
+              "thermodynamic_support",
+              "organization_persistence"
+            ]
+          },
+          "maxItems": 5,
+          "uniqueItems": true
+        },
+        "qualification": {
+          "type": "string",
+          "enum": [
+            "qualified",
+            "not_qualified"
+          ]
+        },
+        "relation_to_direct": {
+          "type": "string",
+          "enum": [
+            "independent",
+            "absorbed_into_direct",
+            "boundary_ambiguous",
+            "not_applicable"
+          ]
+        },
+        "related_direct_candidate_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 10,
+          "uniqueItems": true
+        },
+        "relation_basis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "time_relation",
+            "spatial_relation",
+            "mechanism_relation",
+            "reason"
+          ],
+          "properties": {
+            "time_relation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "spatial_relation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            },
+            "mechanism_relation": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 120
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 300
+            }
+          }
+        },
+        "candidate_creation": {
+          "type": "string",
+          "enum": [
+            "created",
+            "not_created"
+          ]
+        },
+        "created_candidate_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "bbox": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "west",
+        "east",
+        "south",
+        "north"
+      ],
+      "properties": {
+        "west": {
+          "type": "number"
+        },
+        "east": {
+          "type": "number"
+        },
+        "south": {
+          "type": "number"
+        },
+        "north": {
+          "type": "number"
+        }
+      }
+    },
+    "timeWindow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "forecast_hour_start",
+        "forecast_hour_end"
+      ],
+      "properties": {
+        "forecast_hour_start": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "forecast_hour_end": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "valid_time_start_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "valid_time_end_utc": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_name",
+        "candidate_area",
+        "time_window",
+        "peak_forecast_hours",
+        "signal_types",
+        "detection_basis",
+        "precipitation_signal_status",
+        "precursor_signal_categories",
+        "precursor_spatiotemporal_overlap",
+        "hypothesis",
+        "analysis_envelope_request",
+        "diagnostic_plan",
+        "confidence",
+        "related_product_ids",
+        "related_overview_asset_ids",
+        "supporting_reasons",
+        "opposing_reasons",
+        "uncertainties",
+        "separation_reason"
+      ],
+      "properties": {
+        "candidate_name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "candidate_area": {
+          "$ref": "#/$defs/bbox"
+        },
+        "time_window": {
+          "$ref": "#/$defs/timeWindow"
+        },
+        "peak_forecast_hours": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 5
+        },
+        "signal_types": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "maxItems": 6
+        },
+        "detection_basis": {
+          "type": "string",
+          "enum": [
+            "direct_precipitation",
+            "precursor_environment",
+            "mixed"
+          ]
+        },
+        "precipitation_signal_status": {
+          "type": "string",
+          "enum": [
+            "present",
+            "weak",
+            "absent",
+            "uncertain"
+          ]
+        },
+        "precursor_signal_categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "moisture_supply",
+              "low_level_forcing",
+              "mid_upper_forcing",
+              "thermodynamic_support",
+              "organization_persistence",
+              "direct_precipitation"
+            ]
+          },
+          "uniqueItems": true,
+          "maxItems": 6
+        },
+        "precursor_spatiotemporal_overlap": {
+          "type": "boolean"
+        },
+        "hypothesis": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "statement",
+            "spatiotemporal_overlap"
+          ],
+          "properties": {
+            "statement": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 250
+            },
+            "spatiotemporal_overlap": {
+              "type": "boolean"
+            }
+          }
+        },
+        "analysis_envelope_request": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "temporal_padding_hours"
+          ],
+          "properties": {
+            "temporal_padding_hours": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 12
+            }
+          }
+        },
+        "diagnostic_plan": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "diagnostic_id",
+              "purpose"
+            ],
+            "properties": {
+              "diagnostic_id": {
+                "type": "string"
+              },
+              "purpose": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 160
+              }
+            }
+          },
+          "maxItems": 6
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "related_product_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 6
+        },
+        "related_overview_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true,
+          "maxItems": 16
+        },
+        "supporting_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "maxItems": 4
+        },
+        "opposing_reasons": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "maxItems": 3
+        },
+        "uncertainties": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "maxItems": 3
+        },
+        "separation_reason": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "candidateEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "evidence_items"
+      ],
+      "properties": {
+        "evidence_items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "asset_id",
+              "product_id",
+              "forecast_hours",
+              "reason"
+            ],
+            "properties": {
+              "asset_id": {
+                "type": "string"
+              },
+              "product_id": {
+                "type": "string"
+              },
+              "forecast_hours": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "reason": {
+                "type": "string",
+                "maxLength": 160
+              }
+            }
+          },
+          "maxItems": 12
+        }
+      }
+    }
+  }
+}

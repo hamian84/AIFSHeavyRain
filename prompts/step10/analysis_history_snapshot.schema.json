@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "analysis_history_snapshot.schema.json",
+  "title": "AIFSHeavyRain Analysis History v1 Snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "history_schema_version",
+    "analysis_id",
+    "init",
+    "analysis_generated_at_utc",
+    "registered_at_utc",
+    "source_digest_sha256",
+    "product_status",
+    "summary",
+    "source_files",
+    "execution_identity",
+    "registration_status"
+  ],
+  "properties": {
+    "history_schema_version": {
+      "const": "analysis-history-snapshot-v1"
+    },
+    "analysis_id": {
+      "type": "string",
+      "pattern": "^AN_[0-9]{10}_[A-Z0-9]+_[A-F0-9]{12}$"
+    },
+    "init": {
+      "type": "string",
+      "pattern": "^[0-9]{10}$"
+    },
+    "analysis_generated_at_utc": {
+      "type": "string",
+      "minLength": 1
+    },
+    "registered_at_utc": {
+      "type": "string",
+      "minLength": 1
+    },
+    "analysis_state_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source_digest_sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "product_status": {
+      "enum": [
+        "published",
+        "no_surface_candidates"
+      ]
+    },
+    "summary": {
+      "$ref": "#/$defs/summary"
+    },
+    "source_files": {
+      "type": "array",
+      "minItems": 6,
+      "maxItems": 8,
+      "items": {
+        "$ref": "#/$defs/source_file"
+      }
+    },
+    "execution_identity": {
+      "$ref": "#/$defs/execution_identity"
+    },
+    "registration_status": {
+      "const": "complete"
+    }
+  },
+  "$defs": {
+    "nullable_string": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidate_count",
+        "surfaced_candidate_count",
+        "non_surfaced_candidate_count"
+      ],
+      "properties": {
+        "candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "surfaced_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "non_surfaced_candidate_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "source_file": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "role",
+        "archived_name",
+        "source_ref",
+        "source_schema_version",
+        "sha256"
+      ],
+      "properties": {
+        "role": {
+          "enum": [
+            "step03_pass1_request",
+            "step04_pass1_result",
+            "step04_analysis_provenance",
+            "step07_pass2_check_results",
+            "step07_llm_wiki_minority_report",
+            "step08_pass2_result",
+            "step09_operational_result",
+            "step10_forecaster_product"
+          ]
+        },
+        "archived_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_schema_version": {
+          "$ref": "#/$defs/nullable_string"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "execution_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step03",
+        "step04",
+        "step07",
+        "step08",
+        "step10"
+      ],
+      "properties": {
+        "step03": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "package_id",
+            "overview_data_sha256",
+            "attachment_fingerprint",
+            "prompt_hashes"
+          ],
+          "properties": {
+            "package_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "overview_data_sha256": {
+              "type": "string",
+              "minLength": 1
+            },
+            "attachment_fingerprint": {
+              "type": "string",
+              "minLength": 1
+            },
+            "prompt_hashes": {
+              "type": "object"
+            }
+          }
+        },
+        "step04": {
+          "type": "object"
+        },
+        "step07": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "step08": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "step10": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "generator_version",
+            "schema_sha256",
+            "template_sha256"
+          ],
+          "properties": {
+            "generator_version": {
+              "$ref": "#/$defs/nullable_string"
+            },
+            "schema_sha256": {
+              "$ref": "#/$defs/nullable_string"
+            },
+            "template_sha256": {
+              "$ref": "#/$defs/nullable_string"
+            }
+          }
+        }
+      }
+    }
+  }
+}

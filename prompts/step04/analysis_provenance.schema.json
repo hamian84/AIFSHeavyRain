@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "step04_analysis_provenance.schema.json",
+  "title": "AIFSHeavyRain Step04 Analysis Provenance",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "init", "package_id", "generated_at_utc", "pass1_result_sha256",
+    "group_summary_count", "group_summaries", "mandatory_direct_signal_audit",
+    "stage_provenance", "fingerprints"
+  ],
+  "properties": {
+    "schema_version": {"const": "step04-analysis-provenance-v1"},
+    "init": {"type": "string", "pattern": "^[0-9]{10}$"},
+    "package_id": {"type": "string", "minLength": 1},
+    "generated_at_utc": {"type": "string", "minLength": 1},
+    "pass1_result_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "group_summary_count": {"type": "integer", "minimum": 1},
+    "group_summaries": {"type": "array", "minItems": 1, "items": {"type": "object", "minProperties": 1}},
+    "mandatory_direct_signal_audit": {"$ref": "#/$defs/mandatory_direct_signal_audit"},
+    "stage_provenance": {"$ref": "#/$defs/stage_provenance"},
+    "fingerprints": {"$ref": "#/$defs/fingerprints"}
+  },
+  "$defs": {
+    "nullable_string": {"type": ["string", "null"]},
+    "nullable_integer": {"type": ["integer", "null"], "minimum": 0},
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider", "model", "reasoning_effort", "image_detail", "api_family", "endpoint_id",
+        "structured_output_mode", "prompt_sha256", "schema_sha256", "transport_schema_sha256"
+      ],
+      "properties": {
+        "provider": {"$ref": "#/$defs/nullable_string"},
+        "model": {"$ref": "#/$defs/nullable_string"},
+        "reasoning_effort": {"$ref": "#/$defs/nullable_string"},
+        "image_detail": {"$ref": "#/$defs/nullable_string"},
+        "api_family": {"$ref": "#/$defs/nullable_string"},
+        "endpoint_id": {"$ref": "#/$defs/nullable_string"},
+        "structured_output_mode": {"$ref": "#/$defs/nullable_string"},
+        "prompt_sha256": {"$ref": "#/$defs/nullable_string"},
+        "schema_sha256": {"$ref": "#/$defs/nullable_string"},
+        "transport_schema_sha256": {"$ref": "#/$defs/nullable_string"}
+      }
+    },
+    "retry_summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "availability", "http_retry_count", "repair_attempt_count",
+        "structured_output_fallback_count", "source_grounded_retry_attempt_count"
+      ],
+      "properties": {
+        "availability": {"enum": ["available", "partial", "unavailable"]},
+        "http_retry_count": {"$ref": "#/$defs/nullable_integer"},
+        "repair_attempt_count": {"$ref": "#/$defs/nullable_integer"},
+        "structured_output_fallback_count": {"$ref": "#/$defs/nullable_integer"},
+        "source_grounded_retry_attempt_count": {"$ref": "#/$defs/nullable_integer"}
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["checkpoint_count", "configurations", "input_fingerprints", "retry_summary"],
+      "properties": {
+        "checkpoint_count": {"type": "integer", "minimum": 0},
+        "configurations": {"type": "array", "items": {"$ref": "#/$defs/configuration"}},
+        "input_fingerprints": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "retry_summary": {"$ref": "#/$defs/retry_summary"}
+      }
+    },
+    "stage_provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["observation", "group_summary", "candidate_discovery", "candidate_plan"],
+      "properties": {
+        "observation": {"$ref": "#/$defs/stage"},
+        "group_summary": {"$ref": "#/$defs/stage"},
+        "candidate_discovery": {"$ref": "#/$defs/stage"},
+        "candidate_plan": {"$ref": "#/$defs/stage"}
+      }
+    },
+    "anchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary_id", "asset_id", "forecast_hour", "source_valid", "covered", "covered_candidate_ids"],
+      "properties": {
+        "summary_id": {"type": "string", "minLength": 1},
+        "asset_id": {"type": "string", "minLength": 1},
+        "forecast_hour": {"type": "integer", "minimum": 0},
+        "source_valid": {"type": "boolean"},
+        "covered": {"type": "boolean"},
+        "covered_candidate_ids": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "mandatory_direct_signal_audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "policy", "required_anchor_count", "covered_anchor_count", "missing_anchor_count",
+        "all_required_anchors_covered", "anchors"
+      ],
+      "properties": {
+        "policy": {"const": "group_summary_present_direct_precipitation_requires_candidate_evidence_coverage"},
+        "required_anchor_count": {"type": "integer", "minimum": 0},
+        "covered_anchor_count": {"type": "integer", "minimum": 0},
+        "missing_anchor_count": {"type": "integer", "minimum": 0},
+        "all_required_anchors_covered": {"type": "boolean"},
+        "anchors": {"type": "array", "items": {"$ref": "#/$defs/anchor"}}
+      }
+    },
+    "fingerprints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "group_summaries_sha256", "observation_input_fingerprints_sha256",
+        "group_summary_input_fingerprints_sha256", "candidate_discovery_input_fingerprint",
+        "candidate_plan_input_fingerprints_sha256"
+      ],
+      "properties": {
+        "group_summaries_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "observation_input_fingerprints_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "group_summary_input_fingerprints_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "candidate_discovery_input_fingerprint": {"$ref": "#/$defs/nullable_string"},
+        "candidate_plan_input_fingerprints_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    }
+  }
+}
