@@ -3386,6 +3386,7 @@ def _signal_grounding_contract(
     persistence_contract = environment_persistence_evidence_contract(
         check_specifications=specifications,
         check_results=checks,
+        analysis_phases=group["candidate_context"]["analysis_plan"].get("analysis_phases", []),
     )
     return {
         "usable_signal_evidence_check_ids": sorted(_usable_check_ids(checks)),
@@ -3727,6 +3728,7 @@ def validate_candidate_synthesis(
         environment_support_status=environment_status,
         check_specifications=_check_specifications(group),
         check_results=checks,
+        analysis_phases=group["candidate_context"]["analysis_plan"].get("analysis_phases", []),
     )
     if persistence_errors:
         raise Pass2PipelineError(

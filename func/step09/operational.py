@@ -390,6 +390,7 @@ def _environment_persistence_validation(
         environment_support_status=signal.get("environment_support_status"),
         check_specifications=check_specifications,
         check_results=check_results,
+        analysis_phases=plan.get("analysis_phases", []),
     )
 
 
