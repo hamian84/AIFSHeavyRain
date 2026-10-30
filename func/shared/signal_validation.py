@@ -647,7 +647,11 @@ def _is_single_explicit_region_quantitative_check(check_specification: Any) -> b
     )
 
 
-def _environment_persistence_check_is_eligible(check_specification: Any) -> bool:
+def _environment_persistence_check_is_eligible(
+    check_specification: Any,
+    *,
+    analysis_phases: list[dict[str, Any]] | None = None,
+) -> bool:
     """Whether a Check can be cited for candidate-wide environment persistence."""
     if not isinstance(check_specification, dict):
         return False
@@ -677,9 +681,39 @@ def _environment_persistence_check_is_eligible(check_specification: Any) -> bool
     # Environment persistence is explicitly a post-core/peak question.  A
     # pre-to-peak strengthening comparison may explain environment formation,
     # but it cannot by itself prove that the environment persists afterwards.
-    # Current Step04 contracts use PH_POST-style semantic phase keys.  Preserve
-    # the historical fallback only for legacy Checks that have no atomic claims.
+    # Legacy semantic phase keys include POST.  Compact phase keys such as P03
+    # are opaque and must be resolved through canonical Step04 analysis_phases.
     has_post_peak_phase = any("POST" in phase_key.upper() for phase_key in phase_keys)
+    if claims and not has_post_peak_phase and isinstance(analysis_phases, list):
+        post_ids = {
+            str(phase.get("phase_id"))
+            for phase in analysis_phases
+            if isinstance(phase, dict) and phase.get("phase_type") == "post_peak"
+        }
+        check_ids = set(map(str, check_specification.get("phase_ids", [])))
+        contract = check_specification.get("intent_contract")
+        intents = contract.get("source_intents") if isinstance(contract, dict) else None
+        contract_ids = contract.get("phase_ids") if isinstance(contract, dict) else None
+        if (
+            post_ids & check_ids
+            and isinstance(intents, list) and len(intents) == 1
+            and isinstance(intents[0], dict)
+            and isinstance(contract_ids, list)
+            and set(map(str, contract_ids)) == check_ids
+        ):
+            source_keys = {
+                str(key) for key in intents[0].get("phase_keys", []) if str(key)
+            }
+            # One source intent must correspond to the same canonical phases,
+            # and at least one atomic claim must cover the whole source intent.
+            # Merged/ambiguous mappings remain ineligible (fail closed).
+            if len(source_keys) == len(check_ids) and source_keys:
+                has_post_peak_phase = any(
+                    source_keys.issubset(
+                        {str(key) for key in claim.get("phase_keys", [])}
+                    )
+                    for claim in claims
+                )
     if scope == "temporal_evolution" or role == "organization_persistence":
         return has_post_peak_phase if claims else True
     if scope != "multivariable_alignment":
@@ -693,12 +727,13 @@ def environment_persistence_candidate_check_ids(
     *,
     check_specifications: dict[str, dict[str, Any]],
     check_results: dict[str, dict[str, Any]],
+    analysis_phases: list[dict[str, Any]] | None = None,
 ) -> list[str]:
     """Return usable Checks that may ground environment persistence."""
     return sorted(
         check_id
         for check_id, specification in check_specifications.items()
-        if _environment_persistence_check_is_eligible(specification)
+        if _environment_persistence_check_is_eligible(specification, analysis_phases=analysis_phases)
         and isinstance(check_results.get(check_id), dict)
         and check_results[check_id].get("evidence_status") == "complete"
         and check_results[check_id].get("evidence_complete") is True
@@ -755,11 +790,13 @@ def environment_persistence_evidence_contract(
     *,
     check_specifications: dict[str, dict[str, Any]],
     check_results: dict[str, dict[str, Any]],
+    analysis_phases: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Return the exact persistence evidence classification shared by LLM and validators."""
     allowed_ids = environment_persistence_candidate_check_ids(
         check_specifications=check_specifications,
         check_results=check_results,
+        analysis_phases=analysis_phases,
     )
     effect_by_check_id = {
         check_id: _environment_persistence_effect(
@@ -799,6 +836,7 @@ def validate_environment_persistence_contract(
     environment_support_status: Any,
     check_specifications: dict[str, dict[str, Any]],
     check_results: dict[str, dict[str, Any]],
+    analysis_phases: list[dict[str, Any]] | None = None,
 ) -> list[str]:
     """Validate a model-authored persistence status against temporal evidence."""
     errors: list[str] = []
@@ -812,6 +850,7 @@ def validate_environment_persistence_contract(
     evidence_contract = environment_persistence_evidence_contract(
         check_specifications=check_specifications,
         check_results=check_results,
+        analysis_phases=analysis_phases,
     )
     allowed = set(evidence_contract["allowed_evidence_check_ids"])
     invalid = [check_id for check_id in evidence_ids if check_id not in allowed]
