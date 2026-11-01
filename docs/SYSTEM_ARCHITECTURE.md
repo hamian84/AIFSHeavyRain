@@ -5,7 +5,7 @@
 ## 1. 주요 경로와 실행 방식
 
 - 운영 프로젝트: `/home/ubuntu/AIFSHeavyRain`
-- 정식 실행셸: `scripts/run_pipeline.ksh`; 부분·특수 실행 `scripts/run_pipeline_step01.ksh`는 별도 확인 필요.
+- 정식 실행셸: `scripts/run_pipeline.ksh`.
 - 각 단계 Python 엔트리포인트: `scripts/01_collect_aifs.py`~`scripts/10_run_forecaster_product.py`.
 - `envi/pipeline.env`: 프로젝트 루트, Conda Python, `dain/daio/daou`, `logs/tmp`, 웹 루트 등의 운영 경로.
 - `envi/api_keys.env`: API 제공자·모델·인증정보. 공개 Git에 등록하지 않음.
