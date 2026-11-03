@@ -1,6 +1,6 @@
 # 운영 시스템 구조 및 입출력 계약
 
-**적용 기준:** GitHub `main` 2026-10-30 `82f42b1`. 2026-10-12 업로드 운영 ZIP과 10-27 Git 기준선의 파일 목록, 10-29~30 수행자료를 교차 확인했다. 일부 코드 내부 상세 구현은 대표 모듈과 산출물로 확인한 수준이며 모든 런타임 분기를 전수 실행한 것은 아니다.
+**적용 기준:** `main` 기준 커밋 `d37500b`와 작업 브랜치 코드 커밋 [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3). 2026-11-03 UTC(`2026110300`) 수행자료와 현재 Step04/07~09 구현을 대조했다. 일부 코드 내부 상세 구현은 대표 모듈·회귀 테스트·저장 산출물로 확인한 수준이며 모든 런타임 분기를 전수 실행한 것은 아니다.
 
 ## 1. 주요 경로와 실행 방식
 
@@ -57,30 +57,43 @@
 
 ## 4. 중요한 계약 경계
 
-### 4.1 직접 강수 신호
+### 4.1 Step04 정량 범위와 복구 단위
+
+- `majority + not_strengthen` 정량 계약에 필요한 Step05 실행 가능 운영권역이 고정된 후보영역과 겹치지 않으면 `CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE`로 판정한다. 이는 해당 명제의 실행 범위가 없는 후보 단위 제약이다.
+- 후보영역을 넓히거나 옮기고, 정량 명제를 정성 문장으로 바꾸거나 극성을 뒤집어 통과시키지 않는다. Check 하나를 재생성해도 후보 범위 제약은 바뀌지 않으므로 원래 후보·가설 컨텍스트에서 계획 chunk 전체를 bounded budget으로 재생성한다. 같은 상태가 반복되면 `STEP04_CANDIDATE_CHUNK_REPAIR_NONPROGRESS`로 중단한다.
+- 독립적인 국소 Check 계약 오류는 기존처럼 해당 Check 전체를 재생성한다. 수치 명제를 지원하는 운영권역과 입력이 있을 때의 기존 정량 검증은 유지한다.
+- Step04 단계 체크포인트는 입력·프롬프트·스키마·provider 구성을 포함한 지문으로 재사용 여부를 확인한다. 이 수정은 해당 매칭·재개 절차를 바꾸지 않았다.
+
+### 4.2 직접 강수 신호
 
 - 후보를 위해 **Step04 SYSTEM 직접강수 존재 확인 anchor**가 있어야 하며, 현재 운영 정책상 육상·해상 운영권역의 **6시간 강수량 1.0 mm 이상** 여부를 독립 확인한다.
 - 직접 강수 `confirmed`와 수분·수렴·상승 등의 환경 `confirmed`를 동일시하지 않는다.
 - 후보 원시 위치, 대표 강수 객체, 실제 환경 결합 위치를 분리하여 공간을 과장하지 않는다.
+- Step07은 핵심시각별 운영권역 중첩, 유효 강수값, scope 메타자료를 구분한다. 평가한 어느 핵심시각에서든 기준을 만족하면 직접강수 존재 신호가 성립할 수 있다. 기준 미충족을 강수 미관측으로 해석하려면 전체 핵심시각 평가가 완결되어야 한다. 미완결이면 `unavailable` 또는 `incomplete`로 유지한다.
+- 필수 Step05 scope 요약이 누락되면 평가 불가 상태를 생성한다. 불완전 평가에는 결정론적 validator가 `insufficient_evidence / indeterminate`만 허용하며, 위반 시 bounded grounding retry를 수행한다. Anchor 지문에는 `scope-availability-v1` 계약 버전이 들어가 기존 Anchor 체크포인트를 다시 평가한다.
 
-### 4.2 Check와 3회 판독
+### 4.3 Check와 3회 판독
 
 - Step07은 확인항목에 대해 3회 독립 판독 후 구조화 합의·소수 이견을 보존한다.
 - 반대·제한 근거를 표시하고 특정 판독의 예측 시각·물리량·권역·의미를 고정한다.
 - 응답에 값이 존재해도 미사용 상태(`available_but_unusable`)이면 Step08이 결론에 임의 반영해서는 안 된다.
+- 정량 selector는 성공한 Step05 근거의 허용 namespace에 있는 request·feature·region·forecast hour·statistic 조합을 사용해야 한다. selector가 중복되거나 근거 namespace를 벗어나면 검증·복구 대상으로 처리한다.
+- Check 입력 지문에는 요청 및 Step05 결과·이미지, prompt/schema, provider·ensemble 계약과 직접강수 Anchor 문맥이 포함된다. 관련 입력·범위 평가가 달라져 지문이 바뀌면 해당 체크포인트를 재사용하지 않고, 영향을 받지 않은 일치 체크는 재사용할 수 있다.
 
-### 4.3 환경 지속성과 P1 수정
+### 4.4 환경 지속성과 P1 수정
 
 - Step04 내부 local `phase_keys`는 `chunk01:P02` 등 비의미적 식별자일 수 있음.
 - 공식 `analysis_phases[].phase_type=post_peak`를 Check의 `phase_ids` 및 `intent_contract`, `atomic_claim_contract`와 대조해 후속 환경 Check를 식별한다.
 - 단일 운영권역 정량값만으로 후보 전체 환경 지속성을 확정하지 않는다.
 - `limited`는 **검증 가능한 제한 근거**가 있을 때, `insufficient_evidence`는 적격한 후속 환경 증거가 부족할 때 구분한다. 직접 강수 신호는 유지할 수 있다.
 
-### 4.4 Step09 최종 게시 게이트
+### 4.5 Step08 종합과 Step09 최종 게시 게이트
 
-- Step08 LLM 출력만으로 자동 게시하지 않으며 Step09에서 Check 참조·근거 일치·상태·강수·후속 설명을 검증한다.
+- Step08은 직접강수 SYSTEM Anchor를 별도 계약으로 읽는다. 완전하고 사용할 수 있는 Anchor의 `observed`는 `confirmed`, `partially_observed`는 `partial`, `not_observed`/`opposite_observed`는 `not_confirmed`로 매핑한다. Anchor 평가불능·무효·미분류 상태는 `insufficient_evidence`로 둔다.
+- Step08은 usable한 Step07 Check의 증거 참조를 사용하고 지지·반대 근거와 uncertainty를 별도 구성한다. 직접강수, 선행 환경 지지, 환경 지속성은 서로 다른 상태로 유지하므로 직접강수 상태가 불충분해도 선행환경 신호의 적격성을 별도로 검토할 수 있다.
+- Step09는 Step08 출력만으로 게시하지 않고 Check 참조·근거 일치·상태·강수·후속 설명을 다시 검증한다.
 - `display_tier`: `priority` / `elevated` / `general` / 비표출(결과 구조·규칙에 따름).
-- `validation_status=blocked`가 있으면 정상 Step09 게시 완료로 처리하지 않는다.
+- `validation_status=valid`는 계약 검증 통과를 뜻하며 표출을 보장하지 않는다. `should_surface` 및 표출 등급은 검증 상태와 별도로 운영 게이트를 거친다. `validation_status=blocked`가 있으면 정상 Step09 게시 완료로 처리하지 않는다.
 - 감시등급은 전문 예보관의 특보·예보 판단과 별개임.
 
 ## 5. 예보관용 웹 배포

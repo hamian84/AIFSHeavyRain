@@ -1,6 +1,6 @@
 # AIFSHeavyRain 날짜별 개발·수정 이력
 
-**작성 기준일:** 2026-10-30(KST)
+**작성 기준일:** 2026-11-04(KST; 2026-11-03 UTC)
 **범위:** 현재 접근 가능한 과거 대화 맥락, 업로드된 운영 코드 스냅샷과 수행 ZIP, GitHub 이력. 전체 대화 원문/모든 과거 파일을 전수 확보한 것은 아니며, 복원 불가능한 세부사항을 임의로 보완하지 않았다.
 
 ## 0. 기록 방법
@@ -244,6 +244,19 @@
 - GitHub 수정 커밋 [`2f5a1a1`](https://github.com/hamian84/AIFSHeavyRain/commit/2f5a1a166f4d46ab37c0db60e99628f6cd99eae5), 병합 [`4b66fc3`](https://github.com/hamian84/AIFSHeavyRain/commit/4b66fc32dd012ec95e0ee73ff7136973f07c781d).
 - `.gitignore`에 `his_run_pipeline.ksh`만 추가 제외하여 [`82f42b1`](https://github.com/hamian84/AIFSHeavyRain/commit/82f42b193663bb65f8ccf4b9af276ca7524d05f0)로 원격 `main` 반영. 로컬/원격 clean 동기화는 사용자 터미널 출력으로 확인됨.
 - GitHub 계정 비밀번호 직접 Git HTTPS 인증은 지원되지 않으므로 PAT/SSH/credential manager를 사용하며, 토큰 값은 문서화하지 않음.
+
+### 2026-11-03 UTC (2026-11-04 KST) — 후보 단위 정량 범위 복구와 직접강수 평가 가능성 [코드반영/회귀검증/실행검증]
+
+- **발생 증상:** 초기시각 `2026110300`의 Step04에서 `CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE` 및 `STEP04_ATOMIC_REPAIR_NONPROGRESS`가 발생했다. CAND_003은 선행 환경신호 후보였고, 고정된 `candidate_area`와 겹치는 실행 가능한 육상/해상 운영권역이 없었다. 그럼에도 `majority + not_strengthen` 명제는 Step05/Step07 운영권역 925 hPa 정량 판정이 필요한 조건으로 해석됐다.
+- **직접·구조적 원인:** `_validate_compact_quantitative_atomic_claims()`가 운영권역 범위의 실행 불가능성과 개별 Check의 정량 계약 누락을 구분하지 않았다. `call_and_validate_json()`의 Check 단위 재생성은 후보영역 제약을 바꿀 수 없어 같은 위반을 반복할 수 있었다.
+- **Step04 변경:** `CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE`를 후보 계획 chunk 수준 계약으로 분류한다. `_compact_candidate_chunk_repair_required()`가 이 오류에는 Check 복구를 적용하지 않게 하고, `call_and_validate_json()`은 원래 후보·가설 컨텍스트에서 현재 chunk 전체를 bounded budget으로 재생성한다. `_repair_rules_for_validation_errors()`는 후보 영역 이동·확대, 수량 명제의 정성 전환·극성 변경을 금지하고, 원래 가설 목적을 유지하되 확인할 수 없는 명제는 미검증으로 남기도록 안내한다. 반복 무진전은 `STEP04_CANDIDATE_CHUNK_REPAIR_NONPROGRESS`로 중지한다. 다른 국소 Check 오류의 기존 전체 Check 복구는 유지한다.
+- **Step07~09 변경:** `_system_direct_precipitation_anchor_context()`가 운영권역 중첩, 유효 강수값, scope 메타자료를 분리하고 시간별 평가 상태와 임계치 평가 완결성을 계산한다. 유효 강수값이 0인 완전 평가와, 운영권역 중첩·값·메타자료가 없어 평가할 수 없는 경우를 구별하며, 필요한 Step05 메타자료가 없으면 파이프라인을 중단하지 않고 평가 불가 상태를 만든다. `_bundle_messages()`는 평가가 불완전할 때 이를 강수 미발생으로 판정하지 않도록 한다. 독립 검토에서 prompt 지시만으로는 LLM의 `not_observed`/`opposite_observed` 출력을 막지 못하는 경계가 확인되어, `_validate_system_direct_precipitation_assessment()`가 불완전 평가에는 `insufficient_evidence / indeterminate`만 허용하도록 보완했다. 이 위반은 `DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID`로 분류해 제한된 grounding 재시도에 연결했다. Step08 `_direct_precipitation_status_contract()`는 평가불능 또는 사용할 수 없는 Anchor를 `insufficient_evidence`로 전달하고, Step09 표출 Gate는 이를 강수 부재로 축약하지 않는다.
+- **체크포인트:** `_check_fingerprint()`의 Anchor 문맥에 `scope-availability-v1` 계약 버전을 추가했다. 기존 범위·값 메타자료와 함께 버전도 지문에 반영되므로 이전 규칙으로 만든 Anchor 체크포인트는 재사용되지 않고 재평가된다. 다른 입력 지문이 일치하는 Check의 재개 경로는 유지한다.
+- **회귀 검증:** `tests/test_step04_unavailable_majority_scope.py` 10건과 `tests/test_step07_direct_precipitation_scope_availability.py` 13건, 총 23건 통과. 프로젝트 Conda Python 3.13.13으로 `/home/ubuntu/miniconda3/envs/aifsheavyrain/bin/python -B -m unittest discover -s tests -v`, `compileall -q func/step04 func/step07 tests`, `git diff --check`를 실행했다. 빈 운영권역에서의 chunk 복구, 기존 국소 Check 복구, 유효 0 강수의 완전한 임계치 미달, 필수 scope 메타자료 누락, 평가 불가 상태의 결정론적 강제와 bounded retry 분류, Step08 상태 전달, Step09 선행환경 후보 경로를 확인했다.
+- **기존 운영 결과 확인:** 저장된 `2026110300` 산출물에서 Step01~10 완료, Step04 후보 3개·진단 요청 15개·provenance 사용 가능, Step07 17개 Check·3회 판독·`unanimous=11 / majority=5 / unresolved=1`, Step08 후보 3개·재사용 0·semantic retry 1, Step09 valid 3·blocked 0·표출 1, Step10 제품과 16개 자산 및 분석 이력 생성을 확인했다. 이 자료에는 Step04 복구 시도 횟수가 기록되지 않아 해당 운영 실행에서 chunk 복구가 실제 호출됐는지는 단정하지 않는다. 마지막 Step07 assessment guard는 이 산출물 이후 추가한 코드이며 해당 init을 재실행하지 않았다.
+- **남은 검증 범위:** Step04 `mandatory_direct_signal_audit`는 11개 중 5개만 후보 근거로 연결되고 6개가 미연결(`all_required_anchors_covered=false`)이다. 이 지표를 운영 임계치 실패 또는 강수 부재로 해석하지 않으며 후속 확인 대상으로 유지한다. CAND_003은 Step07 직접강수 Check가 `uncertain / indeterminate`, Step08/09 상태가 `insufficient_evidence`이다. 제품의 현재 대응 문장은 강수 존재를 확정하기 어렵다고 쓰지만, 종합 문장은 고정 후보영역 안에서 강수영역이 확인되지 않았다고 기술한다. 범위 차이일 수 있어 결함으로 확정하지 않고 화면 문구의 평가범위 명시를 후속 검토한다. 현재 저장된 `run_status`에는 Step07 체크포인트 재사용 수가 없어 해당 실행의 재사용 여부는 확인하지 않았다.
+- **최종물 확인 한계:** 로컬 `daou/2026110300` 제품 파일은 확인했다. 제공된 운영 URL은 이번 도구에서 열리지 않아 실제 브라우저 렌더링, 이미지·JavaScript 상호작용은 검증하지 않았다. 정상 실행은 기상학적 정확도 검증과 구분한다.
+- **Git:** 코드·회귀 테스트 [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3), [`4d797cc`](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81). 문서는 코드 변경과 분리한 같은 PR의 후속 커밋으로 관리한다.
 
 ---
 

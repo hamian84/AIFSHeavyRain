@@ -1,8 +1,9 @@
 # AIFSHeavyRain — AIFS 기반 위험강수 감시 우선순위 예보지원 시스템
 
-> 문서 기준일: **2026-10-30(KST)**
-> 코드 기준: [`main` / `82f42b1`](https://github.com/hamian84/AIFSHeavyRain/commit/82f42b193663bb65f8ccf4b9af276ca7524d05f0)
-> 문서 성격: 2026년 6~10월 개발·운영 이력의 **사후 복원본**. 일부 초기 사실은 대화 기록에 근거하며 Git 커밋으로 개별 확인되지 않는다.
+> 문서 기준일: **2026-11-04(KST; 2026-11-03 UTC)**
+> 기준 브랜치·커밋: [`main` / `d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f)
+> 이번 변경 코드: [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3), [`4d797cc`](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81) (검토 중인 작업 브랜치)
+> 문서 성격: 2026년 6~11월 개발·운영 이력의 **사후 복원본**. 일부 초기 사실은 대화 기록에 근거하며 Git 커밋으로 개별 확인되지 않는다.
 
 ## 1. 프로젝트 목적
 
@@ -35,6 +36,8 @@ scripts/run_pipeline.ksh
 
 자세한 실제 파일명·입출력·검증 경계는 [시스템 구조](docs/SYSTEM_ARCHITECTURE.md)를 참고한다.
 
+정식 실행은 `ksh scripts/run_pipeline.ksh YYYYMMDDHH`이며 `HH`는 `00` 또는 `12`여야 한다. 단계별 재개는 셸 스크립트의 `STEP01`~`STEP10` 스위치와 기존 체크포인트를 사용한다. `--start-step` 인자는 지원하지 않는다. 자세한 재개·게시·정리 주의사항은 [문서 관리 지침](docs/MAINTENANCE_PLAYBOOK.md)을 참고한다.
+
 ## 3. 운영 원칙과 제약
 
 - 강수 신호는 운영권역의 육상·해상을 포함하여 검증하며, **현재 적용되는 직접 강수 최소기준은 6시간 강수량 1.0 mm 이상**이다. 과거 단계의 실험 기준과 혼동하지 않는다.
@@ -43,10 +46,13 @@ scripts/run_pipeline.ksh
 - 모델·API 설정은 저장소에 포함하지 않는 `envi/api_keys.env`에서 관리하고, 런타임 경로는 `envi/pipeline.env`에 정의한다.
 - 테스트용 `zrun_pipeline.ksh`, `zzrun_pipeline.ksh`, 과거 재수행용 `his_run_pipeline.ksh`는 정식 운영 엔트리포인트가 아니다.
 - 기존 Step10 제품을 다시 만들 때에는 산출물 보존·이력 유지 및 `--overwrite` 조건을 확인한다.
+- 부분 재실행 시에는 필요한 단계만 `True`로 두고 입력 산출물이 있는지 확인한다. `WEB_PUBLISH`와 `CLEANUP`도 의도적으로 설정해 불필요한 게시나 정리를 피한다.
 
 ## 4. 현재 확인된 기준 상태
 
 2026-10-30 기준, 2026-10-27 12UTC~10-29 00UTC의 4개 초기시각에 대해 Step08~10 P1 재수행이 완료되었다. 합계 15개 후보 모두 Step09 유효·표출이며, 환경 지속성에 대한 제한 근거 누락 사례 3개가 개선되었다. 신규 초기시각 `2026102912`는 Step01~10 전체가 완료되었고 Step09 유효·표출 후보 3개가 확인되었다. 이는 **해당 입력에 대한 실행 검증**이지 모든 시각·모델·장애 조건에서 성공이 보장된다는 의미는 아니다.
+
+2026-11-03 UTC(`2026110300`) 저장 산출물은 Step01~10 완료, 후보 3개 중 Step09 유효 3개·차단 0개, Step10 표출 1개로 기록되었다. Step04 직접신호 감사는 11개 중 5개만 후보 근거와 연결되어 6개가 미연결 상태다. 이 감사 공백은 운영 임계치 충족 또는 기상학적 오류를 단독으로 판정하지 않으며, 실행 완료 역시 예측 정확도 검증을 의미하지 않는다. 본 PR의 마지막 Step07 assessment guard는 저장 산출물 생성 이후 추가했으며 운영 파이프라인은 재실행하지 않았다. 세부 결과와 남은 검토사항은 [운영 검증 이력](docs/VALIDATION_HISTORY.md)을 참고한다.
 
 - [운영 검증 이력](docs/VALIDATION_HISTORY.md)
 - [알려진 문제·후속 과제](docs/KNOWN_ISSUES.md)
@@ -56,7 +62,7 @@ scripts/run_pipeline.ksh
 | 문서 | 용도 |
 |---|---|
 | [CHANGELOG.md](CHANGELOG.md) | 공식 버전·코드 변경 요약 |
-| [개발 이력](docs/DEVELOPMENT_HISTORY.md) | 6~10월 날짜별 설계·오류·대응·검증의 복원 |
+| [개발 이력](docs/DEVELOPMENT_HISTORY.md) | 6~11월 날짜별 설계·오류·대응·검증의 복원 |
 | [운영 검증 이력](docs/VALIDATION_HISTORY.md) | 실행 결과, 초기시각, 재수행 전후 비교 |
 | [시스템 구조](docs/SYSTEM_ARCHITECTURE.md) | Step01~10, 입력·출력, 설정·운영 흐름 |
 | [알려진 문제](docs/KNOWN_ISSUES.md) | 미해결·추가 검증·계획을 우선순위별 관리 |

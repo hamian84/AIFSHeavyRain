@@ -1,8 +1,33 @@
 # 변경 이력 (CHANGELOG)
 
-문서 기준일: **2026-10-30(KST)**. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+문서 기준일: **2026-11-04(KST; 2026-11-03 UTC)**. 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
 
-## [Unreleased] — 후속 개선 제안, **적용 완료 아님**
+## [Unreleased] — Step04 정량 범위·Step07 직접강수 평가 상태
+
+### Fixed
+
+- `func/step04/pass1_engine.py`: 후보영역과 겹치는 Step05 실행 가능 운영권역이 없을 때 `majority + not_strengthen` 정량 명제를 명시적인 후보 단위 범위 오류로 판정한다. Check 하나를 반복 수정해도 해결되지 않는 오류는 기존 후보·가설 컨텍스트에서 현재 계획 chunk 전체를 제한된 횟수로 재생성한다. 후보영역·가설 의미·정량 조건을 바꾸어 오류를 우회하지 않는다.
+- [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3) — 위 Step04 수정, Step07 상태 구분 및 회귀 테스트.
+- [`4d797cc`](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81) — Step07 평가 불가 상태의 오판 방지, 누락된 운영권역 메타자료 처리 및 관련 회귀 테스트.
+
+### Changed
+
+- `func/step07/checks.py`: 직접강수 1.0 mm/6h 임계값은 유지하면서 운영권역 중첩·유효 강수값·범위 메타자료 상태를 구분한다. 핵심시각 평가가 불완전하면 Step07 검증기가 `insufficient_evidence / indeterminate`를 강제해 결측을 강수 부재로 판정하지 않는다. 누락된 Step05 scope 메타자료는 중단 오류 대신 평가 불가 상태로 전달한다. 이 계약 버전은 Anchor 체크 지문에 포함된다.
+- Step08은 직접강수 Anchor 평가가 불충분하면 `insufficient_evidence`로 유지하고, Step09는 이를 강수 미확인으로 바꾸지 않는다. 환경 선행신호 후보는 별도 환경 근거와 표출 게이트에 따라 평가한다.
+
+### Tests
+
+- `/home/ubuntu/miniconda3/envs/aifsheavyrain/bin/python -B -m unittest discover -s tests -v`: 23/23 회귀 테스트 통과(프로젝트 Conda Python 3.13.13).
+- `/home/ubuntu/miniconda3/envs/aifsheavyrain/bin/python -B -m compileall -q func/step04 func/step07 tests` 및 `git diff --check` 통과.
+
+### Notes
+
+- `2026110300`: Step01~10 완료, Step07 17개 Check(11 unanimous, 5 majority, 1 unresolved; 각 판독 3회), Step08 후보 3개, Step09 valid 3·blocked 0·surfaced 1, Step10 제품 생성. 이는 해당 실행 산출물의 확인이지 기상학적 예측성능 검증이 아니다.
+- 같은 실행의 Step04 직접신호 감사는 11개 중 5개만 후보 근거와 연결되어 6개가 미연결이다. CAND_003의 직접강수 상태·문장 범위는 검토 대상으로 남기며, 현재 증거만으로 결함이라고 확정하지 않는다.
+- 저장 산출물은 현재 수정 코드로 재생성하지 않았다. 특히 위의 결정론적 Step07 assessment guard는 운영 재실행으로 확인하지 않았으며, 회귀 테스트에서만 확인했다.
+- 운영 웹페이지는 이 작업에서 브라우저 렌더링까지 독립 확인하지 않았다. 상세 운영 수치와 제한은 [VALIDATION_HISTORY.md](docs/VALIDATION_HISTORY.md)를 참조한다.
+
+### 후속 개선 제안 — **적용 완료 아님**
 
 - Step04 후보별 후속 환경의 공간적 지속성을 확인할 분석계획·Check 보강.
 - Step08 동일 근거의 판단 재현성 검증과 내부 표출 검증 용어의 예보관용 문장 노출 억제.

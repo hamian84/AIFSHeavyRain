@@ -1,6 +1,6 @@
 # 알려진 문제 및 후속 개선 목록
 
-**갱신일:** 2026-10-30(KST)
+**갱신일:** 2026-11-04(KST; 2026-11-03 UTC)
 **해석:** 아래 항목은 모두 현재 장애를 뜻하지 않는다. `확인됨`/`추가 확인`/`제안`을 구분하고 실제 해결 전에 `해결됨`으로 바꾸지 않는다.
 
 ## 우선순위 요약
@@ -50,9 +50,9 @@
 
 ## ISSUE-05 — Step04 포괄성 감사 vs 운영 임계치 해석
 
-- **관찰:** `2026102912`의 `mandatory_direct_signal_audit`에서 required 10, covered 8, missing 2, `all_required_anchors_covered=false`. 미포괄된 forecast hour는 F024와 F090으로 이전 검토됨.
+- **관찰:** `2026102912`의 `mandatory_direct_signal_audit`에서 required 10, covered 8, missing 2, `all_required_anchors_covered=false`; 미포괄시각은 F024와 F090이었다. 새 실행 `2026110300`에서도 required 11, covered 5, missing 6, `all_required_anchors_covered=false`가 확인됐다.
 - **평가:** 이것만으로 운영 강수 탐색 실패라고 단정할 수 없음. 동일 시각의 운영권역 강수 최소기준 적용 여부는 별도 분석 필요.
-- **해결 방향:** 그룹 요약 전체 강수 현상 포괄률과 `1.0 mm/6h` 운영 직접강수 기준의 미포괄 여부를 별도 메트릭으로 구분.
+- **해결 방향:** 그룹 요약 전체 강수 현상 포괄률과 `1.0 mm/6h` 운영 직접강수 기준의 미포괄 여부를 별도 메트릭으로 구분. 직접신호 감사의 낮은 coverage를 임계치 미충족이나 무강수로 대체 해석하지 않는다.
 - **종료 조건:** 두 집계의 분모/기준/예외를 보여주는 테스트·문서 완료.
 
 ## ISSUE-06 — 후보명 및 공간적 정체성 재현성
@@ -105,5 +105,12 @@
 | P1 `post_peak` 근거 인식 누락 | **해결 확인 — 검증한 4개 초기시각 범위** | 3 Check 신규 인식, Git `2f5a1a1` |
 | P1 감시등급 설명의 기존 표현 충돌 | **검증 사례 해결** | Git `2f5a1a1`, 새 웹 본문에서 구 표현 미발견 |
 | 과거 `FORECASTER_PRODUCT_EXISTS` | 운영 `--overwrite` 사용 절차 확인 | 실패 원인 이해; 전 파일·전 init에 대한 무조건 덮어쓰기 허용 의미 아님 |
+| Step04 `CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE`의 Check 단위 반복복구 | **코드·회귀 검증 해결 확인** | [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3), 10개 Step04 회귀 테스트 |
+| Step07 직접강수 Anchor에서 평가불능을 임계치 미달과 혼동 | **코드·회귀 검증 해결 확인; 운영 재실행은 하지 않음** | [`4d797cc`](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81), 13개 상태 회귀 테스트; 입력 지문 계약 버전 및 Step08/09 상태 검사 |
+
+## 미확정 검토 메모 — 결함으로 확정하지 않음
+
+- `2026110300/CAND_003`: 보존된 Step07 결과에서 직접강수 Anchor `CHK_CAND003_07`은 `uncertain / indeterminate`, Step08·09의 직접강수 상태는 `insufficient_evidence`다. 생성된 제품의 `current_action`은 강수 존재를 확정하기 어렵다고 표현하고, `final_assessment`는 분석 후보영역 안에서 강수영역이 확인되지 않았다고 기술한다. 서로 다른 공간 범위를 설명했을 수 있으나 표시 문구에서 평가범위가 분명한지 확인할 필요가 있다. 현재 근거로는 코드 결함이라고 단정하지 않는다.
+- 운영 페이지의 브라우저 렌더링은 이번 작업에서 독립 확인하지 못했다. 위 메모는 로컬 `daio/2026110300` 및 `daou/2026110300` 결과 파일의 상태·문구 대조에 한정된다.
 
 새 문제를 추가할 때에는 문제의 발생일, 재현 init/Check, 증거 파일, 코드 커밋, 조치 담당과 완료조건을 반드시 기록한다.

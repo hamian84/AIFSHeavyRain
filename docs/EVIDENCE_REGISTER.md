@@ -1,6 +1,6 @@
 # 근거 등록부 및 복원 감사
 
-**작성 기준:** 2026-10-30(KST)
+**작성 기준:** 2026-11-04(KST; 2026-11-03 UTC)
 **목적:** 이 문서 묶음의 사실이 실제 커밋·수행파일·과거 대화·추정 중 어디에서 나왔는지 구분하여 재검증할 수 있도록 한다.
 
 ## 1. 증거 등급
@@ -23,8 +23,10 @@
 | G-002 | [`2f5a1a1` P1 수정](https://github.com/hamian84/AIFSHeavyRain/commit/2f5a1a166f4d46ab37c0db60e99628f6cd99eae5) | 4개 Python 파일, 총 +49/-7줄 수정 |
 | G-003 | [`4b66fc3` PR #1 병합](https://github.com/hamian84/AIFSHeavyRain/commit/4b66fc32dd012ec95e0ee73ff7136973f07c781d) | P1 코드 `main` 반영 |
 | G-004 | [`82f42b1` .gitignore](https://github.com/hamian84/AIFSHeavyRain/commit/82f42b193663bb65f8ccf4b9af276ca7524d05f0) | `/scripts/his_run_pipeline.ksh` 제외 |
+| G-005 | [`945320f` Step04/Step07 수정·회귀 테스트](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3) | `func/step04/pass1_engine.py`, `func/step07/checks.py`, 관련 테스트 2개; unittest 17건 통과 |
+| G-006 | [`4d797cc` Step07 평가 불가 상태 결정론 검증](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81) | 필수 scope 메타자료 누락 처리, 불완전 평가의 `insufficient_evidence / indeterminate` 강제, Anchor 지문 계약 버전 및 Step07 회귀 테스트 13건 |
 
-현재 코드 기준선: `main`/`82f42b1`. 실제 서버 `git status --short` 결과가 비어 있고 로컬·원격 HEAD가 `82f42b1`이라는 사용자 터미널 출력도 확인됨.
+기준 브랜치: `main`/`d37500b`. 이번 PR의 코드 커밋은 G-005·G-006이며, PR 병합 전까지 `main` 반영으로 취급하지 않는다. 운영 산출물 R-005는 G-006의 최종 validator를 사용해 재생성한 결과가 아니다.
 
 ## 3. 업로드 ZIP 증거 — 로컬/대화 자료, Git 업로드 금지
 
@@ -36,6 +38,20 @@
 | R-002 | `daio(20261029-120756).zip` | `2c592c36b0db9141847b1a4265971c03aacf339486b29469d7e2a4d41e5dc03f` | 4회 초기시각 수정 전 Step 결과 |
 | R-003 | `daio(20261029-160538).zip` | `65a1e5ff0c834594798cd1df087bf5696ace0edd2cf3e147b3d62af5e3cd7ef6` | 같은 4회 초기시각 Step08~10 수정 후 |
 | R-004 | `AIFSHeavyRain_daio(6).zip` | `e15b1cc227c98c1fb8a6c9971be66a5c597f06a405c3c4b6e6a1b123665e99ae` | 신규 `2026102912` 전체 실행 |
+
+### R-005 — 로컬 `2026110300` 실행자료 (원본 Git 제외)
+
+필요한 JSON만 읽어 SHA256을 기록했다. 실행 JSON·웹 제품 원본과 이미지 자산은 저장소에 추가하지 않았다.
+
+| 경로(저장소 밖 실행 산출물) | SHA256 |
+|---|---|
+| `daio/2026110300/run_status.json` | `e1659bb37d3c9397c18735a83a3632d72d5d428e562568e6edac5fe2b7031929` |
+| `daio/2026110300/step04/codex_cli/pass1_result.json` | `35db4e9eba7faa5aa432ba1e5664b61759a330eec48d82722f7887cb90ef42e4` |
+| `daio/2026110300/step04/codex_cli/step04_analysis_provenance.json` | `880fb2b792f7bee62527b54b92401db13a405c3854fcbfca2c6280b456c919c8` |
+| `daio/2026110300/step07/pass2_check_results.json` | `c76e60d4479e71b396f9f1aa7b5938feef15ab13e367c52dadff80cd3d9d96a4` |
+| `daio/2026110300/step08/pass2_result.json` | `d948d1b1eec495c01f4fd1734656e14d53e5bfa68a2f4cf98e8ee5e925b8a7b9` |
+| `daio/2026110300/step09/operational_result.json` | `91f06e612d9252a75abb5272c2e56565083c7de5b85f9faf4f14f35186a9219d` |
+| `daou/2026110300/forecaster_product.json` | `80971afb886396d2ad1795c4d5973b3b3004662b112408daefdd320ebee59a3b` |
 
 **중요 보안 주의:** `oper_AIFSHeavyRain.zip`에는 `envi/api_keys.env`와 과거 백업형 환경파일이 포함되어 있다. 이 파일들을 GitHub, Git Issue, PR, 공개 문서에 첨부하지 않는다. 실제 키/토큰 값은 이 문서에서 읽거나 전재하지 않았다. 과거 배포 여부와 노출 가능성은 별도 보안 점검 대상이다.
 
@@ -49,6 +65,9 @@
 | `run_status` partial_completed | R-003: `<init>/run_status.json` |
 | 신규 2026102912 Step01~10 completed | R-004: `2026102912/run_status.json` |
 | 신규 Step07 Check 25, Step08 3, Step09 3 | R-004: `step07/`, `step08/`, `step09/` JSON |
+| `2026110300` Step01~10 완료와 단계 요약 | R-005: `run_status.json` 및 Step04~10 결과 JSON |
+| `2026110300` Step04 direct-signal audit 11 required / 5 covered / 6 missing | R-005: `step04_analysis_provenance.json` |
+| `2026110300` CAND_003 direct precipitation `insufficient_evidence`, Step09 hidden | R-005: Step07/08/09 결과와 로컬 제품 JSON |
 
 ## 5. 실제 운영 사이트 — 조회 시점의 변동성 주의
 
@@ -57,8 +76,9 @@
 - [`2026102812`](https://aifsheavyrain.duckdns.org/2026102812/)
 - [`2026102900`](https://aifsheavyrain.duckdns.org/2026102900/)
 - [`2026102912`](https://aifsheavyrain.duckdns.org/2026102912/)
+- [`2026110300`](https://aifsheavyrain.duckdns.org/2026110300/)
 
-현재 `/latest/` 또는 동일 init의 페이지는 재발행할 수 있다. 최초 웹 조회 내용과 나중 결과가 달라질 수 있으므로 불변 검증에는 R-002~R-004와 `daou` 이력 스냅샷을 사용한다.
+`2026110300` 링크는 사용자가 제공한 운영 URL이다. 이번 검토에서 live 페이지를 도구로 불러오지 못했으므로 해당 URL의 현재 응답을 검증 근거로 쓰지 않고 R-005 로컬 제품 JSON을 사용했다. 현재 `/latest/` 또는 동일 init의 페이지는 재발행할 수 있다. 최초 웹 조회 내용과 나중 결과가 달라질 수 있으므로 불변 검증에는 R-002~R-005와 `daou` 이력 스냅샷을 사용한다.
 
 ## 6. 과거 대화 기록 기반 사건군 (C1)
 
@@ -70,6 +90,7 @@
 | 직접 강수 anchor·표출·Step07 3회 | 9/01~03, 9/14, 9/17, 9/21, 9/29 | 개선 제안과 재실행 확인 혼재: 본문에서 분리 |
 | 연속 검증 오류 및 대응 | 10/02, 10/05, 10/12~19, 10/21~22, 10/25 | 오류 발생은 확인되나 최종 패치 적용 증거가 불완전한 항목 존재 |
 | P1 원인·재검증·Git | 10/27~30 | Git/두 개 daio ZIP/웹페이지를 함께 확인 가능 |
+| Step04 후보 범위 복구·Step07 평가 가능성 상태 구분 | 11/03 UTC | G-005 코드·테스트 커밋, R-005 운영 JSON | 구현·회귀검증 및 저장 실행 결과 확인; 웹 브라우저 표시·기상학적 정확도는 미검증 |
 
 ## 7. 엄격 검토에서 배제한 주장
 
