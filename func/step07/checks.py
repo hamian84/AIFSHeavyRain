@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import re
 from datetime import datetime, timedelta, timezone
 from numbers import Real
@@ -66,6 +67,7 @@ ENSEMBLE_MEMBER_COUNT = 3
 MINORITY_REPORT_SCHEMA = "step07_minority_report.schema.json"
 MINORITY_REPORT_VERSION = "step07-llm-wiki-minority-report-v1"
 QUANTITATIVE_VALIDATION_CONTRACT_VERSION = "specific-v3+convergence-majority-v2"
+SYSTEM_DIRECT_PRECIPITATION_ASSESSMENT_CONTRACT_VERSION = "scope-availability-v1"
 # Step04 on deployed runs still writes v2. The v2 specific and majority
 # schemas have the fields understood by the Step07 deterministic validators.
 SUPPORTED_QUANTITATIVE_ENFORCEMENT_VERSIONS = frozenset({
@@ -1574,13 +1576,65 @@ def _system_direct_precipitation_anchor_context(
                     continue
                 scope_summary = image.get("operational_scope_field_value_summary")
                 region_summaries = image.get("operational_scope_region_summaries")
-                if not isinstance(scope_summary, dict) or not isinstance(region_summaries, list):
-                    raise Pass2PipelineError(
-                        "DIRECT_PRECIPITATION_SCOPE_METADATA_MISSING",
-                        f"{group.get('candidate_id')} F{hour:03d} SYSTEM anchor requires Step05 operational-scope metadata; rerun Step05.",
-                    )
+                scope_summary_available = isinstance(scope_summary, dict)
+                region_summaries_available = isinstance(region_summaries, list)
+                scope_summary = scope_summary if scope_summary_available else {}
+                region_summaries = region_summaries if region_summaries_available else []
+                scope_mask = image.get("operational_scope_mask")
+                selected_region_ids = (
+                    scope_mask.get("selected_region_ids")
+                    if isinstance(scope_mask, dict)
+                    else None
+                )
+                operational_grid_count = (
+                    scope_mask.get("operational_grid_count")
+                    if isinstance(scope_mask, dict)
+                    else None
+                )
+                scope_mask_metadata_known = bool(
+                    isinstance(operational_grid_count, int)
+                    and not isinstance(operational_grid_count, bool)
+                    and operational_grid_count >= 0
+                    and isinstance(selected_region_ids, list)
+                )
+                has_operational_scope = bool(
+                    scope_mask_metadata_known
+                    and operational_grid_count > 0
+                ) or bool(selected_region_ids) or bool(region_summaries)
+                finite_count = scope_summary.get("finite_count")
                 maximum = scope_summary.get("maximum")
-                maximum_value = float(maximum) if isinstance(maximum, (int, float)) and not isinstance(maximum, bool) else None
+                maximum_value = (
+                    float(maximum)
+                    if isinstance(maximum, Real)
+                    and not isinstance(maximum, bool)
+                    and math.isfinite(float(maximum))
+                    else None
+                )
+                has_valid_precipitation_values = (
+                    isinstance(finite_count, int)
+                    and not isinstance(finite_count, bool)
+                    and finite_count > 0
+                    and maximum_value is not None
+                )
+                if has_operational_scope and not region_summaries_available:
+                    evaluation_status = "unavailable_scope_metadata"
+                elif has_operational_scope and not scope_summary_available:
+                    evaluation_status = "unavailable_precipitation_values"
+                elif has_operational_scope and has_valid_precipitation_values:
+                    evaluation_status = "evaluated"
+                elif (
+                    not has_operational_scope
+                    and scope_mask_metadata_known
+                    and operational_grid_count == 0
+                    and not selected_region_ids
+                    and scope_summary_available
+                    and region_summaries_available
+                ):
+                    evaluation_status = "unavailable_no_operational_overlap"
+                elif has_operational_scope:
+                    evaluation_status = "unavailable_precipitation_values"
+                else:
+                    evaluation_status = "unavailable_scope_metadata"
                 normalized_regions: list[dict[str, Any]] = []
                 for region in region_summaries:
                     if not isinstance(region, dict):
@@ -1599,7 +1653,13 @@ def _system_direct_precipitation_anchor_context(
                         })
                 threshold_by_hour[hour] = {
                     "maximum_6h_mm": maximum_value,
-                    "meets_minimum": bool(maximum_value is not None and maximum_value >= DIRECT_PRECIPITATION_MINIMUM_MM_6H),
+                    "evaluation_status": evaluation_status,
+                    "evaluated": evaluation_status == "evaluated",
+                    "meets_minimum": bool(
+                        evaluation_status == "evaluated"
+                        and maximum_value is not None
+                        and maximum_value >= DIRECT_PRECIPITATION_MINIMUM_MM_6H
+                    ),
                     "threshold_met_regions": normalized_regions,
                 }
     selected_domain_is_candidate_area = bool(selected_domains) and all(
@@ -1607,6 +1667,22 @@ def _system_direct_precipitation_anchor_context(
         for value in selected_domains
     )
     threshold_hours = sorted(hour for hour, row in threshold_by_hour.items() if row["meets_minimum"])
+    evaluation_complete = bool(peak_hours) and all(
+        hour in threshold_by_hour and threshold_by_hour[hour]["evaluated"]
+        for hour in peak_hours
+    )
+    unavailable_hours = [
+        hour for hour in peak_hours
+        if hour not in threshold_by_hour or not threshold_by_hour[hour]["evaluated"]
+    ]
+    if threshold_hours:
+        evaluation_status = "threshold_met"
+    elif evaluation_complete:
+        evaluation_status = "not_met"
+    elif not any(row["evaluated"] for row in threshold_by_hour.values()):
+        evaluation_status = "unavailable"
+    else:
+        evaluation_status = "incomplete"
     return {
         "direct_precipitation_anchor": True,
         "candidate_area": candidate_area,
@@ -1616,9 +1692,14 @@ def _system_direct_precipitation_anchor_context(
         "selected_domain_is_candidate_area": selected_domain_is_candidate_area,
         "presence_scope_quantifier": "at_least_one",
         "minimum_6h_precipitation_mm": DIRECT_PRECIPITATION_MINIMUM_MM_6H,
+        "threshold_evaluation_status": evaluation_status,
+        "threshold_evaluation_complete": evaluation_complete,
+        "threshold_evaluation_unavailable_forecast_hours": unavailable_hours,
         "threshold_evaluation_by_forecast_hour": {
             f"F{hour:03d}": {
                 "maximum_6h_mm": threshold_by_hour[hour]["maximum_6h_mm"],
+                "evaluation_status": threshold_by_hour[hour]["evaluation_status"],
+                "evaluated": threshold_by_hour[hour]["evaluated"],
                 "meets_minimum": threshold_by_hour[hour]["meets_minimum"],
             }
             for hour in sorted(threshold_by_hour)
@@ -1630,6 +1711,28 @@ def _system_direct_precipitation_anchor_context(
         "threshold_met_forecast_hours": threshold_hours,
         "threshold_met": bool(threshold_hours),
     }
+
+
+def _validate_system_direct_precipitation_assessment(
+    check_id: str,
+    anchor_context: dict[str, Any] | None,
+    assessment: dict[str, Any],
+) -> None:
+    """Prevent an unavailable operational-scope check from asserting absence."""
+    if not isinstance(anchor_context, dict) or not anchor_context.get("direct_precipitation_anchor"):
+        return
+    if anchor_context.get("threshold_met") or anchor_context.get("threshold_evaluation_complete"):
+        return
+    if (
+        assessment.get("assessment") == "insufficient_evidence"
+        and assessment.get("scope_coverage") == "indeterminate"
+    ):
+        return
+    raise Pass2PipelineError(
+        "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID",
+        f"{check_id} has unavailable or incomplete operational-scope precipitation evaluation; "
+        "assessment must be insufficient_evidence with scope_coverage=indeterminate.",
+    )
 
 
 def _public_intent_context(specification: dict[str, Any]) -> dict[str, Any]:
@@ -1791,6 +1894,9 @@ def _check_fingerprint(
     )
     if anchor_context is not None:
         fingerprint_payload["system_direct_precipitation_anchor_context"] = anchor_context
+        fingerprint_payload["system_direct_precipitation_assessment_contract_version"] = (
+            SYSTEM_DIRECT_PRECIPITATION_ASSESSMENT_CONTRACT_VERSION
+        )
     return canonical_hash(fingerprint_payload)
 
 
@@ -3876,7 +3982,11 @@ def _bundle_messages(
             "SYSTEM 직접강수 존재 Anchor는 이동, 지속성, 조직화, 최대강도 시각, 시각 간 강도 비교를 판정하지 않는다. "
             f"모델 강수 예측의 운영상 최소기준은 6시간 강수량 {threshold} mm이다. system_direct_precipitation_anchor_context의 "
             "threshold_evaluation_scope는 후보영역과 겹치는 운영 예보권역(육상·해상)으로 제한된다. "
-            "threshold_met=false이면 이미지에 극미량 강수값이 있거나 후보영역의 운영 예보권역 밖에 강수가 있더라도 assessment=not_observed, scope_coverage=complete_expected_scope로 판정한다. "
+            "threshold_met=false이고 threshold_evaluation_complete=true이면, 이미지에 극미량 강수값이 있거나 후보영역의 운영 예보권역 밖에 강수가 있더라도 "
+            "평가 가능한 모든 핵심시각의 운영권역 자료에서 기준을 만족하지 않은 것이므로 assessment=not_observed, scope_coverage=complete_expected_scope로 판정한다. "
+            "threshold_met=false이고 threshold_evaluation_complete=false이면 운영권역 중첩 또는 해당 영역의 유효 강수값이 없어 기준을 완전히 평가하지 못한 것입니다. "
+            "이를 강수 미발생으로 해석하지 말고 assessment=insufficient_evidence, scope_coverage=indeterminate로 판정하며, "
+            "threshold_evaluation_unavailable_forecast_hours와 해당 시각의 evaluation_status에 따라 운영권역 부재·유효 강수값 부재·범위 메타자료 부재를 uncertainty에 구분해 기록하십시오. "
             "threshold_met=true이면 threshold_met_forecast_hours에 포함된 핵심시각의 상세 6시간 강수 이미지에서 운영 예보권역에 "
             f"{threshold} mm 이상을 나타내는 유색 강수영역이 식별 가능한 공간범위로 확인될 때 assessment=observed, "
             "scope_coverage=complete_expected_scope로 판정한다. 임계값 이상 값이 한 격자 또는 영상 잡음처럼 고립되어 식별 가능한 강수영역으로 "
@@ -5282,6 +5392,12 @@ def _bundle_result_values(
     for group_value, check, entries, fingerprint in rows:
         ai = assessments[str(check["check_id"])]
         specification = specifications_by_candidate[str(group_value["candidate_id"])][str(check["check_id"])]
+        anchor_context = _system_direct_precipitation_anchor_context(
+            group_value, check, specification, entries
+        )
+        _validate_system_direct_precipitation_assessment(
+            str(check["check_id"]), anchor_context, ai
+        )
         _validate_image_diagnostic_narrative_identity(entries, ai)
         _validate_moisture_transport_direction_reasoning(entries, ai)
         # Validate the model-authored spatial claim before appending any
@@ -5527,6 +5643,7 @@ def _is_grounding_validation_error(
     if error.code == "EVIDENCE_REF_INVALID":
         return True
     if error.code in {
+        "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID",
         "QUANTITATIVE_FORECAST_HOUR_OUT_OF_SCOPE",
         "QUANTITATIVE_RELATION_INVALID",
         "QUANTITATIVE_RELATION_MISMATCH",
@@ -5730,7 +5847,13 @@ def _grounding_retry_context(
         "Within each check, return each exact (request_id, feature_id, forecast_hour, region_id, statistic) quantitative selector at most once.",
         "If verified_quantitative_relation_corrections is present, correct only the contradicted quantitative relation and any directly dependent wording; do not change unrelated image interpretation, identifiers, or evidence links.",
     ]
-    if error.code == "QUANTITATIVE_CLAIM_INVALID":
+    if error.code == "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID":
+        corrective_instructions.extend([
+            "The SYSTEM direct-precipitation threshold could not be evaluated completely because the required operational-scope overlap, scope metadata, or valid precipitation values are unavailable.",
+            "For this Check return exactly assessment=insufficient_evidence and scope_coverage=indeterminate. Do not report not_observed or opposite_observed, and do not treat unavailable scope/data as evidence that rain is absent.",
+            "Describe the specific unavailable forecast hours and reason from system_direct_precipitation_anchor_context; preserve unrelated findings and evidence links.",
+        ])
+    elif error.code == "QUANTITATIVE_CLAIM_INVALID":
         corrective_instructions.extend([
             "For quantitative_claims and every quantitative_relations[].selectors item, copy an exact five-field selector tuple from allowed_quantitative_selector_namespace.",
             "Check duplicate_quantitative_relation_diagnostics. Within EACH quantitative_relations[].selectors list, never repeat the exact same five-field selector. For a temporal comparison, select the two distinct forecast hours required by the original Step04 expected_signal from one comparable region/feature/statistic; never use F048 versus F048 to represent F018 versus F048.",

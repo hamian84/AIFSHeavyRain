@@ -1,6 +1,6 @@
 # 실행·검증 이력
 
-**기준일:** 2026-10-30(KST). 초기시각(init)은 UTC `YYYYMMDDHH`를 사용하며 웹 표출 시간은 KST다. 이 문서는 실행 스냅샷과 검증 계약의 일치 여부를 기록한다. 관측 대비 예측 정확도 검증은 이 자료에 포함되지 않는다.
+**기준일:** 2026-11-04(KST; 2026-11-03 UTC). 초기시각(init)은 UTC `YYYYMMDDHH`를 사용하며 웹 표출 시간은 KST다. 이 문서는 실행 스냅샷과 검증 계약의 일치 여부를 기록한다. 관측 대비 예측 정확도 검증은 이 자료에 포함되지 않는다.
 
 ## 1. 검증 범위·원천
 
@@ -89,10 +89,43 @@
 - `2026102912`의 남해동부 강수는 경남·전남 육상 격자에도 큰 강수가 포함되어 있으나, 첫 화면 이름이 해상 중심임. 육상 영향 관련 메모는 `KNOWN_ISSUES.md`에 기록.
 - 같은 유효시각을 비교한 다른 init 예측은 일치도/변화를 볼 수 있으나 동일 강수계 이동·발달의 확정 근거는 아니다.
 
-## 4. 운영 완료의 의미와 미검증 범위
+## 4. 2026102912 운영 완료의 의미와 미검증 범위
 
 **확인된 범위:** 5개 초기시각의 실행 상태·JSON 계약, P1 4회 재실행의 후보별 판단 및 웹 텍스트 일부.
 
 **확인되지 않은 범위:** 관측 대비 적중·오경보·POD/FAR/CSI, 모든 예측기간/계절/강수사례의 재현성, 모든 이미지의 HTTP 200과 실제 브라우저 렌더링, JS 상호작용 전수 테스트, API 장애/중단/재시작 주입 시험, 보안 침투 테스트.
 
 운영사례에서 정상 완료한 사실과 연구 검증에서 예측 성능을 입증했다는 주장은 구분한다.
+
+## 5. 2026110300 Step04 및 Step07~10 재실행
+
+기존 로컬 실행 결과만 읽어 확인했으며 파이프라인을 다시 실행하거나 운영 산출물을 수정하지 않았다. 아래 운영 결과는 마지막 Step07 assessment guard를 추가하기 전 저장된 자료다. 주요 파일의 SHA256은 [근거 등록부 R-005](EVIDENCE_REGISTER.md)를 참조한다.
+
+### 단계별 실행 결과
+
+| 단계 | 저장 결과 | 해석·제한 |
+|---|---|---|
+| Step01~03 | 완료 | 입력·개요·Step04 요청 패키지가 저장됨 |
+| Step04 | 완료; 후보 3, 진단 요청 15, provenance 사용 가능 | `mandatory_direct_signal_audit`: required 11, covered 5, missing 6, `all_required_anchors_covered=false`. 후보 근거 포괄률 미완료를 운영 1.0 mm/6h 임계치 실패와 동일시하지 않음 |
+| Step05~06 | 진단 요청 15 성공; Step06 후보 3, Check 17 | 진단 영상·수치 산출과 패키지 입력이 존재함 |
+| Step07 | Check 17; Check별 독립 판독 3회; unanimous 11, majority 5, unresolved 1 | minority report `member_count=3`, `entries=7`; grounding retry 2, language retry 0, quantitative relation selector 자동수정·자동교정·실패 각각 0 |
+| Step08 | 후보 3; 재사용 0; semantic retry 1 | Step07 직접강수 Anchor 상태를 후보별 종합에 전달함 |
+| Step09 | valid 3, blocked 0, surfaced 1 | 계약 검증 통과가 표출을 보장하지 않으며 후보 2개는 hidden |
+| Step10 | 제품 `published`; 후보 3 중 1개 표출; 자산 16; 분석 이력 생성 | 로컬 `daou/2026110300`의 `index.html`과 `forecaster_product.json` 존재를 확인함 |
+
+### Step08~09 후보별 전달
+
+| 후보 | 직접강수 | 환경 지지 | 지속성 | 물리 일관성 | Step09 |
+|---|---|---|---|---|---|
+| CAND_001 | `confirmed` | `confirmed` | `insufficient_evidence` | `conditionally_coherent` | `priority`, 표출 |
+| CAND_002 | `confirmed` | `not_confirmed` | `not_applicable` | `conditionally_coherent` | `hidden` |
+| CAND_003 | `insufficient_evidence` | `partial` | `limited` | `incoherent` | `hidden` |
+
+CAND_003의 `CHK_CAND003_07`은 `uncertain / indeterminate`이며, uncertainty는 후보영역과 겹치는 운영권역 강수 기준의 완전 평가가 불가능했다고 설명한다. 제품 `current_action`도 강수 존재를 확정하기 어렵다고 기술한다. 한편 `final_assessment`에는 고정 분석영역 안에서 강수영역이 확인되지 않았다는 문장이 있다. 공간 범위가 서로 다를 수 있으므로 오류로 확정하지 않고, 예보관 화면에서 기준 평가범위와 후보영역 설명이 구별되는지 추가 확인 대상으로 기록한다.
+
+### 재현·검증 범위
+
+- 회귀 테스트 `tests/test_step04_unavailable_majority_scope.py` 10건과 `tests/test_step07_direct_precipitation_scope_availability.py` 13건, 총 23건 통과. 프로젝트 Conda Python 3.13.13으로 전체 `unittest` discovery 실행.
+- `compileall -q func/step04 func/step07 tests`와 `git diff --check` 통과.
+- 실제 `2026110300`의 JSON 결과와 로컬 웹 제품을 대조했다. 운영 URL은 도구에서 불러오지 못했고 별도 브라우저 자동화도 수행하지 않아 웹 렌더링·이미지 HTTP 응답·JavaScript 상호작용은 확인하지 않았다.
+- 실행 완료와 계약 검증은 해당 실행의 산출 상태만 보증한다. 마지막 Step07 assessment guard의 운영 적용 여부는 확인하지 않았다. Step04 미연결 anchor 6건, CAND_003 표현 범위, 관측 대비 적중률·오경보율 및 전체 기상학적 타당성은 별도 검증 대상이다.
