@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import copy
 import json
+import math
 import re
 from datetime import datetime, timedelta, timezone
 from numbers import Real
@@ -1579,8 +1580,55 @@ def _system_direct_precipitation_anchor_context(
                         "DIRECT_PRECIPITATION_SCOPE_METADATA_MISSING",
                         f"{group.get('candidate_id')} F{hour:03d} SYSTEM anchor requires Step05 operational-scope metadata; rerun Step05.",
                     )
+                scope_mask = image.get("operational_scope_mask")
+                selected_region_ids = (
+                    scope_mask.get("selected_region_ids")
+                    if isinstance(scope_mask, dict)
+                    else None
+                )
+                operational_grid_count = (
+                    scope_mask.get("operational_grid_count")
+                    if isinstance(scope_mask, dict)
+                    else None
+                )
+                scope_mask_metadata_known = bool(
+                    isinstance(operational_grid_count, int)
+                    and not isinstance(operational_grid_count, bool)
+                    and operational_grid_count >= 0
+                    and isinstance(selected_region_ids, list)
+                )
+                has_operational_scope = bool(
+                    scope_mask_metadata_known
+                    and operational_grid_count > 0
+                ) or bool(selected_region_ids) or bool(region_summaries)
+                finite_count = scope_summary.get("finite_count")
                 maximum = scope_summary.get("maximum")
-                maximum_value = float(maximum) if isinstance(maximum, (int, float)) and not isinstance(maximum, bool) else None
+                maximum_value = (
+                    float(maximum)
+                    if isinstance(maximum, Real)
+                    and not isinstance(maximum, bool)
+                    and math.isfinite(float(maximum))
+                    else None
+                )
+                has_valid_precipitation_values = (
+                    isinstance(finite_count, int)
+                    and not isinstance(finite_count, bool)
+                    and finite_count > 0
+                    and maximum_value is not None
+                )
+                if has_operational_scope and has_valid_precipitation_values:
+                    evaluation_status = "evaluated"
+                elif (
+                    not has_operational_scope
+                    and scope_mask_metadata_known
+                    and operational_grid_count == 0
+                    and not selected_region_ids
+                ):
+                    evaluation_status = "unavailable_no_operational_overlap"
+                elif has_operational_scope:
+                    evaluation_status = "unavailable_precipitation_values"
+                else:
+                    evaluation_status = "unavailable_scope_metadata"
                 normalized_regions: list[dict[str, Any]] = []
                 for region in region_summaries:
                     if not isinstance(region, dict):
@@ -1599,7 +1647,13 @@ def _system_direct_precipitation_anchor_context(
                         })
                 threshold_by_hour[hour] = {
                     "maximum_6h_mm": maximum_value,
-                    "meets_minimum": bool(maximum_value is not None and maximum_value >= DIRECT_PRECIPITATION_MINIMUM_MM_6H),
+                    "evaluation_status": evaluation_status,
+                    "evaluated": evaluation_status == "evaluated",
+                    "meets_minimum": bool(
+                        evaluation_status == "evaluated"
+                        and maximum_value is not None
+                        and maximum_value >= DIRECT_PRECIPITATION_MINIMUM_MM_6H
+                    ),
                     "threshold_met_regions": normalized_regions,
                 }
     selected_domain_is_candidate_area = bool(selected_domains) and all(
@@ -1607,6 +1661,22 @@ def _system_direct_precipitation_anchor_context(
         for value in selected_domains
     )
     threshold_hours = sorted(hour for hour, row in threshold_by_hour.items() if row["meets_minimum"])
+    evaluation_complete = bool(peak_hours) and all(
+        hour in threshold_by_hour and threshold_by_hour[hour]["evaluated"]
+        for hour in peak_hours
+    )
+    unavailable_hours = [
+        hour for hour in peak_hours
+        if hour not in threshold_by_hour or not threshold_by_hour[hour]["evaluated"]
+    ]
+    if threshold_hours:
+        evaluation_status = "threshold_met"
+    elif evaluation_complete:
+        evaluation_status = "not_met"
+    elif not any(row["evaluated"] for row in threshold_by_hour.values()):
+        evaluation_status = "unavailable"
+    else:
+        evaluation_status = "incomplete"
     return {
         "direct_precipitation_anchor": True,
         "candidate_area": candidate_area,
@@ -1616,9 +1686,14 @@ def _system_direct_precipitation_anchor_context(
         "selected_domain_is_candidate_area": selected_domain_is_candidate_area,
         "presence_scope_quantifier": "at_least_one",
         "minimum_6h_precipitation_mm": DIRECT_PRECIPITATION_MINIMUM_MM_6H,
+        "threshold_evaluation_status": evaluation_status,
+        "threshold_evaluation_complete": evaluation_complete,
+        "threshold_evaluation_unavailable_forecast_hours": unavailable_hours,
         "threshold_evaluation_by_forecast_hour": {
             f"F{hour:03d}": {
                 "maximum_6h_mm": threshold_by_hour[hour]["maximum_6h_mm"],
+                "evaluation_status": threshold_by_hour[hour]["evaluation_status"],
+                "evaluated": threshold_by_hour[hour]["evaluated"],
                 "meets_minimum": threshold_by_hour[hour]["meets_minimum"],
             }
             for hour in sorted(threshold_by_hour)
@@ -3876,7 +3951,11 @@ def _bundle_messages(
             "SYSTEM 직접강수 존재 Anchor는 이동, 지속성, 조직화, 최대강도 시각, 시각 간 강도 비교를 판정하지 않는다. "
             f"모델 강수 예측의 운영상 최소기준은 6시간 강수량 {threshold} mm이다. system_direct_precipitation_anchor_context의 "
             "threshold_evaluation_scope는 후보영역과 겹치는 운영 예보권역(육상·해상)으로 제한된다. "
-            "threshold_met=false이면 이미지에 극미량 강수값이 있거나 후보영역의 운영 예보권역 밖에 강수가 있더라도 assessment=not_observed, scope_coverage=complete_expected_scope로 판정한다. "
+            "threshold_met=false이고 threshold_evaluation_complete=true이면, 이미지에 극미량 강수값이 있거나 후보영역의 운영 예보권역 밖에 강수가 있더라도 "
+            "평가 가능한 모든 핵심시각의 운영권역 자료에서 기준을 만족하지 않은 것이므로 assessment=not_observed, scope_coverage=complete_expected_scope로 판정한다. "
+            "threshold_met=false이고 threshold_evaluation_complete=false이면 운영권역 중첩 또는 해당 영역의 유효 강수값이 없어 기준을 완전히 평가하지 못한 것입니다. "
+            "이를 강수 미발생으로 해석하지 말고 assessment=insufficient_evidence, scope_coverage=indeterminate로 판정하며, "
+            "threshold_evaluation_unavailable_forecast_hours와 해당 시각의 evaluation_status에 따라 운영권역 부재·유효 강수값 부재·범위 메타자료 부재를 uncertainty에 구분해 기록하십시오. "
             "threshold_met=true이면 threshold_met_forecast_hours에 포함된 핵심시각의 상세 6시간 강수 이미지에서 운영 예보권역에 "
             f"{threshold} mm 이상을 나타내는 유색 강수영역이 식별 가능한 공간범위로 확인될 때 assessment=observed, "
             "scope_coverage=complete_expected_scope로 판정한다. 임계값 이상 값이 한 격자 또는 영상 잡음처럼 고립되어 식별 가능한 강수영역으로 "

@@ -2601,6 +2601,16 @@ def _repair_rules_for_validation_errors(validation_errors: list[str]) -> list[st
             ]
         )
 
+    if "CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE" in joined:
+        rules.extend(
+            [
+                "CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE은 immutable candidate_area와 겹치는 실행 가능한 operational_land/marine_macro 권역이 없어 Step05/Step07의 운영권역 정량 판정을 구성할 수 없다는 뜻입니다.",
+                "candidate_area를 확대·이동하거나 source_corridor/marine_detail을 정량 운영권역으로 사용하지 마십시오. majority + not_strengthen 명제를 정성 판독으로 바꾸거나 expected_state/scope_quantifier를 바꾸어 같은 결론인 것처럼 처리하지 마십시오.",
+                "Check 하나의 수정으로 해결할 수 없는 후보 범위 제약이므로 원래 후보·가설 컨텍스트에서 현재 chunk 전체를 다시 생성하십시오. 원래 후보 가설의 기상학적 목적은 유지하고, 실제 입력에 있는 공간장·시간·분석 모드로 실행 가능한 검증요청을 구성하십시오.",
+                "원래 가설 자체가 운영권역 다수결 판정을 요구한다면 그 명제를 검증 완료로 가장하지 마십시오. 다른 공간장 검증으로 확인할 수 있는 가설과 구분하여 미검증 범위를 명시하십시오.",
+            ]
+        )
+
     if "EXPECTED_SIGNAL_PROCEDURAL_TEXT_INVALID" in joined:
         rules.extend(
             [
@@ -3040,6 +3050,14 @@ def _compact_check_keys_from_validation_errors(
     return keys
 
 
+def _compact_candidate_chunk_repair_required(validation_errors: list[str]) -> bool:
+    """Identify contracts that cannot be executed within any single Check."""
+    return any(
+        "CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE" in str(error)
+        for error in validation_errors
+    )
+
+
 def _compact_check_scope_constraints_from_validation_errors(
     validation_errors: list[str],
 ) -> dict[str, str]:
@@ -3453,6 +3471,7 @@ def call_and_validate_json(
         quantitative_request_split_required = any(
             "QUANTITATIVE_ATOMICITY_INVALID" in str(error) for error in errors
         )
+        candidate_chunk_repair_required = _compact_candidate_chunk_repair_required(errors)
         spatial_context_creation_required = (
             "SPATIAL_ANALYSIS_GRID_INSUFFICIENT" in joined_errors
             and "Provide a genuine context_domain" in joined_errors
@@ -3462,6 +3481,7 @@ def call_and_validate_json(
             if semantic_unit_repair == "diagnostic_check"
             and not spatial_context_creation_required
             and not quantitative_request_split_required
+            and not candidate_chunk_repair_required
             else []
         )
         if atomic_check_targets:
@@ -15204,6 +15224,14 @@ def _validate_compact_quantitative_atomic_claims(
                     "repair=regenerate a coherent verification request; do not negate the original hypothesis "
                     "just to satisfy the available quantitative executor"
                 )
+        if quantifier == "majority" and state == "not_strengthen" and not selectable_operational_regions:
+            raise ValueError(
+                "CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE "
+                f"check_key={check.get('check_key')} claim_key={claim.get('claim_key')} "
+                "majority not_strengthen cannot be evaluated because the immutable candidate_area "
+                "overlaps no Step05-eligible operational_land or marine_macro region; "
+                "repair_unit=candidate_plan_chunk"
+            )
         if enforced_single and quantifier == "majority" and state == "not_strengthen" and not isinstance(claim.get("quantitative_scope"), dict):
             raise ValueError(
                 "QUANTITATIVE_SCOPE_CONTRACT_INVALID "
