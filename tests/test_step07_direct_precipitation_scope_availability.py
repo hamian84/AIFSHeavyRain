@@ -1,7 +1,12 @@
 import unittest
 
 from func.shared.signal_validation import derive_candidate_type, derive_display_tier
-from func.step07.checks import _system_direct_precipitation_anchor_context
+from func.step07.checks import (
+    Pass2PipelineError,
+    _is_grounding_validation_error,
+    _system_direct_precipitation_anchor_context,
+    _validate_system_direct_precipitation_assessment,
+)
 from func.step08.synthesis import _direct_precipitation_status_contract
 
 
@@ -131,6 +136,123 @@ class DirectPrecipitationScopeAvailabilityTests(unittest.TestCase):
         self.assertEqual(
             context["threshold_evaluation_by_forecast_hour"]["F090"]["evaluation_status"],
             "unavailable_scope_metadata",
+        )
+
+    def test_missing_field_summary_is_unavailable_without_aborting(self):
+        context = _context_for_image({
+            "operational_scope_mask": {
+                "selected_region_ids": ["LAND_TEST"],
+                "operational_grid_count": 4,
+                "status": "applied",
+            },
+            "operational_scope_region_summaries": [],
+        })
+
+        self.assertEqual(
+            context["threshold_evaluation_by_forecast_hour"]["F090"]["evaluation_status"],
+            "unavailable_precipitation_values",
+        )
+
+    def test_missing_region_summaries_are_unavailable_without_aborting(self):
+        context = _context_for_image({
+            "operational_scope_mask": {
+                "selected_region_ids": ["LAND_TEST"],
+                "operational_grid_count": 4,
+                "status": "applied",
+            },
+            "operational_scope_field_value_summary": {
+                "finite_count": 4,
+                "maximum": 1.2,
+            },
+        })
+
+        self.assertFalse(context["threshold_met"])
+        self.assertFalse(context["threshold_evaluation_complete"])
+        self.assertEqual(
+            context["threshold_evaluation_by_forecast_hour"]["F090"]["evaluation_status"],
+            "unavailable_scope_metadata",
+        )
+
+    def test_unavailable_scope_rejects_absence_or_opposition_assessments(self):
+        context = _context_for_image({
+            "operational_scope_mask": {
+                "selected_region_ids": [],
+                "operational_grid_count": 0,
+                "status": "empty_operational_overlap",
+            },
+            "operational_scope_field_value_summary": {
+                "finite_count": 0,
+                "maximum": None,
+            },
+            "operational_scope_region_summaries": [],
+        })
+
+        for assessment, coverage in (
+            ("not_observed", "complete_expected_scope"),
+            ("opposite_observed", "opposite_expected_scope"),
+            ("uncertain", "indeterminate"),
+        ):
+            with self.subTest(assessment=assessment), self.assertRaises(Pass2PipelineError) as caught:
+                _validate_system_direct_precipitation_assessment(
+                    "CHK_CAND003_07",
+                    context,
+                    {"assessment": assessment, "scope_coverage": coverage},
+                )
+            self.assertEqual(
+                caught.exception.code,
+                "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID",
+            )
+
+    def test_unavailable_scope_accepts_indeterminate_insufficient_evidence(self):
+        context = _context_for_image({
+            "operational_scope_mask": {
+                "selected_region_ids": [],
+                "operational_grid_count": 0,
+                "status": "empty_operational_overlap",
+            },
+            "operational_scope_field_value_summary": {
+                "finite_count": 0,
+                "maximum": None,
+            },
+            "operational_scope_region_summaries": [],
+        })
+
+        _validate_system_direct_precipitation_assessment(
+            "CHK_CAND003_07",
+            context,
+            {"assessment": "insufficient_evidence", "scope_coverage": "indeterminate"},
+        )
+
+    def test_unavailable_scope_contract_error_uses_bounded_grounding_retry(self):
+        error = Pass2PipelineError(
+            "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID",
+            "operational-scope evaluation unavailable",
+        )
+
+        self.assertTrue(_is_grounding_validation_error(error, response={}, rows=[]))
+
+    def test_complete_threshold_miss_still_allows_not_observed(self):
+        context = _context_for_image({
+            "operational_scope_mask": {
+                "selected_region_ids": ["LAND_TEST"],
+                "operational_grid_count": 4,
+                "status": "applied",
+            },
+            "operational_scope_field_value_summary": {
+                "finite_count": 4,
+                "maximum": 0.0,
+            },
+            "operational_scope_region_summaries": [{
+                "region_id": "LAND_TEST",
+                "region_name": "검증 육상권역",
+                "maximum_6h_mm": 0.0,
+            }],
+        })
+
+        _validate_system_direct_precipitation_assessment(
+            "CHK_CAND003_07",
+            context,
+            {"assessment": "not_observed", "scope_coverage": "complete_expected_scope"},
         )
 
     def test_existing_one_mm_presence_rule_remains_evaluable(self):

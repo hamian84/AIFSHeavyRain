@@ -67,6 +67,7 @@ ENSEMBLE_MEMBER_COUNT = 3
 MINORITY_REPORT_SCHEMA = "step07_minority_report.schema.json"
 MINORITY_REPORT_VERSION = "step07-llm-wiki-minority-report-v1"
 QUANTITATIVE_VALIDATION_CONTRACT_VERSION = "specific-v3+convergence-majority-v2"
+SYSTEM_DIRECT_PRECIPITATION_ASSESSMENT_CONTRACT_VERSION = "scope-availability-v1"
 # Step04 on deployed runs still writes v2. The v2 specific and majority
 # schemas have the fields understood by the Step07 deterministic validators.
 SUPPORTED_QUANTITATIVE_ENFORCEMENT_VERSIONS = frozenset({
@@ -1575,11 +1576,10 @@ def _system_direct_precipitation_anchor_context(
                     continue
                 scope_summary = image.get("operational_scope_field_value_summary")
                 region_summaries = image.get("operational_scope_region_summaries")
-                if not isinstance(scope_summary, dict) or not isinstance(region_summaries, list):
-                    raise Pass2PipelineError(
-                        "DIRECT_PRECIPITATION_SCOPE_METADATA_MISSING",
-                        f"{group.get('candidate_id')} F{hour:03d} SYSTEM anchor requires Step05 operational-scope metadata; rerun Step05.",
-                    )
+                scope_summary_available = isinstance(scope_summary, dict)
+                region_summaries_available = isinstance(region_summaries, list)
+                scope_summary = scope_summary if scope_summary_available else {}
+                region_summaries = region_summaries if region_summaries_available else []
                 scope_mask = image.get("operational_scope_mask")
                 selected_region_ids = (
                     scope_mask.get("selected_region_ids")
@@ -1616,13 +1616,19 @@ def _system_direct_precipitation_anchor_context(
                     and finite_count > 0
                     and maximum_value is not None
                 )
-                if has_operational_scope and has_valid_precipitation_values:
+                if has_operational_scope and not region_summaries_available:
+                    evaluation_status = "unavailable_scope_metadata"
+                elif has_operational_scope and not scope_summary_available:
+                    evaluation_status = "unavailable_precipitation_values"
+                elif has_operational_scope and has_valid_precipitation_values:
                     evaluation_status = "evaluated"
                 elif (
                     not has_operational_scope
                     and scope_mask_metadata_known
                     and operational_grid_count == 0
                     and not selected_region_ids
+                    and scope_summary_available
+                    and region_summaries_available
                 ):
                     evaluation_status = "unavailable_no_operational_overlap"
                 elif has_operational_scope:
@@ -1705,6 +1711,28 @@ def _system_direct_precipitation_anchor_context(
         "threshold_met_forecast_hours": threshold_hours,
         "threshold_met": bool(threshold_hours),
     }
+
+
+def _validate_system_direct_precipitation_assessment(
+    check_id: str,
+    anchor_context: dict[str, Any] | None,
+    assessment: dict[str, Any],
+) -> None:
+    """Prevent an unavailable operational-scope check from asserting absence."""
+    if not isinstance(anchor_context, dict) or not anchor_context.get("direct_precipitation_anchor"):
+        return
+    if anchor_context.get("threshold_met") or anchor_context.get("threshold_evaluation_complete"):
+        return
+    if (
+        assessment.get("assessment") == "insufficient_evidence"
+        and assessment.get("scope_coverage") == "indeterminate"
+    ):
+        return
+    raise Pass2PipelineError(
+        "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID",
+        f"{check_id} has unavailable or incomplete operational-scope precipitation evaluation; "
+        "assessment must be insufficient_evidence with scope_coverage=indeterminate.",
+    )
 
 
 def _public_intent_context(specification: dict[str, Any]) -> dict[str, Any]:
@@ -1866,6 +1894,9 @@ def _check_fingerprint(
     )
     if anchor_context is not None:
         fingerprint_payload["system_direct_precipitation_anchor_context"] = anchor_context
+        fingerprint_payload["system_direct_precipitation_assessment_contract_version"] = (
+            SYSTEM_DIRECT_PRECIPITATION_ASSESSMENT_CONTRACT_VERSION
+        )
     return canonical_hash(fingerprint_payload)
 
 
@@ -5361,6 +5392,12 @@ def _bundle_result_values(
     for group_value, check, entries, fingerprint in rows:
         ai = assessments[str(check["check_id"])]
         specification = specifications_by_candidate[str(group_value["candidate_id"])][str(check["check_id"])]
+        anchor_context = _system_direct_precipitation_anchor_context(
+            group_value, check, specification, entries
+        )
+        _validate_system_direct_precipitation_assessment(
+            str(check["check_id"]), anchor_context, ai
+        )
         _validate_image_diagnostic_narrative_identity(entries, ai)
         _validate_moisture_transport_direction_reasoning(entries, ai)
         # Validate the model-authored spatial claim before appending any
@@ -5606,6 +5643,7 @@ def _is_grounding_validation_error(
     if error.code == "EVIDENCE_REF_INVALID":
         return True
     if error.code in {
+        "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID",
         "QUANTITATIVE_FORECAST_HOUR_OUT_OF_SCOPE",
         "QUANTITATIVE_RELATION_INVALID",
         "QUANTITATIVE_RELATION_MISMATCH",
@@ -5809,7 +5847,13 @@ def _grounding_retry_context(
         "Within each check, return each exact (request_id, feature_id, forecast_hour, region_id, statistic) quantitative selector at most once.",
         "If verified_quantitative_relation_corrections is present, correct only the contradicted quantitative relation and any directly dependent wording; do not change unrelated image interpretation, identifiers, or evidence links.",
     ]
-    if error.code == "QUANTITATIVE_CLAIM_INVALID":
+    if error.code == "DIRECT_PRECIPITATION_EVALUATION_UNAVAILABLE_ASSESSMENT_INVALID":
+        corrective_instructions.extend([
+            "The SYSTEM direct-precipitation threshold could not be evaluated completely because the required operational-scope overlap, scope metadata, or valid precipitation values are unavailable.",
+            "For this Check return exactly assessment=insufficient_evidence and scope_coverage=indeterminate. Do not report not_observed or opposite_observed, and do not treat unavailable scope/data as evidence that rain is absent.",
+            "Describe the specific unavailable forecast hours and reason from system_direct_precipitation_anchor_context; preserve unrelated findings and evidence links.",
+        ])
+    elif error.code == "QUANTITATIVE_CLAIM_INVALID":
         corrective_instructions.extend([
             "For quantitative_claims and every quantitative_relations[].selectors item, copy an exact five-field selector tuple from allowed_quantitative_selector_namespace.",
             "Check duplicate_quantitative_relation_diagnostics. Within EACH quantitative_relations[].selectors list, never repeat the exact same five-field selector. For a temporal comparison, select the two distinct forecast hours required by the original Step04 expected_signal from one comparable region/feature/statistic; never use F048 versus F048 to represent F018 versus F048.",
