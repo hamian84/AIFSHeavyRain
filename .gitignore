@@ -35,6 +35,9 @@ __pycache__/
 # 웹 게시 디렉터리 심볼릭 링크
 /html
 
+# 테스트 파일
+/tests/
+
 # 테스트용 파이프라인 실행 스크립트
 /scripts/zrun_pipeline.ksh
 /scripts/zzrun_pipeline.ksh
