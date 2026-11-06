@@ -2048,6 +2048,9 @@ def _regenerate_step08_semantic_unit(
             "signal_assessment 전체와 그 판단에 종속되는 uncertainties, final_assessment, revision, operational_brief, operational_guidance를 한 번에 다시 생성하십시오. "
             "현재 오류 하나만 고치지 말고 signal_grounding_contract의 direct precipitation required_status/presence anchor, precursor evidence, positive alignment, environment confirmed, environment persistence, physical_synthesis 조건을 모두 동시에 만족시키십시오. direct status가 presence anchor로 통제되는 경우 이동·연속성·조직화·강도 관련 Check로 그 상태를 다시 해석하지 마십시오. "
             "물리적 성립성은 Check 개수로 정하지 말고 Step04 가설의 supporting/opposing 관계와 Step07 판독을 이용해 강수 발생·유지 메커니즘이 일관되는지 평가하십시오. "
+            "environment_support_status가 not_confirmed 또는 insufficient_evidence이면 environment_persistence_status=not_applicable 및 "
+            "environment_persistence_evidence_check_ids=[]를 동시에 적용하십시오. 환경이 confirmed/partial이면 not_applicable을 금지하고 "
+            "시계열 근거가 부족할 경우 insufficient_evidence를 사용하십시오. "
             "이 계약은 모든 signal_conclusion_block 재생성에서 동일하게 적용되므로 한 조건을 고치면서 다른 조건을 다시 위반하지 마십시오. "
             "Step07 usable evidence와 Step09 publication contract에 맞지 않는 confirmed, positive alignment, surface 판단을 선언하지 마십시오."
         )
@@ -3466,9 +3469,11 @@ def _signal_grounding_contract(
             "rule": (
                 "environment_persistence_status는 핵심시각에 확인된 환경이 시간적으로 유지·강화되는지를 별도로 뜻합니다. "
                 "environment_support_status가 confirmed 또는 partial이면 not_applicable을 사용하지 마십시오. "
+                "environment_support_status가 not_confirmed 또는 insufficient_evidence이면 environment_persistence_status는 반드시 not_applicable이고 "
+                "environment_persistence_evidence_check_ids는 빈 배열이어야 합니다. 이 경우 temporal Check가 존재하더라도 지속성 판정을 하지 마십시오. "
                 "effect_by_check_id와 supporting/limiting/mixed/context 목록은 validator와 동일한 결정론적 참조 계약입니다. "
                 "mixed는 지지와 제한이 같은 비중이라는 뜻이 아니라, 하나의 시간변화 Check 안에 양의 지속 근거와 명시적 제한 근거가 함께 있다는 뜻입니다. "
-                "시간변화에 대한 usable 근거가 없거나 판단 가능한 supporting/limiting/mixed 근거가 부족하면 insufficient_evidence를 사용하십시오. "
+                "environment_support_status가 confirmed 또는 partial인 경우, 시간변화에 대한 usable 근거가 없거나 판단 가능한 supporting/limiting/mixed 근거가 부족하면 insufficient_evidence를 사용하십시오. "
                 "limited를 선택할 때는 limiting_check_ids 또는 mixed_check_ids 중 실제 판단에 사용한 Check를 최소 하나 포함하십시오. "
                 "confirmed를 선택할 때는 서로 다른 환경 범주 두 개 이상을 대표하는 supporting_check_ids를 사용해야 하며, "
                 "available limiting 또는 mixed temporal Check가 하나라도 있으면 confirmed를 선택하지 마십시오. "

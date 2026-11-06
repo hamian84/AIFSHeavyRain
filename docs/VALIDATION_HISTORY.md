@@ -1,6 +1,6 @@
 # 실행·검증 이력
 
-**기준일:** 2026-11-04(KST; 2026-11-03 UTC). 초기시각(init)은 UTC `YYYYMMDDHH`를 사용하며 웹 표출 시간은 KST다. 이 문서는 실행 스냅샷과 검증 계약의 일치 여부를 기록한다. 관측 대비 예측 정확도 검증은 이 자료에 포함되지 않는다.
+**기준일:** 2026-11-06(KST; 이번 실행 이력 추가). 초기시각(init)은 UTC `YYYYMMDDHH`를 사용하며 웹 표출 시간은 KST다. 이 문서는 실행 스냅샷과 검증 계약의 일치 여부를 기록한다. 관측 대비 예측 정확도 검증은 이 자료에 포함되지 않는다.
 
 ## 1. 검증 범위·원천
 
@@ -129,3 +129,33 @@ CAND_003의 `CHK_CAND003_07`은 `uncertain / indeterminate`이며, uncertainty�
 - `compileall -q func/step04 func/step07 tests`와 `git diff --check` 통과.
 - 실제 `2026110300`의 JSON 결과와 로컬 웹 제품을 대조했다. 운영 URL은 도구에서 불러오지 못했고 별도 브라우저 자동화도 수행하지 않아 웹 렌더링·이미지 HTTP 응답·JavaScript 상호작용은 확인하지 않았다.
 - 실행 완료와 계약 검증은 해당 실행의 산출 상태만 보증한다. 마지막 Step07 assessment guard의 운영 적용 여부는 확인하지 않았다. Step04 미연결 anchor 6건, CAND_003 표현 범위, 관측 대비 적중률·오경보율 및 전체 기상학적 타당성은 별도 검증 대상이다.
+
+## 6. 2026110600 Step08 오류 및 재수행 대조
+
+### 실제 실행 로그(`logs.zip`)
+
+| 구분 | 기록(UTC) | 결과 |
+|---|---|---|
+| 최초 Step08 | 2026-11-06 09:02:54 | `CAND_002 / ENVIRONMENT_PERSISTENCE_INVALID`로 실패, 전체 파이프라인 중단 |
+| 후속 Step08~10 | 2026-11-06 12:15:09~12:17:35 | Step08·09·10 완료, `PIPELINE_OK` |
+| 후속 Step08 | 2026-11-06 12:17:27 | 후보 3, 체크포인트 재사용 1·신규 2, 재시도 0 |
+| 후속 Step09 | 2026-11-06 12:17:29 | valid 3 / blocked 0 / surfaced 2 |
+
+### `daio(2).zip` → `daio(3).zip` 비교
+
+- 동일: Step04~07 산출물, `run_status.json` SHA-256 `864d5b9f9750b66d91b111a7d4893484644056370aa5a43ef858ab3143eda6a2`.
+- 변경: `step08/pass2_result.json` SHA-256 `21cdf6fc98b1db358372f2f638044b55ea899b2846c6b52a8cf954f805b6da5e` → `42c3ba2b54497a3182dcc51f21b966d9df8e578a632208fa2adc759564fbc154`.
+- 변경: `step09/operational_result.json` SHA-256 `ceb9631dbe6d21851a94f1e5f5aa680cbbf67db96017f809157c5f4d3dc4c07f` → `e287889a1d99dde4915d2682509936073061b8f87cf9aa78587cc04368d0d7e4`.
+- 최신 Step08/09 파일의 ZIP 시각은 2026-11-06 22:12:36/22:12:38 KST다. 이 시점의 로그는 `logs.zip`에 포함되지 않았다.
+
+| 후보 | 직접 강수 | 환경 존재 | 환경 지속성 | Step09 | 표출 상태 |
+|---|---|---|---|---|---|
+| `CAND_001` 동해중부 | `confirmed` | `confirmed` | `limited` | `valid` | `elevated`(우선 확인) |
+| `CAND_002` 서해남부 서부 | `confirmed` | `not_confirmed` | `not_applicable` | `valid` | `hidden`(비표출) |
+| `CAND_003` 동해남부 | `confirmed` | `partial` | `insufficient_evidence` | `valid` | `general`(일반 감시) |
+
+### 검증의 한계
+
+- `CAND_002`의 환경 미확인/지속성 미적용 조합은 현행 검증 계약과 일치한다. Step07 Check 22건 중 합의 미성립 1건은 설계된 제외 처리다.
+- **Step08·09 JSON 검증 통과를 동일 오류의 재발 방지 입증이나 기상학적 정확도 검증으로 해석하지 않는다.**
+- 운영 서버에서 미커밋 변경된 실제 코드 Diff, 최신(22:12 KST) 실행의 로그, 최신 Step10 제품 재생성·웹 게시, 브라우저 내 PNG/JS 동작은 확인 대상이다.

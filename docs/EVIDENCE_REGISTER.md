@@ -1,6 +1,6 @@
 # 근거 등록부 및 복원 감사
 
-**작성 기준:** 2026-11-04(KST; 2026-11-03 UTC)
+**작성 기준:** 2026-11-06(KST; 이번 실행 근거 추가)
 **목적:** 이 문서 묶음의 사실이 실제 커밋·수행파일·과거 대화·추정 중 어디에서 나왔는지 구분하여 재검증할 수 있도록 한다.
 
 ## 1. 증거 등급
@@ -26,7 +26,7 @@
 | G-005 | [`945320f` Step04/Step07 수정·회귀 테스트](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3) | `func/step04/pass1_engine.py`, `func/step07/checks.py`, 관련 테스트 2개; unittest 17건 통과 |
 | G-006 | [`4d797cc` Step07 평가 불가 상태 결정론 검증](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81) | 필수 scope 메타자료 누락 처리, 불완전 평가의 `insufficient_evidence / indeterminate` 강제, Anchor 지문 계약 버전 및 Step07 회귀 테스트 13건 |
 
-기준 브랜치: `main`/`d37500b`. 이번 PR의 코드 커밋은 G-005·G-006이며, PR 병합 전까지 `main` 반영으로 취급하지 않는다. 운영 산출물 R-005는 G-006의 최종 validator를 사용해 재생성한 결과가 아니다.
+2026-11-04 당시 검토 기준: `main`/`d37500b`. 당시 PR의 코드 커밋은 G-005·G-006이며, 이 서술은 병합 이전 시점의 기록이다. 2026-11-06 갱신 당시 최신 공개 `main`은 `ffa5f78`이다. 운영 산출물 R-005는 G-006의 최종 validator를 사용해 재생성한 결과가 아니다.
 
 ## 3. 업로드 ZIP 증거 — 로컬/대화 자료, Git 업로드 금지
 
@@ -105,3 +105,15 @@
 ## 8. 기록 신뢰도 향상을 위한 다음 수집 항목
 
 추후에는 Git PR 본문에 `init`, `candidate_id`, `check_id`, 단계별 입력 해시, 오류 코드, 수정 커밋, 재실행 결과, 웹 검증 URL, 적격성 반례 테스트를 함께 기입한다. 실행 전체 ZIP은 저장소 밖에 보관하고 SHA256만 문서에 넣는다.
+
+## 9. 2026-11-06 실행근거 추가 (R1 / 코드 Diff 미확인)
+
+| 자료 | SHA-256 | 확인 범위 |
+|---|---|---|
+| `logs.zip` | `96fcaa4579218e86f5c4a094ef750c99e9113352a22526ce0077ec78b69e458d` | 최초 Step08 실패와 12:17 UTC 재수행 성공 로그 |
+| `daio(2).zip` | `6b628206997296e2c6a328a6e6376700e18681d2f5696f1464699a9946932ba6` | 21:17 KST 실행 Step08·09 최종 상태 |
+| `daio(3).zip` | `9c4a751f503fcf858e561bf6267035616c06fef513d8bb2eb12f2a54744d8e45` | 22:12 KST 새 Step08·09 JSON, Step04~07 동일 |
+
+- GitHub 공개 기준 `main`: [`ffa5f78`](https://github.com/hamian84/AIFSHeavyRain/commit/ffa5f7869204610b1693060c6844c960a14566c1). 이 커밋은 `.gitignore`의 `/tests/` 제외를 반영한 것이며, 11월 6일 미커밋 Step08 코드 수정 커밋은 아니다.
+- **증거 수준:** 위 ZIP은 R1 실행 산출물 증거다. 서버 로컬 코드 Diff를 아직 받지 못했으므로 실제 수정 파일·함수에 대한 G1 변경 검증은 불가능하다. Git에 ZIP 원본을 올리지 않는다.
+- Step08/09 최종 수치와 출처, 미확인 재발 위험은 `VALIDATION_HISTORY.md`, `KNOWN_ISSUES.md`의 11월 6일 항목 참고.
