@@ -1,6 +1,6 @@
 # 변경 이력 (CHANGELOG)
 
-문서 기준일: **2026-11-04(KST; 2026-11-03 UTC)**. 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+문서 기준일: **2026-11-06(KST)**. 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
 
 ## [Unreleased] — Step04 정량 범위·Step07 직접강수 평가 상태
 
@@ -26,6 +26,14 @@
 - 같은 실행의 Step04 직접신호 감사는 11개 중 5개만 후보 근거와 연결되어 6개가 미연결이다. CAND_003의 직접강수 상태·문장 범위는 검토 대상으로 남기며, 현재 증거만으로 결함이라고 확정하지 않는다.
 - 저장 산출물은 현재 수정 코드로 재생성하지 않았다. 특히 위의 결정론적 Step07 assessment guard는 운영 재실행으로 확인하지 않았으며, 회귀 테스트에서만 확인했다.
 - 운영 웹페이지는 이 작업에서 브라우저 렌더링까지 독립 확인하지 않았다. 상세 운영 수치와 제한은 [VALIDATION_HISTORY.md](docs/VALIDATION_HISTORY.md)를 참조한다.
+
+### 2026-11-06 — Step08 환경 지속성 검증 오류 재수행 [실행검증 / 로컬 변경 미확정]
+
+- `init=2026110600`: 최초 Step08 `CAND_002`에서 `ENVIRONMENT_PERSISTENCE_INVALID` 발생으로 중단.
+- 같은 초기시각 후속 Step08~10 완료. Step09 후보 3/3 유효·차단 0, 표출 2, 비표출 1.
+- 추가 Step08·09 재생성(`daio(3).zip`) 후에도 후보 상태와 표출 결정 동일. Step04~07 입력/근거 파일은 이전 ZIP과 같음.
+- 관련 점검 파일: `func/step08/synthesis.py`, `prompts/step08/candidate_synthesis.ko.md`, `func/shared/signal_validation.py`. **실제 서버 로컬 Diff는 미확인**이므로 특정 함수/프롬프트 수정이 완료됐다고 기록하지 않음.
+- 검증: DAIO 후보별 계약·표출 상태 비교 및 제공 로그 확인. 코드 단위 회귀 테스트, 22:12 KST 최신 재생성 로그, 최신 Step10 웹 게시 및 관측 대비 성능 검증은 미수행.
 
 ### 후속 개선 제안 — **적용 완료 아님**
 

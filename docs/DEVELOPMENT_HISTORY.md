@@ -1,6 +1,6 @@
 # AIFSHeavyRain 날짜별 개발·수정 이력
 
-**작성 기준일:** 2026-11-04(KST; 2026-11-03 UTC)
+**작성 기준일:** 2026-11-06(KST; 기존 기록 보존, 이번 실행 이력 추가)
 **범위:** 현재 접근 가능한 과거 대화 맥락, 업로드된 운영 코드 스냅샷과 수행 ZIP, GitHub 이력. 전체 대화 원문/모든 과거 파일을 전수 확보한 것은 아니며, 복원 불가능한 세부사항을 임의로 보완하지 않았다.
 
 ## 0. 기록 방법
@@ -257,6 +257,16 @@
 - **남은 검증 범위:** Step04 `mandatory_direct_signal_audit`는 11개 중 5개만 후보 근거로 연결되고 6개가 미연결(`all_required_anchors_covered=false`)이다. 이 지표를 운영 임계치 실패 또는 강수 부재로 해석하지 않으며 후속 확인 대상으로 유지한다. CAND_003은 Step07 직접강수 Check가 `uncertain / indeterminate`, Step08/09 상태가 `insufficient_evidence`이다. 제품의 현재 대응 문장은 강수 존재를 확정하기 어렵다고 쓰지만, 종합 문장은 고정 후보영역 안에서 강수영역이 확인되지 않았다고 기술한다. 범위 차이일 수 있어 결함으로 확정하지 않고 화면 문구의 평가범위 명시를 후속 검토한다. 현재 저장된 `run_status`에는 Step07 체크포인트 재사용 수가 없어 해당 실행의 재사용 여부는 확인하지 않았다.
 - **최종물 확인 한계:** 로컬 `daou/2026110300` 제품 파일은 확인했다. 제공된 운영 URL은 이번 도구에서 열리지 않아 실제 브라우저 렌더링, 이미지·JavaScript 상호작용은 검증하지 않았다. 정상 실행은 기상학적 정확도 검증과 구분한다.
 - **Git:** 코드·회귀 테스트 [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3), [`4d797cc`](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81). 문서는 코드 변경과 분리한 같은 PR의 후속 커밋으로 관리한다.
+
+### 2026-11-06 — Step08 환경 지속성 상태 불일치와 재수행 [실행검증/로컬코드변경 미확정]
+
+- **초기시각:** `2026110600`(2026-11-06 00UTC). 최초 Step08는 2026-11-06 09:02:54 UTC에 `CAND_002`의 `ENVIRONMENT_PERSISTENCE_INVALID`로 중단되었다. 원문: `environment persistence must be not_applicable when environment support is not confirmed/partial`.
+- **원인(확인):** Step08 AI가 생성한 환경 존재 상태(`environment_support_status`)와 환경 지속성 상태(`environment_persistence_status`)의 조합이 현행 검증 계약과 불일치했다. 실패한 AI 원본 응답은 확보하지 못해 잘못 생성된 정확한 enum 값은 미확정이다.
+- **검증 계약(기준코드 확인):** 환경 `not_confirmed` 또는 `insufficient_evidence`에서는 지속성 `not_applicable`과 빈 `environment_persistence_evidence_check_ids`가 필수이다. 환경 `confirmed`/`partial`에서는 시간변화 근거에 따라 `confirmed`/`limited`/`insufficient_evidence` 중 하나를 사용한다. 해당 계약이 11월 6일 새로 구현되었다는 증거는 없다.
+- **관련 소스:** `func/step08/synthesis.py`(상태·근거 검증 및 재생성), `prompts/step08/candidate_synthesis.ko.md`(AI 지시), `func/shared/signal_validation.py`(결정론적 계약), `scripts/08_run_pass2_synthesis.py`(`--no-resume`, 체크포인트 재사용). 이전 서버 `git status`에는 앞의 두 수정파일과 `.gitignore` 변경이 표시됐으나 **서버의 실제 `git diff`를 확보하지 못해 함수·문장 단위 코드 변경과 변경 원인은 확정하지 않는다.**
+- **재실행:** 같은 초기시각의 Step08~10을 2026-11-06 12:15:09~12:17:35 UTC에 재수행하여 완료했다. Step08 후보 3건(재사용 1건/신규 2건), Step09 유효 3건·차단 0건·표출 2건·비표출 1건.
+- **추가 재생성 산출물:** `daio(3).zip`의 Step08 및 Step09 JSON은 각각 22:12:36, 22:12:38 KST로 갱신되었다. 이전 `daio(2).zip`에 비해 Step04~07은 변경되지 않고 Step08·09 JSON만 변경되었다. 후보별 상태 및 표출 여부는 유지되었다. 해당 재생성의 **별도 로그는 제공되지 않았고**, 동봉 `run_status.json`은 이전 실행과 동일하므로 최신 실행 내부 재시도 횟수는 확인되지 않는다.
+- **판단:** 재수행으로 정상 산출물이 생성된 것은 확인했다. 동일 오류의 근본적인 재발 방지 또는 원본 관측 대비 예측 성능 향상은 입증되지 않았다. 코드의 실제 변경사항은 커밋 전 `git diff`를 기준으로 추가 기록해야 한다.
 
 ---
 
