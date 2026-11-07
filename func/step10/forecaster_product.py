@@ -42,7 +42,7 @@ from func.shared.signal_validation import (
     derive_signal_class,
     derive_validated_precursor_categories,
 )
-from func.step07.checks import (
+from func.step07.checks_api import (
     MINORITY_REPORT_SCHEMA,
     load_step06_package,
     load_step07_results,
@@ -51,7 +51,7 @@ from func.step07.checks import (
     validate_step07_minority_report_consistency,
     _single_majority_convergence_not_strengthen_claim,
 )
-from func.step08.synthesis import (
+from func.step08.synthesis_api import (
     _candidate_analysis_region_index,
     migrate_step08_document,
     step08_output_path,

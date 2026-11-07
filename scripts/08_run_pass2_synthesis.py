@@ -16,7 +16,17 @@ from func.shared.env_loader import load_project_env  # noqa: E402
 from func.shared.pipeline_common import setup_pipeline_logging, update_run_status  # noqa: E402
 from func.shared.runtime_paths import configured_project_root  # noqa: E402
 from func.shared.pass2_common import Pass2PipelineError  # noqa: E402
-from func.step08.synthesis import dry_run_summary, run_step08  # noqa: E402
+from func.step08 import synthesis_analysis as analysis  # noqa: E402
+from func.step08 import synthesis_validation as validation  # noqa: E402
+from func.step08 import synthesis_workflow as workflow  # noqa: E402
+from func.step08 import synthesis_support as support  # noqa: E402
+from func.step08.synthesis_runtime import configure as configure_step08_roles  # noqa: E402
+
+configure_step08_roles(
+    analysis=analysis, validation=validation, workflow=workflow, support=support,
+)
+dry_run_summary = workflow.dry_run_summary
+run_step08 = workflow.run_step08
 
 ROOT = configured_project_root(ROOT)
 

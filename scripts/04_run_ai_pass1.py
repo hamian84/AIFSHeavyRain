@@ -18,7 +18,17 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from func.step04 import pass1_engine as engine
+from func.step04 import pass1_analysis as analysis
+from func.step04 import pass1_validation as validation
+from func.step04 import pass1_workflow as workflow
+from func.step04 import pass1_support as support
+from func.step04.pass1_runtime import configure as configure_step04_roles
+
+# The script owns the Step04 analysis/validation lifecycle.  There is no
+# import or invocation of the legacy pass1_engine module.
+configure_step04_roles(
+    analysis=analysis, validation=validation, workflow=workflow, support=support,
+)
 from func.step04.analysis_provenance import PROVENANCE_FILENAME, write_step04_analysis_provenance
 from func.shared.ai_provider import (
     IMAGE_DETAILS,
@@ -357,7 +367,7 @@ def _completed_result_checkpoint_matches(
         and result.get("package_id") == package_id
         and isinstance(engine_checkpoint, dict)
         and engine_checkpoint.get("contract_version")
-        == engine.SPLIT_SYNTHESIS_CONTRACT_VERSION
+        == validation.SPLIT_SYNTHESIS_CONTRACT_VERSION
         and _checkpoint_provider_configuration_matches(
             checkpoint,
             expected_configuration=provider_configuration,
@@ -373,7 +383,7 @@ def _completed_system_anchor_contract_matches(
     result: dict[str, Any],
 ) -> bool:
     """Reject completed Step04 results produced under an obsolete Anchor contract."""
-    errors = engine.system_direct_precipitation_anchor_final_errors(result)
+    errors = validation.system_direct_precipitation_anchor_final_errors(result)
     if errors:
         logging.info(
             "step04 completed result invalidated by SYSTEM Anchor invariant: %s",
@@ -399,7 +409,7 @@ def _completed_system_anchor_contract_matches(
         if (
             not isinstance(engine_checkpoint, dict)
             or engine_checkpoint.get("system_direct_precipitation_anchor_execution_contract_version")
-            != engine.SYSTEM_DIRECT_PRECIPITATION_ANCHOR_EXECUTION_CONTRACT_VERSION
+            != validation.SYSTEM_DIRECT_PRECIPITATION_ANCHOR_EXECUTION_CONTRACT_VERSION
         ):
             logging.info(
                 "step04 completed result invalidated: SYSTEM Anchor execution contract mismatch candidate=%s",
@@ -532,7 +542,7 @@ def _valid_engine_resume_checkpoint(
     if (
         candidate_id is not None
         and engine_checkpoint.get("system_direct_precipitation_anchor_execution_contract_version")
-        != engine.SYSTEM_DIRECT_PRECIPITATION_ANCHOR_EXECUTION_CONTRACT_VERSION
+        != validation.SYSTEM_DIRECT_PRECIPITATION_ANCHOR_EXECUTION_CONTRACT_VERSION
     ):
         return False
     return (
@@ -900,7 +910,7 @@ def _build_engine_argv(*, root: Path, temp_root: Path, init: str, args: argparse
         argv.append("--no-env-file")
     else:
         # The wrapper resolves the project dotenv once and passes its provenance
-        # directly to the in-process compatibility engine. Do not encode the
+        # to the role-separated Step04 workflow. Do not encode the
         # resolved model back into argv; model selection remains env-file-only.
         pass
     if args.candidate_id:
@@ -1043,7 +1053,7 @@ def _prepare_engine_workspace(
     provider_configuration: dict[str, Any],
     model: str,
 ) -> int:
-    """폐기된 엔진에 필요한 임시 입력 계약만 구성합니다."""
+    """기존 데이터 계약을 사용하는 Step04 임시 분석 작업영역을 구성합니다."""
 
     (temp_root / "prompts").mkdir(parents=True, exist_ok=True)
     shutil.copytree(runtime_dir(root, "prompts"), temp_root / "prompts", dirs_exist_ok=True)
@@ -1202,7 +1212,7 @@ def _failed_candidate_id(exc: Exception) -> str | None:
     return match.group(1) if match else None
 
 
-def _run_engine(*, root: Path, init: str, request: dict[str, Any], args: argparse.Namespace, output: Path, model: str, provider_configuration: dict[str, Any], env_load: ProjectEnvLoad) -> dict[str, Any]:
+def _run_analysis_validation(*, root: Path, init: str, request: dict[str, Any], args: argparse.Namespace, output: Path, model: str, provider_configuration: dict[str, Any], env_load: ProjectEnvLoad) -> dict[str, Any]:
     with step_workspace(
         root=root,
         init=init,
@@ -1247,7 +1257,7 @@ def _run_engine(*, root: Path, init: str, request: dict[str, Any], args: argpars
                 os.environ["AIFS_CODEX_DIAGNOSTIC_DIR"] = str(output / "_diagnostics")
             root_logger.addFilter(engine_log_filter)
             with contextlib.redirect_stdout(io.StringIO()):
-                code = engine.main(checkpoint_publisher=checkpoint_publisher, preloaded_env_load=env_load)
+                code = workflow.main(checkpoint_publisher=checkpoint_publisher, preloaded_env_load=env_load)
         finally:
             root_logger.removeFilter(engine_log_filter)
             sys.argv = old_argv
@@ -1515,7 +1525,7 @@ def main(argv: list[str] | None = None) -> int:
         completed_result_language_errors: list[str] = []
         if args.resume and result_path.is_file() and not args.overwrite and not args.candidate_id:
             result = load_json(result_path)
-            completed_result_language_errors = engine.validate_step04_narrative_language(result)
+            completed_result_language_errors = validation.validate_step04_narrative_language(result)
             completed_result_matches = (
                 result.get("package_id") == request.get("package_id")
                 and _completed_result_checkpoint_matches(
@@ -1559,7 +1569,7 @@ def main(argv: list[str] | None = None) -> int:
             "model": model,
             "output_dir": rel(root, output),
         })
-        result = _run_engine(
+        result = _run_analysis_validation(
             root=root,
             init=args.init,
             request=request,

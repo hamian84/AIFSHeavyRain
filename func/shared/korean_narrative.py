@@ -114,6 +114,11 @@ _SAFE_COMPASS_NOUN_CONTEXT = re.compile(
     r"(?<![A-Za-z0-9_])(?P<direction>[NSEW])(?=\s*(?:방향|경계|부근|해상|해역|지역|영역|섹터|사면))"
 )
 _UNIT_SPLIT = re.compile(r"[^A-Za-z]+")
+# An existing Korean prefix plus a Latin coordinate suffix must not yield
+# repeated text such as "북위 북위 35°".
+_REPEATED_COORDINATE_LABEL = re.compile(
+    r"(?P<label>북위|남위|동경|서경) +(?P=label)(?= *[0-9])"
+)
 _FORBIDDEN_KOREAN_SCOPE_TERMS = frozenset({"호우", "집중호우"})
 _FORBIDDEN_KOREAN_TERM_REPLACEMENTS = {
     "6시간 누적 강수량": "6시간 강수량 또는 초기시각부터의 누적강수량으로 구분하십시오.",
@@ -170,7 +175,34 @@ def normalize_korean_coordinate_notation(text: str) -> tuple[str, int]:
 
     normalized = _COORD_SUFFIX_DIRECTION.sub(_replacement, text)
     normalized = _COORD_PREFIX_DIRECTION.sub(_replacement, normalized)
-    return normalized, count
+    normalized, deduplicated = _REPEATED_COORDINATE_LABEL.subn(
+        lambda match: match.group("label"), normalized
+    )
+    return normalized, count + deduplicated
+
+
+
+def _normalize_safe_spatial_text(value: str) -> tuple[str, int]:
+    """Normalize coordinates and explicit compass noun contexts once.
+
+    Shared by Step04 discovery and Step07. Ambiguous standalone compass letters
+    are intentionally left for the existing Korean-language validator.
+    """
+    normalized, changed = normalize_korean_coordinate_notation(value)
+
+    def _compass_suffix_replacement(match: re.Match[str]) -> str:
+        return _COMPASS_DIRECTION_STEM[match.group("direction")] + match.group("suffix")
+
+    def _compass_noun_replacement(match: re.Match[str]) -> str:
+        return _COMPASS_DIRECTION_LABEL[match.group("direction")]
+
+    normalized, suffix_count = _SAFE_COMPASS_SUFFIX.subn(
+        _compass_suffix_replacement, normalized
+    )
+    normalized, noun_count = _SAFE_COMPASS_NOUN_CONTEXT.subn(
+        _compass_noun_replacement, normalized
+    )
+    return normalized, changed + suffix_count + noun_count
 
 
 def normalize_step07_response_directions(payload: dict[str, Any]) -> int:
@@ -186,23 +218,6 @@ def normalize_step07_response_directions(payload: dict[str, Any]) -> int:
     """
     fixes = 0
 
-    def _normalize_text(value: str) -> tuple[str, int]:
-        normalized, changed = normalize_korean_coordinate_notation(value)
-
-        def _compass_suffix_replacement(match: re.Match[str]) -> str:
-            nonlocal changed
-            changed += 1
-            return _COMPASS_DIRECTION_STEM[match.group("direction")] + match.group("suffix")
-
-        def _compass_noun_replacement(match: re.Match[str]) -> str:
-            nonlocal changed
-            changed += 1
-            return _COMPASS_DIRECTION_LABEL[match.group("direction")]
-
-        normalized = _SAFE_COMPASS_SUFFIX.sub(_compass_suffix_replacement, normalized)
-        normalized = _SAFE_COMPASS_NOUN_CONTEXT.sub(_compass_noun_replacement, normalized)
-        return normalized, changed
-
     for assessment in payload.get("assessments", []):
         if not isinstance(assessment, dict):
             continue
@@ -213,7 +228,7 @@ def normalize_step07_response_directions(payload: dict[str, Any]) -> int:
             for row in rows:
                 if not isinstance(row, dict) or not isinstance(row.get("statement"), str):
                     continue
-                normalized, changed = _normalize_text(row["statement"])
+                normalized, changed = _normalize_safe_spatial_text(row["statement"])
                 if changed:
                     row["statement"] = normalized
                     fixes += changed
@@ -222,7 +237,7 @@ def normalize_step07_response_directions(payload: dict[str, Any]) -> int:
             for index, value in enumerate(uncertainties):
                 if not isinstance(value, str):
                     continue
-                normalized, changed = _normalize_text(value)
+                normalized, changed = _normalize_safe_spatial_text(value)
                 if changed:
                     uncertainties[index] = normalized
                     fixes += changed
@@ -303,6 +318,78 @@ def normalize_step08_response_coordinates(payload: dict[str, Any]) -> int:
             _normalize_key(guidance, key)
 
     return fixes
+
+
+
+def normalize_step04_discovery_directions(payload: dict[str, Any]) -> int:
+    """Normalize unambiguous direction notation in Step04 discovery prose.
+
+    Structured references, candidate IDs, coordinates, forecasts and model
+    outputs are untouched. All substitutions reuse the Step07-safe spatial
+    normalization policy rather than reimplementing it.
+    """
+    if not isinstance(payload, dict):
+        return 0
+
+    replacements = 0
+
+    def normalize_field(container: dict[str, Any], key: str) -> None:
+        nonlocal replacements
+        value = container.get(key)
+        if isinstance(value, str):
+            normalized, changes = _normalize_safe_spatial_text(value)
+            if changes:
+                container[key] = normalized
+                replacements += changes
+
+    def normalize_list(container: dict[str, Any], key: str) -> None:
+        nonlocal replacements
+        values = container.get(key)
+        if not isinstance(values, list):
+            return
+        for index, value in enumerate(values):
+            if isinstance(value, str):
+                normalized, changes = _normalize_safe_spatial_text(value)
+                if changes:
+                    values[index] = normalized
+                    replacements += changes
+
+    for candidate in payload.get("candidates", []):
+        if not isinstance(candidate, dict):
+            continue
+        for key in ("candidate_name", "separation_reason"):
+            normalize_field(candidate, key)
+        hypothesis = candidate.get("hypothesis")
+        if isinstance(hypothesis, dict):
+            normalize_field(hypothesis, "statement")
+        for diagnostic in candidate.get("diagnostic_plan", []):
+            if isinstance(diagnostic, dict):
+                normalize_field(diagnostic, "purpose")
+        for key in ("supporting_reasons", "opposing_reasons", "uncertainties"):
+            normalize_list(candidate, key)
+
+    for group in payload.get("candidate_evidence", []):
+        if not isinstance(group, dict):
+            continue
+        for item in group.get("evidence_items", []):
+            if isinstance(item, dict):
+                normalize_field(item, "reason")
+
+    normalize_list(payload, "global_uncertainties")
+    assessment = payload.get("precursor_candidate_assessment")
+    if isinstance(assessment, dict):
+        normalize_field(assessment, "rationale")
+
+    for opportunity in payload.get("precursor_opportunities", []):
+        if not isinstance(opportunity, dict):
+            continue
+        relation = opportunity.get("relation_basis")
+        if isinstance(relation, dict):
+            for key in ("time_relation", "spatial_relation", "mechanism_relation", "reason"):
+                normalize_field(relation, key)
+
+    return replacements
+
 
 
 def validate_korean_text(value: Any, *, path: str) -> list[str]:

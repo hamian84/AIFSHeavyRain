@@ -9,13 +9,14 @@ both a complete permanent product and an independently published web copy.
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import os
 import re
 import shutil
 import sys
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +31,6 @@ from func.shared.runtime_paths import configured_project_root  # noqa: E402
 INIT_RE = re.compile(r"^\d{10}$")
 RUNTIME_TARGETS = ("dain", "daio")
 VALID_PRODUCT_STATUSES = frozenset({"published", "no_surface_candidates"})
-DEFAULT_RETENTION_DAYS = 4
 
 
 def parse_init_utc(init: str) -> datetime | None:
@@ -65,74 +65,82 @@ def _safe_target(root: Path, base: Path, init: str) -> Path | None:
         return None
 
 
+def _runtime_targets(
+    root: Path, bases: dict[str, Path | None], init: str
+) -> list[dict[str, Any]]:
+    """Inspect real runtime directories once per phase, preserving safety state."""
+    targets = []
+    for name, base in bases.items():
+        if base is None:
+            continue
+        path = base / init
+        if path.exists() or path.is_symlink():
+            targets.append({
+                "target": name,
+                "path": str(path),
+                "safe": _safe_target(root, base, init) is not None,
+            })
+    return targets
+
+
+def _product_files_complete(directory: Path) -> bool:
+    """Require three independent, non-symlink published product components."""
+    return (
+        directory.is_dir()
+        and all(
+            (directory / name).is_file() and not (directory / name).is_symlink()
+            for name in ("index.html", "forecaster_product.json")
+        )
+        and (directory / "assets").is_dir()
+        and not (directory / "assets").is_symlink()
+    )
+
+
 def _publication_reasons(root: Path, web_root: Path, init: str) -> list[str]:
+    """Check permanent + independent published copies; never treat links as data."""
     reasons: list[str] = []
     product_dir = root / "daou" / init
-    product_path = product_dir / "forecaster_product.json"
-    product_index = product_dir / "index.html"
-    product_assets = product_dir / "assets"
-
-    # 영구제품 디렉터리 자체가 symlink이면 자식 파일이 일반 파일처럼 보여도
-    # 독립 보존 원칙을 충족했다고 간주하지 않습니다.
-    if product_dir.is_symlink() or not product_dir.is_dir():
+    if product_dir.is_symlink() or not _product_files_complete(product_dir):
         reasons.append("final_product_missing")
     else:
-        if not product_index.is_file() or product_index.is_symlink():
-            reasons.append("final_product_missing")
-        if not product_path.is_file() or product_path.is_symlink():
-            reasons.append("final_product_missing")
-        if not product_assets.is_dir() or product_assets.is_symlink():
-            reasons.append("final_product_missing")
-
-    if not reasons:
         try:
-            import json
-
-            product = json.loads(product_path.read_text(encoding="utf-8"))
-        except (OSError, ValueError, json.JSONDecodeError):
+            product = json.loads((product_dir / "forecaster_product.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
             reasons.append("final_product_invalid")
         else:
-            if not isinstance(product, dict) or product.get("init") != init or product.get("product_status") not in VALID_PRODUCT_STATUSES:
+            if (
+                not isinstance(product, dict)
+                or product.get("init") != init
+                or product.get("product_status") not in VALID_PRODUCT_STATUSES
+            ):
                 reasons.append("final_product_invalid")
 
     web_dir = web_root / init
-    publication_dir = web_dir
     if web_dir.is_symlink():
-        # New atomic publishing layout: dated URLs may point to a validated immutable
-        # release below web_root/.releases. Only that controlled symlink layout is
-        # accepted; arbitrary external symlinks remain invalid.
+        # Only a release below the controlled .releases directory may back
+        # an atomic web link. Arbitrary external symlinks remain ineligible.
         try:
-            resolved = web_dir.resolve(strict=True)
-            release_root = (web_root / ".releases").resolve(strict=True)
-            resolved.relative_to(release_root)
+            published_dir = web_dir.resolve(strict=True)
+            published_dir.relative_to((web_root / ".releases").resolve(strict=True))
         except (OSError, ValueError):
-            reasons.append("web_product_missing")
-            publication_dir = None
-        else:
-            publication_dir = resolved
-    elif not web_dir.is_dir():
-        reasons.append("web_product_missing")
-        publication_dir = None
+            published_dir = None
+    else:
+        published_dir = web_dir if web_dir.is_dir() else None
 
-    if publication_dir is not None:
-        if not (publication_dir / "index.html").is_file() or (publication_dir / "index.html").is_symlink():
-            reasons.append("web_product_missing")
-        if not (publication_dir / "forecaster_product.json").is_file() or (publication_dir / "forecaster_product.json").is_symlink():
-            reasons.append("web_product_missing")
-        if not (publication_dir / "assets").is_dir() or (publication_dir / "assets").is_symlink():
-            reasons.append("web_product_missing")
-    return list(dict.fromkeys(reasons))
+    if published_dir is None or not _product_files_complete(published_dir):
+        reasons.append("web_product_missing")
+    return reasons
 
 
 def build_cleanup_plan(
     root: Path,
     *,
     web_root: Path,
-    retention_days: int = DEFAULT_RETENTION_DAYS,
+    retention_days: int,
     now: datetime | None = None,
     current_init: str | None = None,
 ) -> list[dict[str, Any]]:
-    """Plan only; do not remove any files while resolving retention decisions."""
+    """Plan UTC calendar-date retention without removing any files."""
     if retention_days < 0:
         raise ValueError("retention_days must be zero or greater")
     root = Path(root).resolve()
@@ -146,6 +154,10 @@ def build_cleanup_plan(
         now = now.astimezone(timezone.utc)
 
     bases = {name: _safe_base(root, name) for name in RUNTIME_TARGETS}
+    unsafe_base = any(
+        base is None and ((root / name).exists() or (root / name).is_symlink())
+        for name, base in bases.items()
+    )
     names: set[str] = set()
     for base in bases.values():
         if base is None:
@@ -163,59 +175,36 @@ def build_cleanup_plan(
         if init_time is None:
             plan.append({"init": init, "action": "SKIP", "reasons": ["invalid_init"], "targets": []})
             continue
-        common_reasons = _publication_reasons(root, web_root, init)
-        if now - init_time < timedelta(days=retention_days):
-            common_reasons.append("retention_not_expired")
-        if init == current_init:
-            common_reasons.append("current_init_protected")
-        targets: list[dict[str, Any]] = []
-        unsafe_runtime_target = False
-        for name, base in bases.items():
-            if base is None:
-                continue
-            target = base / init
-            if not target.exists() and not target.is_symlink():
-                continue
-            safe_target = _safe_target(root, base, init)
-            if safe_target is None:
-                unsafe_runtime_target = True
-            targets.append(
-                {
-                    "target": name,
-                    "path": str(target),
-                    "safe": safe_target is not None,
-                }
-            )
 
+        # First classify by UTC calendar day; only expired candidates need
+        # expensive publication checks.
+        reasons: list[str] = []
+        if (now.date() - init_time.date()).days <= retention_days:
+            reasons.append("retention_not_expired")
+        if init == current_init:
+            reasons.append("current_init_protected")
+
+        targets = _runtime_targets(root, bases, init)
         if not targets:
             plan.append({"init": init, "action": "SKIP", "reasons": ["runtime_target_missing"], "targets": []})
             continue
 
-        # 같은 INIT의 dain/daio 중 하나라도 symlink/경로 이탈 등으로 안전하지 않으면
-        # 나머지 target도 삭제하지 않습니다. 부분 삭제보다 보존을 우선합니다.
-        init_reasons = list(common_reasons)
-        if unsafe_runtime_target:
-            init_reasons.append("unsafe_target_path")
-        init_reasons = list(dict.fromkeys(init_reasons))
+        # One unsafe member or base protects both directories for this init.
+        if unsafe_base or any(not target["safe"] for target in targets):
+            reasons.append("unsafe_target_path")
+        if not reasons:
+            reasons.extend(_publication_reasons(root, web_root, init))
 
-        resolved_targets: list[dict[str, Any]] = []
-        for target in targets:
-            reasons = list(init_reasons)
-            resolved_targets.append(
-                {
-                    "target": target["target"],
-                    "path": target["path"],
-                    "action": "DELETE" if not reasons else "SKIP",
-                    "reasons": reasons,
-                }
-            )
-
+        action = "SKIP" if reasons else "DELETE"
         plan.append(
             {
                 "init": init,
-                "action": "DELETE" if all(item["action"] == "DELETE" for item in resolved_targets) else "SKIP",
-                "reasons": init_reasons,
-                "targets": resolved_targets,
+                "action": action,
+                "reasons": reasons,
+                "targets": [
+                    {**target, "action": action, "reasons": list(reasons)}
+                    for target in targets
+                ],
             }
         )
     return plan
@@ -239,41 +228,69 @@ def _cleanup_logger(root: Path) -> logging.Logger:
     return logger
 
 
-def execute_cleanup_plan(root: Path, plan: list[dict[str, Any]], logger: logging.Logger) -> tuple[int, int]:
-    """Delete only exact planned dain/daio targets after a second safety check."""
-    root = Path(root).resolve()
-    deleted = 0
-    failures = 0
+def execute_cleanup_plan(
+    root: Path,
+    plan: list[dict[str, Any]],
+    logger: logging.Logger,
+    *,
+    web_root: Path,
+) -> tuple[int, int]:
+    """Delete expired targets only after rechecking paths and publication."""
+    root, web_root = Path(root).resolve(), Path(web_root).resolve()
+    deleted = failures = 0
     for item in plan:
+        if item.get("action") != "DELETE":
+            continue
         init = str(item["init"])
-        delete_targets = [target for target in item.get("targets", []) if target.get("action") == "DELETE"]
+        delete_targets = [
+            row for row in item.get("targets", []) if row.get("action") == "DELETE"
+        ]
         if not delete_targets:
             continue
 
-        # 계획 수립 이후 파일시스템이 바뀌었을 수 있으므로 한 INIT의 모든 target을
-        # 삭제 직전에 다시 검증합니다. 하나라도 안전하지 않으면 해당 INIT은 전부 보존합니다.
-        resolved_targets: list[tuple[str, Path]] = []
-        unsafe_names: list[str] = []
-        for target in delete_targets:
-            name = str(target["target"])
-            base = _safe_base(root, name)
-            safe_target = _safe_target(root, base, init) if base is not None else None
-            if safe_target is None:
-                unsafe_names.append(name)
-            else:
-                resolved_targets.append((name, safe_target))
-        if unsafe_names:
+        # Recheck the entire init, including any sibling that appeared since
+        # planning. A missing/unsafe planned target also blocks all deletion.
+        expected = {row["target"] for row in delete_targets}
+        bases = {name: _safe_base(root, name) for name in RUNTIME_TARGETS}
+        fresh = {
+            row["target"]: row for row in _runtime_targets(root, bases, init)
+        }
+        unsafe = [
+            name for name in RUNTIME_TARGETS
+            if (name in expected and name not in fresh)
+            or (name in fresh and not fresh[name]["safe"])
+        ]
+        if not expected.issubset(RUNTIME_TARGETS):
+            unsafe.extend(sorted(expected.difference(RUNTIME_TARGETS)))
+        unsafe.extend(
+            name for name, base in bases.items()
+            if base is None and ((root / name).exists() or (root / name).is_symlink())
+            and name not in unsafe
+        )
+        if unsafe:
             logger.error(
                 "CLEANUP_FAIL init=%s targets=%s reason=unsafe_target_path; init preserved",
-                init,
-                ",".join(unsafe_names),
+                init, ",".join(unsafe),
             )
             failures += 1
             continue
 
-        for name, safe_target in resolved_targets:
+        # A published copy can disappear or become invalid after plan creation.
+        # Reject the entire init if either independent copy is no longer safe.
+        publication_errors = _publication_reasons(root, web_root, init)
+        if publication_errors:
+            logger.error(
+                "CLEANUP_FAIL init=%s reason=%s; init preserved",
+                init, ",".join(publication_errors),
+            )
+            failures += 1
+            continue
+
+        for name in RUNTIME_TARGETS:
+            if name not in expected:
+                continue
             try:
-                shutil.rmtree(safe_target)
+                shutil.rmtree(Path(fresh[name]["path"]))
             except OSError as exc:
                 logger.error("CLEANUP_FAIL init=%s target=%s error=%s", init, name, exc)
                 failures += 1
@@ -287,7 +304,7 @@ def run_cleanup(
     root: Path,
     *,
     web_root: Path,
-    retention_days: int = DEFAULT_RETENTION_DAYS,
+    retention_days: int,
     dry_run: bool = False,
     current_init: str | None = None,
     now: datetime | None = None,
@@ -328,7 +345,7 @@ def run_cleanup(
         logger.info("CLEANUP_OK dry_run=true delete_candidates=%s skipped=%s deleted_targets=0", delete_candidates, skipped)
         return plan, 0
 
-    deleted, failures = execute_cleanup_plan(root, plan, logger)
+    deleted, failures = execute_cleanup_plan(root, plan, logger, web_root=web_root)
     if failures:
         logger.error("CLEANUP_FAIL deleted_targets=%s failed_targets=%s", deleted, failures)
         return plan, 1
@@ -340,7 +357,12 @@ def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Safely delete expired completed AIFS dain/daio init directories.")
     parser.add_argument("--root", type=Path, default=configured_project_root(PROJECT_ROOT))
     parser.add_argument("--web-root", type=Path, default=Path(os.getenv("AIFS_WEB_ROOT", "/var/www/html")))
-    parser.add_argument("--retention-days", type=int, default=DEFAULT_RETENTION_DAYS)
+    parser.add_argument(
+        "--retention-days",
+        type=int,
+        required=True,
+        help="UTC calendar days to retain; provided by run_pipeline.ksh.",
+    )
     parser.add_argument("--dry-run", action="store_true", help="Plan and log cleanup actions without deleting files.")
     parser.add_argument("--current-init", help="Protect this currently running init even if it would otherwise be eligible.")
     return parser

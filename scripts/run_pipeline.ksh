@@ -37,6 +37,10 @@ export STEP10=True
 export WEB_PUBLISH=True
 export CLEANUP=True
 
+# UTC calendar-day retention (single source of truth for operational cleanup).
+# Keep D-0 through D-4; consider D-5 and older for deletion.
+CLEANUP_RETENTION_DAYS=4
+
 #--------------------------------------------------------------------
 #####################################################################
 ### DEFINE DIRECTORY
@@ -326,17 +330,17 @@ EOF_WEB
 
 run_cleanup()
 {
-    log "RUNTIME_CLEANUP_START init=${INIT} retention_days=7"
+    log "RUNTIME_CLEANUP_START init=${INIT} retention_days=${CLEANUP_RETENTION_DAYS}"
 
     if "${AIFS_PYTHON}" "${AIFS_SCRIPT_DIR}/cleanup_runtime_data.py" \
         --root "${AIFS_ROOT}" \
         --web-root "${AIFS_WEB_ROOT}" \
-        --retention-days 7 \
+        --retention-days "${CLEANUP_RETENTION_DAYS}" \
         --current-init "${INIT}"; then
-        log "RUNTIME_CLEANUP_OK init=${INIT} retention_days=7"
+        log "RUNTIME_CLEANUP_OK init=${INIT} retention_days=${CLEANUP_RETENTION_DAYS}"
     else
         RC=$?
-        log "RUNTIME_CLEANUP_WARNING init=${INIT} exit_code=${RC} retention_days=7"
+        log "RUNTIME_CLEANUP_WARNING init=${INIT} exit_code=${RC} retention_days=${CLEANUP_RETENTION_DAYS}"
     fi
 }
 

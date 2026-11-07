@@ -26,7 +26,7 @@ from func.shared.signal_validation import (
     validate_pass2_revision,
     validate_validated_precursor_evidence,
 )
-from func.step07.checks import (
+from func.step07.checks_api import (
     MINORITY_REPORT_SCHEMA,
     load_step06_package,
     load_step07_results,
@@ -38,7 +38,7 @@ from func.step07.checks import (
     validate_step07_minority_report_consistency,
     normalize_step07_result_for_synthesis,
 )
-from func.step08.synthesis import (
+from func.step08.synthesis_api import (
     _candidate_analysis_region_index,
     _candidate_name_grounding_audit,
     _step08_alignment_narrative_errors,
