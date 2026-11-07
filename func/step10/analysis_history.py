@@ -24,7 +24,7 @@ from func.shared.pass2_common import Pass2PipelineError, load_json_object, valid
 from func.shared.pipeline_common import now_utc, sha256sum, write_json
 from func.shared.runtime_paths import logical_ref, resolve_logical_ref, runtime_path
 from func.step10.forecaster_product import step10_output_dir, validate_published_product
-from func.step07.checks import MINORITY_REPORT_SCHEMA, step07_minority_report_path
+from func.step07.checks_api import MINORITY_REPORT_SCHEMA, step07_minority_report_path
 from func.step04.analysis_provenance import PROVENANCE_FILENAME, PROVENANCE_SCHEMA_NAME
 
 

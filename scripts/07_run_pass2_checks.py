@@ -15,7 +15,20 @@ from func.shared.env_loader import load_project_env  # noqa: E402
 from func.shared.pipeline_common import setup_pipeline_logging, update_run_status  # noqa: E402
 from func.shared.runtime_paths import configured_project_root  # noqa: E402
 from func.shared.pass2_common import Pass2PipelineError  # noqa: E402
-from func.step07.checks import ENSEMBLE_MEMBER_COUNT, dry_run_summary, load_step06_package, load_step07_results, run_step07  # noqa: E402
+from func.step07 import checks_analysis as analysis  # noqa: E402
+from func.step07 import checks_validation as validation  # noqa: E402
+from func.step07 import checks_workflow as workflow  # noqa: E402
+from func.step07 import checks_support as support  # noqa: E402
+from func.step07.checks_runtime import configure as configure_step07_roles  # noqa: E402
+from func.step07.checks_context import ENSEMBLE_MEMBER_COUNT  # noqa: E402
+
+configure_step07_roles(
+    analysis=analysis, validation=validation, workflow=workflow, support=support,
+)
+dry_run_summary = workflow.dry_run_summary
+load_step06_package = workflow.load_step06_package
+load_step07_results = workflow.load_step07_results
+run_step07 = workflow.run_step07
 
 ROOT = configured_project_root(ROOT)
 
