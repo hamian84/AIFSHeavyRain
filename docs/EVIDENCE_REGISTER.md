@@ -1,6 +1,6 @@
 # 근거 등록부 및 복원 감사
 
-**작성 기준:** 2026-11-06(KST; 이번 실행 근거 추가)
+**작성 기준:** 2026-11-13(KST; 11월 6일까지의 기존 증거 기록은 당시 시점 기준으로 보존)
 **목적:** 이 문서 묶음의 사실이 실제 커밋·수행파일·과거 대화·추정 중 어디에서 나왔는지 구분하여 재검증할 수 있도록 한다.
 
 ## 1. 증거 등급
@@ -25,6 +25,7 @@
 | G-004 | [`82f42b1` .gitignore](https://github.com/hamian84/AIFSHeavyRain/commit/82f42b193663bb65f8ccf4b9af276ca7524d05f0) | `/scripts/his_run_pipeline.ksh` 제외 |
 | G-005 | [`945320f` Step04/Step07 수정·회귀 테스트](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3) | `func/step04/pass1_engine.py`, `func/step07/checks.py`, 관련 테스트 2개; unittest 17건 통과 |
 | G-006 | [`4d797cc` Step07 평가 불가 상태 결정론 검증](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81) | 필수 scope 메타자료 누락 처리, 불완전 평가의 `insufficient_evidence / indeterminate` 강제, Anchor 지문 계약 버전 및 Step07 회귀 테스트 13건 |
+| G-007 | [`15b0e07` / PR #5 병합](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60) | 2026-11-08 00:26 KST, `main`에 Step04·07·08 모듈 역할 분리, Cleanup 등 31개 파일 반영 |
 
 2026-11-04 당시 검토 기준: `main`/`d37500b`. 당시 PR의 코드 커밋은 G-005·G-006이며, 이 서술은 병합 이전 시점의 기록이다. 2026-11-06 갱신 당시 최신 공개 `main`은 `ffa5f78`이다. 운영 산출물 R-005는 G-006의 최종 validator를 사용해 재생성한 결과가 아니다.
 
@@ -102,6 +103,7 @@
 6. ‘웹페이지 텍스트 추출 성공은 모든 PNG·지도·JavaScript 정상이다’ — **아님**.
 7. ‘10월 5일 구버전의 5mm 논의가 현재 1.0mm/6h 정책보다 우선한다’ — **아님**.
 
+
 ## 8. 기록 신뢰도 향상을 위한 다음 수집 항목
 
 추후에는 Git PR 본문에 `init`, `candidate_id`, `check_id`, 단계별 입력 해시, 오류 코드, 수정 커밋, 재실행 결과, 웹 검증 URL, 적격성 반례 테스트를 함께 기입한다. 실행 전체 ZIP은 저장소 밖에 보관하고 SHA256만 문서에 넣는다.
@@ -117,3 +119,11 @@
 - GitHub 공개 기준 `main`: [`ffa5f78`](https://github.com/hamian84/AIFSHeavyRain/commit/ffa5f7869204610b1693060c6844c960a14566c1). 이 커밋은 `.gitignore`의 `/tests/` 제외를 반영한 것이며, 11월 6일 미커밋 Step08 코드 수정 커밋은 아니다.
 - **증거 수준:** 위 ZIP은 R1 실행 산출물 증거다. 서버 로컬 코드 Diff를 아직 받지 못했으므로 실제 수정 파일·함수에 대한 G1 변경 검증은 불가능하다. Git에 ZIP 원본을 올리지 않는다.
 - Step08/09 최종 수치와 출처, 미확인 재발 위험은 `VALIDATION_HISTORY.md`, `KNOWN_ISSUES.md`의 11월 6일 항목 참고.
+
+## 10. 2026-11-13 현행화 추가 근거 및 미병합 수정본
+
+- **G1 확인:** [GitHub `main` `15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60), PR #5 병합과 31개 파일 변경. 현재 Step04/07/08 운영 모듈명은 이 커밋의 저장소 파일을 기준으로 함.
+- **R-006 원본 실패 DAIO:** `AIFSHeavyRain_daio.zip`, SHA256 `b8d72f2227417e6d7a7fc012e68941fde816d2e2e60bbc99d690fc0e7cec7b84` (사용자 제공 원본 ZIP 바이트). `2026111112/step07/diagnostics/grounding_failures.json`, `step06/pass2_input_package.json`, `step05/diagnostics/REQ_CAND002_005.json`, `step04/codex_cli/pass1_result.json`로 원인 조사. **공개 저장소에 ZIP 원본을 올리지 않음.**
+- **C1 수정 후 운영 확인:** 2026-11-13 사용자 메시지에서 "수정한 내용이 문제없이 수행되는 걸 확인했어"라고 보고. 정확한 재수행 init·로그·Step08~10 산출물은 제공되지 않았으며, 사용자 보고를 R1 직접 실행 검증으로 승격하지 않음.
+- **수정본 제공물:** `AIFSHR_STEP07_MAJORITY_GROUNDING_FIX_20261112.zip` (이전 응답에서 제공; 수정 코드 6개 + `MODIFICATION_REPORT.md`). 당시 산출물 SHA256 `3f9dbc7ce455059b5c77463e169e87815ab430b65d6795e7454a59ff636cb9e9`. 이 ZIP 제공이 곧 GitHub `main` 반영을 의미하지는 않음.
+- **현행 저장소 경계:** 검토 시점 `main=15b0e07`, 최근 수정본은 사용자 운영 적용 확인 단계이지만 Git 저장소에는 아직 미커밋/미병합 상태. 문서 커밋에서도 이 구분을 유지해야 함.

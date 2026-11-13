@@ -1,18 +1,34 @@
 # 변경 이력 (CHANGELOG)
 
-문서 기준일: **2026-11-06(KST)**. 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+문서 최종 갱신일: **2026-11-13(KST)**. 현재 확인된 GitHub `main` 기준은 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60)이다. 과거 기록: 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
 
-## [Unreleased] — Step04 정량 범위·Step07 직접강수 평가 상태
+## [Unreleased] — 2026-11-13 Step07 다수 운영권역 정량 근거 연결 보완 [운영 적용 확인/ Git 반영 전]
+
+### Fixed / Changed
+
+- `init=2026111112`, `CAND_002 / CHK_CAND002_05`: `QUANTITATIVE_CLAIM_INVALID` 및 `QUANTITATIVE_RELATION_MISMATCH`로 Step07 중단. 925 hPa 수렴 `majority + strengthen` Check의 `quantitative_scope=null`에 기존 원자료 연결 기능이 적용되지 않아 AI가 일부 정량 선택자와 비교 관계를 잘못 작성했다.
+- **Git 반영 예정 코드 6개**: `func/step07/checks_analysis.py`, `checks_context.py`, `checks_support.py`, `checks_validation.py`, `checks_workflow.py`, `prompts/step04/candidate_plan.ko.md`. 명시적 정량계약 또는 범위가 명확한 레거시 Check에 한해 Step05의 선택자·비교 관계를 기존 함수로 연결하고, 수치와 모순되는 AI 판단은 계속 검증한다. 기존 `not_strengthen` 기능 유지, 새 검증기 도입·검증 완화 없음.
+- **검증 기록**: 업로드된 실패 DAIO에 대해 F054→F072 공통 18개 운영권역, 수렴 강화 8개·비강화 10개, 선택자 36개·관계 18개를 재계산. 기존 실패 진단 및 명시적/레거시 계약 회귀검증, Python 구문 검사·`git diff --check` 통과(수정본 제공 시점).
+- **운영 확인**: 사용자가 수정본을 반영한 뒤 정상 수행을 확인했다고 2026-11-13 보고. 이 대화에서 수정 후 운영 로그·전체 Step07~10 결과를 직접 확보하여 독립 검증하지는 않았다. GitHub `main` 반영과 관측 기반 예측성능 검증도 아직 수행하지 않았다.
+
+## [2026-11-08] — PR #5 Step04/07/08 역할 분리·런타임 정리 개선 [Git 병합]
+
+- [PR #5](https://github.com/hamian84/AIFSHeavyRain/pull/5) 병합 커밋 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60), 2026-11-08 00:26 KST. 변경 파일 31개가 `main`에 반영됨.
+- Step04의 `func/step04/pass1_*.py`, Step07의 `func/step07/checks_*.py`, Step08의 `func/step08/synthesis_*.py` 중심으로 역할을 분리. 옛 `pass1_engine.py`, `checks.py`, `synthesis.py`는 현행 직접 실행 모듈이 아니다.
+- `scripts/cleanup_runtime_data.py` 및 `scripts/run_pipeline.ksh`의 런타임 정리 구조와 보존 정책을 개선. 기본 설정 `CLEANUP_RETENTION_DAYS=4`는 UTC 날짜 기준 D0~D4 보호이며, 삭제 대상은 안전조건을 충족하는 `dain/daio`로 한정.
+- **검증 한계**: 병합 커밋과 파일 변경은 Git 확인 사실이다. 이 사실만으로 병합 직후 전체 파이프라인이나 실제 삭제 작업을 재수행해 검증했다고 간주하지 않는다.
+
+## [2026-11-04~11-06] — Step04 정량 범위·Step07 직접강수 평가 상태 [기존 Git 반영, 당시 파일명 기준]
 
 ### Fixed
 
-- `func/step04/pass1_engine.py`: 후보영역과 겹치는 Step05 실행 가능 운영권역이 없을 때 `majority + not_strengthen` 정량 명제를 명시적인 후보 단위 범위 오류로 판정한다. Check 하나를 반복 수정해도 해결되지 않는 오류는 기존 후보·가설 컨텍스트에서 현재 계획 chunk 전체를 제한된 횟수로 재생성한다. 후보영역·가설 의미·정량 조건을 바꾸어 오류를 우회하지 않는다.
+- `func/step04/pass1_engine.py` (당시 통합 모듈, PR #5 이후 역할 분리): 후보영역과 겹치는 Step05 실행 가능 운영권역이 없을 때 `majority + not_strengthen` 정량 명제를 명시적인 후보 단위 범위 오류로 판정한다. Check 하나를 반복 수정해도 해결되지 않는 오류는 기존 후보·가설 컨텍스트에서 현재 계획 chunk 전체를 제한된 횟수로 재생성한다. 후보영역·가설 의미·정량 조건을 바꾸어 오류를 우회하지 않는다.
 - [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3) — 위 Step04 수정, Step07 상태 구분 및 회귀 테스트.
 - [`4d797cc`](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81) — Step07 평가 불가 상태의 오판 방지, 누락된 운영권역 메타자료 처리 및 관련 회귀 테스트.
 
 ### Changed
 
-- `func/step07/checks.py`: 직접강수 1.0 mm/6h 임계값은 유지하면서 운영권역 중첩·유효 강수값·범위 메타자료 상태를 구분한다. 핵심시각 평가가 불완전하면 Step07 검증기가 `insufficient_evidence / indeterminate`를 강제해 결측을 강수 부재로 판정하지 않는다. 누락된 Step05 scope 메타자료는 중단 오류 대신 평가 불가 상태로 전달한다. 이 계약 버전은 Anchor 체크 지문에 포함된다.
+- `func/step07/checks.py` (당시 통합 모듈, PR #5 이후 역할 분리): 직접강수 1.0 mm/6h 임계값은 유지하면서 운영권역 중첩·유효 강수값·범위 메타자료 상태를 구분한다. 핵심시각 평가가 불완전하면 Step07 검증기가 `insufficient_evidence / indeterminate`를 강제해 결측을 강수 부재로 판정하지 않는다. 누락된 Step05 scope 메타자료는 중단 오류 대신 평가 불가 상태로 전달한다. 이 계약 버전은 Anchor 체크 지문에 포함된다.
 - Step08은 직접강수 Anchor 평가가 불충분하면 `insufficient_evidence`로 유지하고, Step09는 이를 강수 미확인으로 바꾸지 않는다. 환경 선행신호 후보는 별도 환경 근거와 표출 게이트에 따라 평가한다.
 
 ### Tests
