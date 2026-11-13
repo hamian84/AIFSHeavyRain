@@ -1,6 +1,6 @@
 # 운영 시스템 구조 및 입출력 계약
 
-**적용 기준:** `main` 기준 커밋 `d37500b`와 작업 브랜치 코드 커밋 [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3). 2026-11-03 UTC(`2026110300`) 수행자료와 현재 Step04/07~09 구현을 대조했다. 일부 코드 내부 상세 구현은 대표 모듈·회귀 테스트·저장 산출물로 확인한 수준이며 모든 런타임 분기를 전수 실행한 것은 아니다.
+**적용 기준:** GitHub `main` 병합 커밋 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60) (2026-11-08, PR #5). 이전 검토 기준은 `d37500b`와 작업 브랜치 코드 커밋 [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3). 2026-11-03 UTC(`2026110300`) 수행자료는 당시 운영 검증 증거로 보존하며, 현행 Step04/07/08 모듈 경로는 PR #5가 병합된 `main`을 기준으로 확인했다. 일부 코드 내부 상세 구현은 대표 모듈·회귀 테스트·저장 산출물로 확인한 수준이며 모든 런타임 분기를 전수 실행한 것은 아니다.
 
 ## 1. 주요 경로와 실행 방식
 
@@ -19,11 +19,11 @@
 | 01 AIFS 수집 | `01_collect_aifs.py` | shared AIFS 데이터 모듈 | ECMWF AIFS 원격 자료/수집 목록 | `dain/<init>/raw/aifs/` 및 ingest/run 상태·manifest; 요청 수·누락·자료 유효성 검사 |
 | 02 개요·특성 | `02_build_pass1_overview.py` | `func/step02/*`, shared overview/map | Step01 GRIB, 데이터 카탈로그·운영권역 CSV | `daio/<init>/step02/overview_data.json`, `overview/*.png` |
 | 03 1차 AI 요청 | `03_build_pass1_request.py` | `func/step03/pass1_request.py` | Step02 개요·요약/영상, 요청 프롬프트 | `daio/<init>/step03/pass1_request.json` |
-| 04 후보·분석계획 | `04_run_ai_pass1.py` | `func/step04/pass1_engine.py`, `analysis_provenance.py` | Step03 요청, Step04 한국어 프롬프트·스키마 | `daio/<init>/step04/<provider>/pass1_result.json`, `step04_analysis_provenance.json`, 체크포인트 |
+| 04 후보·분석계획 | `04_run_ai_pass1.py` | `func/step04/pass1_analysis.py`, `pass1_validation.py`, `pass1_workflow.py`, `analysis_provenance.py` | Step03 요청, Step04 한국어 프롬프트·스키마 | `daio/<init>/step04/<provider>/pass1_result.json`, `step04_analysis_provenance.json`, 체크포인트 |
 | 05 진단 산출 | `05_run_step05.py` | `func/step05/diagnostics.py`, `renderer.py`, `candidate_overview.py` | Step04 진단 요청·기상장·정량 정책 | `daio/<init>/step05/diagnostics/REQ_*.json` 및 PNG, `candidate_overview_data.json` |
 | 06 Pass2 입력 구성 | `06_build_pass2_package.py` | `func/step06/package.py` | Step04 후보·계획/Step05 진단 | `daio/<init>/step06/pass2_input_package.json` |
-| 07 독립 판독 | `07_run_pass2_checks.py` | `func/step07/checks.py`, shared majority | Step06 Check별 증거 이미지/정량값, Step07 프롬프트 | `daio/<init>/step07/pass2_check_results.json`, `llm_wiki_minority_report.json`, 진단기록 |
-| 08 후보별 종합 | `08_run_pass2_synthesis.py` | `func/step08/synthesis.py`, `func/shared/signal_validation.py` | Step04 후보/가설, Step06 패키지, Step07 판독, Step08 프롬프트 | `daio/<init>/step08/pass2_result.json` 및 후보별 체크포인트 |
+| 07 독립 판독 | `07_run_pass2_checks.py` | `func/step07/checks_api.py`, `checks_analysis.py`, `checks_validation.py`, `checks_workflow.py`, shared majority | Step06 Check별 증거 이미지/정량값, Step07 프롬프트 | `daio/<init>/step07/pass2_check_results.json`, `llm_wiki_minority_report.json`, 진단기록 |
+| 08 후보별 종합 | `08_run_pass2_synthesis.py` | `func/step08/synthesis_api.py`, `synthesis_analysis.py`, `synthesis_validation.py`, `synthesis_workflow.py`, `func/shared/signal_validation.py` | Step04 후보/가설, Step06 패키지, Step07 판독, Step08 프롬프트 | `daio/<init>/step08/pass2_result.json` 및 후보별 체크포인트 |
 | 09 운영 게시 판단 | `09_finalize_pass2.py` | `func/step09/operational.py`, shared tier validation | Step08 후보별 신호·근거 + Step04~07 검증 자료 | `daio/<init>/step09/operational_result.json`; valid/blocked, display tier, should_surface |
 | 10 예보관용 최종물 | `10_run_forecaster_product.py` | `func/step10/forecaster_product.py`, `analysis_history.py`, `llm_wiki.py` | Step04~09 결과, 지도/영상 자산, 템플릿 | `daou/<init>/index.html`, `forecaster_product.json`, `assets/`, 분석이력 관련 파일 |
 
@@ -80,6 +80,13 @@
 - 정량 selector는 성공한 Step05 근거의 허용 namespace에 있는 request·feature·region·forecast hour·statistic 조합을 사용해야 한다. selector가 중복되거나 근거 namespace를 벗어나면 검증·복구 대상으로 처리한다.
 - Check 입력 지문에는 요청 및 Step05 결과·이미지, prompt/schema, provider·ensemble 계약과 직접강수 Anchor 문맥이 포함된다. 관련 입력·범위 평가가 달라져 지문이 바뀌면 해당 체크포인트를 재사용하지 않고, 영향을 받지 않은 일치 체크는 재사용할 수 있다.
 
+### 4.3.1 2026-11-13 Step07 정량연결 수정의 적용 상태
+
+- **확인된 GitHub `main` (`15b0e07`)**: `majority + not_strengthen` 수렴 정량 연결 기능이 구현되어 있고, `majority + strengthen`에서 정량 범위가 `null`이면 모델이 정량 관계를 직접 작성해야 한다. 이 문서 갱신 시점에는 신규 강화 연결 수정이 공개 `main`에 **미반영**임.
+- **사용자 운영 적용 확인(병합 예정 수정본)**: Step04에 명시된 두 시각과 `convergence925_1e5_s`의 후보 중첩 운영권역 범위가 유일하고 유효한 경우 기존 Step05 선택자·비교 함수로 자료를 연결. 값의 방향에 반하는 AI 결론은 기존 검증으로 거부. 모호하거나 자료가 누락된 레거시 범위는 임의로 유추하지 않음.
+- 수정본 파일: `func/step07/checks_analysis.py`, `checks_context.py`, `checks_support.py`, `checks_validation.py`, `checks_workflow.py`, `prompts/step04/candidate_plan.ko.md`. Step05 자료 생성·Step08~10 계약은 변경 대상 아님.
+- **운영 검증 경계:** 사용자 정상 수행 보고가 있지만 수정 후 전체 로그·웹 결과 독립 검증은 수행하지 않았으며, 코드가 Git에 병합된 후에는 본 항목을 현재 상태에 맞춰 갱신해야 함.
+
 ### 4.4 환경 지속성과 P1 수정
 
 - Step04 내부 local `phase_keys`는 `chunk01:P02` 등 비의미적 식별자일 수 있음.
@@ -114,6 +121,12 @@ WEB_PUBLISH → /var/www/html/.releases/<init>_<build-id>/
 - 동일 init 재게시 뒤에는 페이지의 내용이 바뀔 수 있으므로 과거 실행결과 비교는 `analysis_history`와 당시 스냅샷을 사용한다.
 - `CLEANUP`은 런타임 보존 정책에 영향을 줄 수 있으므로 과거 디버깅자료가 필요한 경우 실행 전에 주의한다.
 - 페이지가 텍스트로 조회되는 것만으로 이미지를 실제로 불러오고 JS 버튼/그래프가 정상 동작한다는 증거가 되지 않는다.
+
+### 5.1 PR #5 런타임 정리 정책 (현재 `main`)
+
+- `scripts/run_pipeline.ksh`의 기본 `CLEANUP_RETENTION_DAYS=4`는 UTC 날짜 기준 D0~D4를 보호한다. 기한이 지난 자료라도 **완료·게시 및 경로 안전 조건**을 확인한 대상만 정리 계획에 포함된다.
+- `scripts/cleanup_runtime_data.py`에서 정리 가능한 경로는 `dain/<init>`와 `daio/<init>`이다. `daou`, 웹 배포 경로 및 `logs`는 삭제 대상이 아니다. 심볼릭 링크 및 보호 경로의 상세 검사는 코드 기준을 따른다.
+- 이 항목은 **Git 코드에서 확인한 정책**이며, 이번 문서 작업에서 실제 삭제/복구를 수행해 검증한 기록은 아니다.
 
 ## 6. 현재 코드에 대해 부정확하게 기술하면 안 되는 내용
 

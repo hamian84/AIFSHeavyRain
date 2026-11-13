@@ -1379,6 +1379,12 @@ def _quantitative_contract_shape_failure_details(
                 "code": "QUANTITATIVE_SCOPE_CONTRACT_INVALID",
                 "detail": "Step04 convergence majority not_strengthen 정량계약 구조가 지원되는 계약과 맞지 않습니다.",
             }]
+    if quantifier == "majority" and state == "strengthen" and isinstance(claim.get("quantitative_scope"), dict):
+        if _majority_convergence_binding_scope(check_specification) is None:
+            return [{
+                "code": "QUANTITATIVE_SCOPE_CONTRACT_INVALID",
+                "detail": "Step04 convergence majority strengthen 정량계약 구조가 지원되는 계약과 맞지 않습니다.",
+            }]
     return []
 
 # Original func/step07/checks.py:3159
@@ -1473,10 +1479,10 @@ def quantitative_atomic_claim_failure_details(
         # features to the model rather than creating a false negative.
         return []
 
-    majority_claim = _single_majority_convergence_not_strengthen_claim(check_specification)
-    if majority_claim is None or check is None or entries is None:
+    majority_binding = _majority_convergence_binding_scope(check_specification, check)
+    if majority_binding is None or check is None or entries is None:
         return []
-    scope = majority_claim["quantitative_scope"]
+    majority_claim, scope = majority_binding
     feature_id = scope["feature_id"]
     hours = list(scope["forecast_hours"])
     statistic = scope["statistic"]
@@ -1549,8 +1555,12 @@ def quantitative_atomic_claim_failure_details(
         target = strengthening_regions if is_strengthening else not_strengthening_regions
         target.append(region_id)
     total = len(expected_regions)
-    support = len(not_strengthening_regions) > total / 2
-    opposite = len(strengthening_regions) > total / 2
+    if majority_claim["expected_state"] == "strengthen":
+        support = len(strengthening_regions) > total / 2
+        opposite = len(not_strengthening_regions) > total / 2
+    else:
+        support = len(not_strengthening_regions) > total / 2
+        opposite = len(strengthening_regions) > total / 2
     assessment = str(result.get("assessment") or "")
     detail_common = {
         "required_feature_id": feature_id,
@@ -1563,15 +1573,17 @@ def quantitative_atomic_claim_failure_details(
         "not_strengthening_regions": [names_by_region.get(region_id, region_id) for region_id in not_strengthening_regions],
         "physical_transitions": transitions,
     }
-    aggregation = _majority_convergence_aggregation_from_result(check_specification, result)
-    text_failures = _majority_count_text_failure_details(result, aggregation)
-    if text_failures:
-        return text_failures
+    if majority_claim["expected_state"] == "not_strengthen":
+        aggregation = _majority_convergence_aggregation_from_result(check_specification, result)
+        text_failures = _majority_count_text_failure_details(result, aggregation)
+        if text_failures:
+            return text_failures
     if support and assessment != "observed":
         return [{
             "code": "QUANTITATIVE_EXPECTED_STATE_MISMATCH",
             "detail": (
-                f"925 hPa 수렴 not_strengthen majority가 {len(not_strengthening_regions)}/{total}개 권역에서 성립합니다. "
+                f"925 hPa 수렴 {majority_claim['expected_state']} majority가 "
+                f"{len(strengthening_regions) if majority_claim['expected_state'] == 'strengthen' else len(not_strengthening_regions)}/{total}개 권역에서 성립합니다. "
                 f"수렴 강화 권역은 {', '.join(detail_common['strengthening_regions']) or '없음'}입니다. "
                 "majority 명제는 observed로 판정하고 예외 권역은 상반 근거에 기록하십시오."
             ),
@@ -1581,7 +1593,8 @@ def quantitative_atomic_claim_failure_details(
         return [{
             "code": "QUANTITATIVE_EXPECTED_STATE_MISMATCH",
             "detail": (
-                f"925 hPa 수렴 not_strengthen majority의 반대가 {len(strengthening_regions)}/{total}개 권역에서 성립합니다. "
+                f"925 hPa 수렴 {majority_claim['expected_state']} majority의 반대가 "
+                f"{len(not_strengthening_regions) if majority_claim['expected_state'] == 'strengthen' else len(strengthening_regions)}/{total}개 권역에서 성립합니다. "
                 "opposite_observed로 판정하십시오."
             ),
             **detail_common,
@@ -1589,7 +1602,7 @@ def quantitative_atomic_claim_failure_details(
     if not support and not opposite and assessment not in {"partially_observed", "uncertain"}:
         return [{
             "code": "QUANTITATIVE_EXPECTED_STATE_MISMATCH",
-            "detail": "925 hPa 수렴 not_strengthen majority가 정확한 다수를 이루지 못했습니다. 부분 확인 또는 불확실로 제한하십시오.",
+            "detail": f"925 hPa 수렴 {majority_claim['expected_state']} majority가 정확한 다수를 이루지 못했습니다. 부분 확인 또는 불확실로 제한하십시오.",
             **detail_common,
         }]
     return []

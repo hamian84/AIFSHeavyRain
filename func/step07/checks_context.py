@@ -69,6 +69,7 @@ SUPPORTED_QUANTITATIVE_ENFORCEMENT_VERSIONS = frozenset({
 })
 SPECIFIC_SELECTOR_GUIDANCE_VERSION = "specific-required-selectors-v1"
 MAJORITY_QUANTITATIVE_BINDING_VERSION = "convergence-majority-source-binding-v1"
+MAJORITY_STRENGTHEN_BINDING_VERSION = "convergence-majority-strengthen-source-binding-v1"
 QUANTITATIVE_STATISTICS = frozenset({"min", "max", "mean", "p95"})
 _TEMPORAL_PRECIPITATION_DIAGNOSTICS = frozenset({"accumulated_precipitation", "temporal_evolution"})
 _TEMPORAL_PRECIPITATION_ROLES = frozenset({"hazard_magnitude", "uncertainty"})

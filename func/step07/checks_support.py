@@ -294,6 +294,84 @@ def _single_majority_convergence_not_strengthen_claim(
         return None
     return claim
 
+def _majority_convergence_binding_scope(
+    specification: dict[str, Any],
+    check: dict[str, Any] | None = None,
+) -> tuple[dict[str, Any], dict[str, Any]] | None:
+    """Exact 925 hPa convergence majority scope, with safe legacy fallback.
+
+    For legacy strengthen claims without an explicit scope, only the original
+    Check and atomic claim may define the two forecast hours. Do not infer a
+    variable, time window, or region from model-authored selectors.
+    """
+    existing = _single_majority_convergence_not_strengthen_claim(specification)
+    if existing is not None:
+        return existing, existing["quantitative_scope"]
+    contract = specification.get("atomic_claim_contract")
+    claims = contract.get("canonical_claims") if isinstance(contract, dict) else None
+    if not isinstance(claims, list) or len(claims) != 1 or not isinstance(claims[0], dict):
+        return None
+    claim = claims[0]
+    if claim.get("scope_quantifier") != "majority" or claim.get("expected_state") != "strengthen":
+        return None
+    scope = claim.get("quantitative_scope")
+    if scope is None:
+        if not isinstance(check, dict) or (
+            specification.get("feature_ids") != ["convergence925_1e5_s"]
+            or specification.get("diagnostic_id") != "temporal_evolution"
+            or check.get("check_scope") != "temporal_evolution"
+        ):
+            return None
+        statement = str(claim.get("claim_statement") or "")
+        expected = str(specification.get("expected_signal") or "")
+        scope_description = str(claim.get("scope_description") or "")
+        if (
+            not all(token in statement and token in expected
+                    for token in ("925", "수렴", "강화", "운영권역", "대부분"))
+            or "후보" not in statement
+            or "후보" not in scope_description
+            or "운영권역" not in scope_description
+        ):
+            return None
+        statement_hours = [int(v) for v in re.findall(r"F(\d{2,3})(?!\d)", statement)]
+        expected_hours = [int(v) for v in re.findall(r"F(\d{2,3})(?!\d)", expected)]
+        if (
+            len(statement_hours) != 2
+            or statement_hours != expected_hours
+            or statement_hours != sorted(set(statement_hours))
+            or not set(statement_hours).issubset(
+                set(check.get("allowed_quantitative_forecast_hours") or [])
+            )
+        ):
+            return None
+        scope = {
+            "feature_id": "convergence925_1e5_s",
+            "region_scope": "candidate_overlap",
+            "region_ids": [],
+            "forecast_hours": statement_hours,
+            "comparison_forecast_hours": None,
+            "statistic": "mean",
+        }
+    if not isinstance(scope, dict):
+        return None
+    hours = scope.get("forecast_hours")
+    if (
+        scope.get("feature_id") != "convergence925_1e5_s"
+        or scope.get("region_scope") != "candidate_overlap"
+        or scope.get("region_ids") != []
+        or not isinstance(hours, list) or len(hours) != 2
+        or any(isinstance(h, bool) or not isinstance(h, int) or h < 0 for h in hours)
+        or hours != sorted(set(hours))
+        or scope.get("comparison_forecast_hours") is not None
+        or scope.get("statistic") != "mean"
+        or (check is not None and not set(hours).issubset(
+            set(check.get("allowed_quantitative_forecast_hours") or hours)
+        ))
+    ):
+        return None
+    return claim, scope
+
+
 # Original func/step07/checks.py:2838
 def _majority_convergence_aggregation_from_result(
     check_specification: dict[str, Any],

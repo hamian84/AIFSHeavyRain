@@ -1152,6 +1152,30 @@ def _bundle_messages(
             "방향과 공간적 연결이 불분명하면 유입 여부는 확인되지 않았다고 기술하되, '북동향이므로 후보로 향하지 않는다'처럼 "
             "방향 하나만을 근거로 부재를 단정하지 마십시오. 정량적인 경계 수증기 유입량은 주어진 자료로 계산하지 마십시오."
         )
+    majority_bindings = [
+        _majority_convergence_binding_scope(specifications.get(str(check.get("check_id")), {}), check)
+        for check in checks
+    ]
+    if any(
+        binding is not None and binding[0].get("expected_state") == "strengthen"
+        for binding in majority_bindings
+    ):
+        # Target only applicable checks, not the global Step07 prompt. The
+        # independent AI pass receives no Python-computed outcome here.
+        bundle_context["majority_convergence_strengthen_instruction"] = (
+            "For an exact 925 hPa convergence majority-strengthen claim, assess "
+            "whether more than half of the source-overlap operational regions "
+            "show physical convergence strengthening between the Check's two "
+            "stated forecast hours. Positive convergence increasing or a "
+            "transition into positive convergence is strengthening; becoming "
+            "less negative while still divergent is not. Keep the model's "
+            "meteorological assessment independent. For this exact majority "
+            "comparison, return empty quantitative_claims and "
+            "quantitative_relations arrays instead of manually enumerating "
+            "all operational-region pairs: Python binds and verifies those "
+            "source cells after the independent assessment. Keep image and "
+            "quantitative evidence references grounded in the supplied data."
+        )
     if any("specific_quantitative_selector_context" in row for row in check_rows):
         bundle_context["specific_quantitative_selector_instruction"] = (
             "For each specific Check with status=available, build its deciding quantitative relation "

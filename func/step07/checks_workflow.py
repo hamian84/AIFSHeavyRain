@@ -97,10 +97,13 @@ def _check_fingerprint(
     if _single_specific_quantitative_atomic_claim(check_specification) is not None:
         fingerprint_payload["specific_selector_guidance_version"] = SPECIFIC_SELECTOR_GUIDANCE_VERSION
     if _single_majority_convergence_not_strengthen_claim(check_specification) is not None:
-        # Re-evaluate only Checks whose post-model quantitative binding changed.
+        # Preserve the existing not_strengthen checkpoint contract.
         fingerprint_payload["majority_quantitative_binding_version"] = MAJORITY_QUANTITATIVE_BINDING_VERSION
         if include_majority_narrative_contract:
             fingerprint_payload["majority_narrative_contract_version"] = MAJORITY_NARRATIVE_CONTRACT_VERSION
+    elif _majority_convergence_binding_scope(check_specification, check) is not None:
+        # Re-evaluate only new strengthen bindings; do not invalidate all Checks.
+        fingerprint_payload["majority_strengthen_binding_version"] = MAJORITY_STRENGTHEN_BINDING_VERSION
     anchor_context = _system_direct_precipitation_anchor_context(
         group, check, check_specification, entries
     )
@@ -129,10 +132,10 @@ def _bind_majority_convergence_quantitative_evidence(
     For this exact contract only, numerical claims and pairwise relations are
     *system-generated*, not AI-authored. The result schema is unchanged.
     """
-    claim = _single_majority_convergence_not_strengthen_claim(check_specification)
-    if claim is None:
+    binding = _majority_convergence_binding_scope(check_specification, check)
+    if binding is None:
         return None
-    scope = claim["quantitative_scope"]
+    _claim, scope = binding
     feature_id = str(scope["feature_id"])
     statistic = str(scope["statistic"])
     hours = list(scope["forecast_hours"])
@@ -163,6 +166,10 @@ def _bind_majority_convergence_quantitative_evidence(
         if expected_cells.issubset(cells)
     )
     if len(complete_requests) != 1:
+        if _claim.get("quantitative_scope") is None:
+            # A legacy shadow claim cannot establish an unambiguous source
+            # contract; leave the original AI-validation path unchanged.
+            return None
         raise Pass2PipelineError(
             "QUANTITATIVE_SCOPE_CONTRACT_INVALID",
             f"{check.get('check_id')} majority contract requires exactly one Step05 request "
