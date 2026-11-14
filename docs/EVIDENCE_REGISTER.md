@@ -127,3 +127,12 @@
 - **C1 수정 후 운영 확인:** 2026-11-13 사용자 메시지에서 "수정한 내용이 문제없이 수행되는 걸 확인했어"라고 보고. 정확한 재수행 init·로그·Step08~10 산출물은 제공되지 않았으며, 사용자 보고를 R1 직접 실행 검증으로 승격하지 않음.
 - **수정본 제공물:** `AIFSHR_STEP07_MAJORITY_GROUNDING_FIX_20261112.zip` (이전 응답에서 제공; 수정 코드 6개 + `MODIFICATION_REPORT.md`). 당시 산출물 SHA256 `3f9dbc7ce455059b5c77463e169e87815ab430b65d6795e7454a59ff636cb9e9`. 이 ZIP 제공이 곧 GitHub `main` 반영을 의미하지는 않음.
 - **현행 저장소 경계:** 검토 시점 `main=15b0e07`, 최근 수정본은 사용자 운영 적용 확인 단계이지만 Git 저장소에는 아직 미커밋/미병합 상태. 문서 커밋에서도 이 구분을 유지해야 함.
+
+## 11. 2026-11-15 Step04·08 수정본 및 사용자 시험 보고 근거
+
+- **G-008 공개 Git 기준:** [`8afd3c3` / PR #6 병합](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e). 2026-11-15 조회 시점의 `main` HEAD. 이 커밋의 Step04 정규화 버전은 `1.0.0`, Step08 최초 AI 요청에는 수정된 물리량별 `observable_grounding_contract`가 아직 연결되지 않았다. 즉 이번 Step04·08 수정본은 **공개 Git 미병합**.
+- **R-007 수정 전 오류 자료:** 사용자 제공 `daio(4).zip`, SHA256 `df6264bf21cf9009c4240ce766ccc6e27018f9f436e103b56662d9db551e89fe`. 내부 `2026111312/step04/codex_cli/failure_summary.json`의 `HYPOTHESIS_CHECK_ROLE_CONFLICT` 기록을 확인. 실행 자료 전체 ZIP은 Git 업로드 금지.
+- **C-008 Step08 실패 로그:** 사용자 제공 `2026111312` Step08 `OBSERVABLE_IDENTITY_INVALID`, `CAND_002` 재생성 두 차례 후 실패. 상세자료 존재와 실제 사용 판독의 차이가 원인 판단의 출발점이며, 실패 AI 서술 원문 전체는 이 기록에 없음.
+- **수정본 제공 근거:** Step04 `AIFSHR_STEP04_VALIDATION_OPTIMIZATION_20261114.zip`은 이전 수정·시험 기록에 근거하며 이 문서 갱신 시 ZIP 바이트를 다시 확보하지 못했다. Step08 `AIFSHR_STEP08_GITHUB_MAIN_MODIFIED_20261114.zip`, SHA256 `75c9e742ee7bec3b618e944e61022320d26f7bb6422b9219ad66fa19fb5f0dc0`은 해당 바이너리 파일이 이 대화에 존재해 확인했다.
+- **C-009 사용자 시험 보고:** 2026-11-15 사용자 발화 "앞서 step04, 08을 수정한 코드로 테스트도 완료했어". **C1 등급**으로 기록. 재실행 성공 로그 및 최종 출력의 R1 독립 검증, 실제 운영 파일의 체크섬 대조, Git 반영 완료의 G1 증거로 승격하지 않음.
+- **별도 Step07 자료:** `daio(5).zip`, SHA256 `3c21a2b007324f9e54f59a785952dadc14f6bdc24c7315735bfc6ebfa9323db4`. `2026111400/CAND_008/CHK_CAND008_04` 위치 서술과 `relative_sector` 충돌을 확인한 실패 기록이며, Step04·08 수정의 효과를 뒷받침하는 근거는 아님.

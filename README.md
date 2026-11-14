@@ -1,6 +1,8 @@
 # AIFSHeavyRain — AIFS 기반 위험강수 감시 우선순위 예보지원 시스템
 
-> 문서 기준일: **2026-11-04(KST; 2026-11-03 UTC)**
+> 문서 갱신일: **2026-11-15(KST)**. 현재 확인된 공개 GitHub `main`: [`8afd3c3`](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e). Step04·Step08 수정 코드는 **사용자 시험 완료 보고/공개 Git 미반영** 상태이며, 변경사항과 검증 수준은 기존 [CHANGELOG.md](CHANGELOG.md)의 2026-11-14~15 항목에서 관리한다.
+> 아래 초기 기준일·커밋 및 10~11월 초 실행 결과는 **과거 문서화 당시 기준의 이력**으로 보존한다.
+> 기존 문서 기준일: **2026-11-04(KST; 2026-11-03 UTC)**
 > 기준 브랜치·커밋: [`main` / `d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f)
 > 이번 변경 코드: [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3), [`4d797cc`](https://github.com/hamian84/AIFSHeavyRain/commit/4d797cc4eefc3985a11b5447026575c4052c6e81) (검토 중인 작업 브랜치)
 > 문서 성격: 2026년 6~11월 개발·운영 이력의 **사후 복원본**. 일부 초기 사실은 대화 기록에 근거하며 Git 커밋으로 개별 확인되지 않는다.

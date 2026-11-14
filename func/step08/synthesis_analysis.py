@@ -234,6 +234,8 @@ def _messages(
         "allowed_precursor_evidence_paths": _usable_precursor_evidence_paths(group, checks),
         "allowed_alignment_evidence_check_ids": _usable_alignment_check_ids(group, checks),
         "signal_grounding_contract": _signal_grounding_contract(group, checks),
+        # Distinguish available detailed products from usable Step07 evidence.
+        "observable_grounding_contract": _observable_grounding_contract(group, checks),
         "candidate_name_grounding_contract": _candidate_name_grounding_contract(root, group, checks),
         "evidence_reference_contract": _reference_repair_constraints(group, checks),
         "check_semantics": [
@@ -268,6 +270,9 @@ def _messages(
             "Step07 v8의 ensemble_consensus는 동일 근거에 대한 3회 독립 판독의 구조화 합의 결과입니다. check_assessments.assessment는 이 합의로 확정된 권위 판정이므로 Step08에서 다시 판정하거나 반대 상태로 변경하지 마십시오. assessment_agreement=unresolved인 Check는 usable_for_synthesis=false이며 근거로 사용하지 마십시오. minority 원문은 Step08 입력에 제공되지 않으며, 합의 강도는 발생확률이나 위험도 등급으로 해석하지 마십시오. "
             "강수 이동 서술은 ensemble_consensus의 precipitation_motion_agreement와 consensus_precipitation_motion_classification을 반드시 따르십시오. coherent_movement가 unanimous인 경우에만 '이동한다/이동하며'처럼 무조건적인 연속 이동을 사실로 서술할 수 있습니다. coherent_movement가 majority이면 '이동 신호가 다수 판독에서 확인되지만' 또는 '이동하는 양상이 있으나 재배치 가능성이 남는다'처럼 이견을 문장 안에 명시하십시오. reorganization/indeterminate/stationary 또는 위치 합의가 불충분하면 하나의 강수계가 연속 이동한다고 단정하지 말고 확대·재배치·분리·재조직 또는 이동 여부 불확실로 서술하십시오. 이 규칙은 final_assessment, operational_brief.key_signal, operational_guidance 및 예보관 답변에 모두 적용합니다. "
             "check_semantics.capability.observable_ids는 해당 Check가 실제 상품에서 직접 확인할 수 있는 기상량의 식별자입니다. 근거를 종합할 때 이 observable identity를 다른 Check의 유사 개념으로 치환하지 마십시오. 특히 total_column_water 중첩을 moisture_flux 중첩으로, wind_vector_difference_850_500을 실제 하층 바람으로 바꾸어 서술하지 마십시오. "
+            "observable_grounding_contract를 최초 종합판단에도 적용하십시오. 각 물리량의 state=usable인 경우에만 해당 usable_check_ids의 실제 판독 범위에서 강도·변화·공간구조를 사실로 서술하십시오. "
+            "state=available_but_unusable이면 상세자료는 존재하되 현재 종합판단에 사용할 수 있는 판독 근거가 없다는 뜻입니다. 이 경우 물리량의 강화·약화·지속·분포·중첩을 확인된 사실로 쓰지 말고, 필요한 경우 판단 한계만 표현하십시오. "
+            "특히 TCW와 연직바람시어의 자료 존재를 해당 상태의 확인과 혼동하지 마십시오. 다른 usable 선행환경 Check에 근거한 판단은 보존하고, 자료 부족은 실제 available 상태가 부족할 때만 설명하십시오. "
             "unusable_check_ids와 내부 검증 실패 상태는 사용자 자연어에 설명하지 마십시오. 해당 근거를 사용하지 않은 결과 특정 강도 변화·이동·지속성을 판단할 수 없다면 그 기상학적 판단 한계만 표현하십시오. 실제 상세자료가 없거나 불완전한 경우에만 자료 부족을 언급하십시오. "
             "final_assessment는 candidate_core_time_window를 주된 예보기간으로 삼아 그 시간창의 강수 전개부터 시작하십시오. 분석 여유시간의 자료를 쓰는 경우 원래 후보시간 이후 또는 이전의 후속·선행 변화임을 명확히 구분하십시오. 강수영역의 확대와 주요 강수 중심의 이동은 서로 다른 개념이므로 Step07 근거가 구분할 때 자연어에서도 반드시 구분하십시오."
         ),

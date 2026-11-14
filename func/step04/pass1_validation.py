@@ -6987,6 +6987,36 @@ def _compact_check_fingerprint(
         "evidence_role": str(row.get("evidence_role", "")),
         "coverage_roles": sorted(_effective_compact_check_coverage_roles(row)),
         "purpose": re.sub(r"\s+", " ", str(row.get("purpose", "")).strip()),
+        # Continuation reuse must preserve the complete executable proposition.
+        # Similar narrative text is not evidence that different atomic states,
+        # subareas, quantitative scopes or component contracts are equivalent.
+        "verification_mode": str(row.get("verification_mode", "")),
+        "check_scope": str(row.get("check_scope", "")),
+        "spatial_relation_scope": str(row.get("spatial_relation_scope", "")),
+        "required_signal_components": sorted(
+            {str(item) for item in (row.get("required_signal_components") or [])}
+        ),
+        "atomic_claims": sorted(
+            [
+                {
+                    "claim_components": sorted(
+                        {str(item) for item in (claim.get("claim_components") or [])}
+                    ),
+                    "expected_state": str(claim.get("expected_state", "")),
+                    "scope_quantifier": str(claim.get("scope_quantifier", "")),
+                    "scope_description": re.sub(
+                        r"\s+", " ", str(claim.get("scope_description", "")).strip()
+                    ),
+                    "phase_keys": sorted(
+                        {phase_aliases.get(str(key), str(key)) for key in (claim.get("phase_keys") or [])}
+                    ),
+                    "quantitative_scope": claim.get("quantitative_scope"),
+                }
+                for claim in (row.get("atomic_claims") or [])
+                if isinstance(claim, dict)
+            ],
+            key=canonical_hash,
+        ),
         "cross_section_line": _cross_section_line_signature(row.get("cross_section_line")),
         "cross_section_strategy": _normalized_cross_section_strategy(row.get("cross_section_strategy")),
         "reference_band_axis": _reference_band_axis_signature(row.get("reference_band_axis")),
@@ -8064,9 +8094,15 @@ def _merge_semantic_duplicate_compact_hypotheses(
         )
         overlap = set(duplicate_of["supporting_check_keys"]) & set(duplicate_of["opposing_check_keys"])
         if overlap:
-            duplicate_of["opposing_check_keys"] = [
-                value for value in duplicate_of["opposing_check_keys"] if value not in overlap
-            ]
+            # An ambiguous evidence role is not a harmless representation issue.
+            # Never silently delete opposing evidence or change the AI's premise.
+            raise ValueError(
+                "HYPOTHESIS_CHECK_ROLE_CONFLICT "
+                f"candidate_id={candidate_id} "
+                f"hypothesis={duplicate_of.get('hypothesis_key')} "
+                f"check_ids={sorted(overlap)}; "
+                "repair=regenerate the hypothesis/check relationships without changing evidence polarity"
+            )
         duplicate_of["statement"] = _more_specific_compact_narrative(
             duplicate_of.get("statement"), row.get("statement")
         )
@@ -9138,6 +9174,38 @@ def validate_compact_candidate_plan_response(
                         "repair=regenerate the continuation chunk so at least one previously missing "
                         "coverage role is satisfied by an executable verification structure"
                     )
+
+        # Reuse the *existing* final Check/phase/hypothesis normalization on
+        # copies before accepting a chunk. Otherwise an alias created only at
+        # expansion can introduce a role conflict after the bounded repair loop.
+        # This does not add a new meteorological validator or mutate AI evidence.
+        trial_chunk = (
+            _normalize_compact_continuation_chunk(copy.deepcopy(value), previous_chunks)
+            if previous_chunks else copy.deepcopy(value)
+        )
+        trial_chunks = [*previous_chunks, trial_chunk]
+        trial_phases = [
+            copy.deepcopy(phase)
+            for item in trial_chunks
+            for phase in _compact_plan_rows(item, "analysis_phases")
+        ]
+        trial_checks = [
+            copy.deepcopy(check)
+            for item in trial_chunks
+            for check in _compact_plan_rows(item, "diagnostic_checks")
+        ]
+        trial_hypotheses = [
+            copy.deepcopy(hypothesis)
+            for item in trial_chunks
+            for hypothesis in _compact_plan_rows(item, "hypotheses")
+        ]
+        trial_phases = _deduplicate_compact_phases(trial_phases, trial_checks)
+        _canonicalize_semantic_duplicate_compact_plan(
+            trial_checks,
+            trial_hypotheses,
+            trial_phases,
+            candidate_id=str(candidate.get("candidate_id", "")),
+        )
     except (TypeError, ValueError) as exc:
         errors.append(str(exc))
     return errors

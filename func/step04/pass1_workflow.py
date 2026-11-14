@@ -362,10 +362,20 @@ def _compact_provider_envelope(envelope: dict[str, Any]) -> dict[str, Any]:
 
 # Original func/step04/pass1_engine.py:3053
 def _compact_candidate_chunk_repair_required(validation_errors: list[str]) -> bool:
-    """Identify contracts that cannot be executed within any single Check."""
+    """Route non-local hypothesis and Check-merge errors to chunk regeneration.
+
+    These errors cannot be repaired by replacing one verification request:
+    the model must reconsider relationships across Checks and hypotheses.
+    Keep the existing bounded chunk-repair budget and original context.
+    """
     return any(
-        "CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE" in str(error)
+        marker in str(error)
         for error in validation_errors
+        for marker in (
+            "CANDIDATE_QUANTITATIVE_SCOPE_UNAVAILABLE",
+            "HYPOTHESIS_CHECK_ROLE_CONFLICT",
+            "COMPACT_CHECK_MERGE_CONTRACT_CONFLICT",
+        )
     )
 
 # Original func/step04/pass1_engine.py:3086
