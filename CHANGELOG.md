@@ -1,6 +1,17 @@
 # 변경 이력 (CHANGELOG)
 
-문서 최종 갱신일: **2026-11-13(KST)**. 현재 확인된 GitHub `main` 기준은 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60)이다. 과거 기록: 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+문서 최종 갱신일: **2026-11-15(KST)**. 2026-11-15 확인된 GitHub `main` 기준은 [`8afd3c3`](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e)이다. 2026-11-13까지의 이전 문서 기준은 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60)이다. 과거 기록: 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+
+## [Unreleased] — 2026-11-14~15 Step04·Step08 검증·복구 최적화 [사용자 시험 완료 보고 / Git 반영 전]
+
+- **기준:** 2026-11-15 확인 GitHub `main=8afd3c3`. 이 커밋에는 이번 Step04·Step08 운영 코드 수정본이 포함되지 않는다. 운영 서버 적용·시험과 Git 반영을 구분한다.
+- **Step04:** `init=2026111312`의 `HYPOTHESIS_CHECK_ROLE_CONFLICT` 대응. `func/step04/pass1_validation.py`의 Check 의미 지문 및 통합 전 검증, `pass1_workflow.py`의 chunk 단위 복구 경로, `pass1_context.py`의 정규화 버전 `1.0.1` 변경. 자동 반대 근거 삭제를 방지하고 기존 AI 판단·검증 원칙을 유지한다.
+- **Step08:** 동일 초기시각 `OBSERVABLE_IDENTITY_INVALID` 대응. `func/step08/synthesis_analysis.py` 최초 입력의 물리량별 사용 가능 근거 계약 전달과 `synthesis_workflow.py` 복구 지시의 오류 필드 경로 보존. 기존 Step07 Check 판정·Step08 물리량 검증·Step09~10 계약 유지.
+- **수정본 제공:** `AIFSHR_STEP04_VALIDATION_OPTIMIZATION_20261114.zip`(이전 기록), `AIFSHR_STEP08_GITHUB_MAIN_MODIFIED_20261114.zip`(이번 문서 작업에서 파일 직접 확인).
+- **사용자 시험 보고:** 2026-11-15, Step04·Step08 수정 코드로 시험 완료. 현재 대화에 시험 초기시각·명령·완료 로그가 별도로 제공되지 않아 전체 파이프라인 성공 또는 관측 기반 예측성능 향상으로 확대하지 않는다.
+- **문서 관리:** Step04·08 변경과 검증 상태는 이 기존 CHANGELOG 항목에서 관리하며, 새 단계별 이력 파일을 만들지 않는다. 시험의 범위와 한계는 기존 [VALIDATION_HISTORY.md](docs/VALIDATION_HISTORY.md), 근거 등급은 [EVIDENCE_REGISTER.md](docs/EVIDENCE_REGISTER.md), 미해결 항목은 [KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)에 추가한다. 이번 문서 갱신은 운영 코드·GitHub 업로드를 수행하지 않았다.
+- **검증 경계:** 앞서 제공한 Step04 수정본은 Check 중복 처리 및 모의 AI chunk 복구, Python 문법·변경 범위 시험을 수행했으며, Step08 수정본은 근거 사용 가능 상태 전달, TCW 오류 경로 보존, 연직바람시어 복구 지시 유지, Python 문법 검사를 수행했다. 이는 **코드 단위 시험**이며 실제 `2026111312` Step04/Step08 전체 재수행의 독립 검증이 아니다.
+- **남은 위험:** Step04 통합 체크포인트 버전 상향 시 후보계획 재생성 가능성, Step08 유효 Check가 없는 물리량의 단정 방지, 동일 입력 반복 재현성은 추가 운영 증거가 필요하다. `2026111400` Step07 `SPATIAL_NARRATIVE_GROUNDING_INVALID` 사례는 별도 미해결 사안으로 Step04·08 수정 성과로 간주하지 않는다.
 
 ## [Unreleased] — 2026-11-13 Step07 다수 운영권역 정량 근거 연결 보완 [운영 적용 확인/ Git 반영 전]
 

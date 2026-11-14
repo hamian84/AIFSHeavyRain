@@ -64,9 +64,21 @@ def _step08_language_repair_reason(errors: list[str]) -> str:
 # Original func/step08/synthesis.py:940
 def _step08_observable_repair_reason(errors: list[str]) -> str:
     """Return an actionable observable-grounding instruction for regeneration."""
-    details = "; ".join(str(error).split(":", 1)[-1].strip() for error in errors[:6])
+    # Preserve the precise failing field path when regenerating a multi-field block.
+    details = "; ".join(str(error).strip() for error in errors[:6])
     topics: list[str] = []
     joined = " ".join(errors)
+    if any(
+        str(error).startswith("signal_assessment.precursor_environment_assessment:")
+        for error in errors
+    ):
+        topics.append(
+            "오류 필드는 signal_assessment.precursor_environment_assessment입니다. "
+            "TCW의 usable Step07 판독 근거가 없으면 TCW 강도·증감·유지·공간구조를 "
+            "확인된 사실로 서술하지 말고, 사용할 수 있는 다른 선행환경 Check로 판단하십시오. "
+            "TCW 관련 내용은 자료 부족으로 바꾸지 말고 현재 사용할 수 있는 판독의 "
+            "판단 한계로 표현하며, Check 판정이나 사용 가능성을 바꾸지 마십시오."
+        )
     if "연직바람시어" in joined or "연직 바람 시어" in joined:
         topics.append(
             "연직바람시어가 available_but_unusable이면 시어의 강도·약화·강화·공간구조 변화를 사실로 쓰지 말고, "
