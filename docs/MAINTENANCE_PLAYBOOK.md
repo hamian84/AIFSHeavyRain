@@ -102,3 +102,11 @@ sha256sum -c DOC_SHA256SUMS.txt
 ```
 
 위 명령은 프로젝트 루트에 이 문서 외 Markdown이 있으면 그 파일도 포함할 수 있다. 정확한 최초 문서 8개만 기록하려면 대상 파일 목록을 명시해야 한다.
+
+## 2026-11-18 신규 종관 진단 유지관리
+
+- 새 진단의 가용성·단위·계산·시각·근거역할·허용 판독 항목을 먼저 정의. Step03→04→05→06→07→08→10 식별자/해시 연계까지 통합 검증.
+- 설명용 Check는 Step09 운영 판단 근거로 사용 불가. 무근거 위치 변화·이동·물리과정 주장을 차단.
+- 기본 AIFSHR_ENABLE_SYNOPTIC_CONTEXT=0. 실제 사례 시험은 별도 AIFSHeavyRain_test 소스·자료·API 출력·웹경로에서만 수행. 운영 run_pipeline.ksh의 WEB_PUBLISH/CLEANUP 기본 True를 그대로 실행하지 말 것.
+- 운영 GitHub main 및 기존 daio/daou/웹 최신 심볼릭 링크를 수정하지 말 것. 회귀 및 장애주입 시험 이후 별도 PR을 사용자 승인 아래 반영.
+- 별도 외부 소스·스킬 도입 없음. 기존 프로젝트의 NumPy/Xarray/Matplotlib/Pillow/PyYAML/jsonschema 재사용.

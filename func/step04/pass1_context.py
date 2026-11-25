@@ -80,7 +80,7 @@ CANDIDATE_DISCOVERY_METEOROLOGICAL_QC_VERSION = "1.1.0"
 CANDIDATE_DISCOVERY_OPERATIONAL_SCOPE_CONTRACT_VERSION = "1.0.1"
 SYSTEM_DIRECT_PRECIPITATION_COVERAGE_AUDIT_VERSION = "1.1.0"
 DIRECT_PRECIPITATION_COVERAGE_RECONCILIATION_VERSION = "1.5.0"
-COMPACT_CANDIDATE_PLAN_CONTRACT_VERSION = "3.12.3"
+COMPACT_CANDIDATE_PLAN_CONTRACT_VERSION = "3.13.0"
 COMPACT_CANDIDATE_PLAN_NORMALIZATION_VERSION = "1.0.1"
 CHECK_INTENT_CONTRACT_VERSION = "1.5.0"
 ATOMIC_CLAIM_CONTRACT_VERSION = "0.4.0"
@@ -88,8 +88,8 @@ ATOMIC_CLAIM_VALIDATION_MODE = "shadow"
 CAPABILITY_VALIDATION_MODE = "shadow"
 COMPACT_CANDIDATE_PLAN_EXPANDER_VERSION = "3.7.1"
 COMPACT_CANDIDATE_PLAN_COVERAGE_VERSION = "1.1.0"
-CANONICAL_PLAN_MAX_HYPOTHESES = 4
-CANONICAL_PLAN_MAX_FORECASTER_QUESTIONS = 6
+CANONICAL_PLAN_MAX_HYPOTHESES = 6
+CANONICAL_PLAN_MAX_FORECASTER_QUESTIONS = 8
 NARRATIVE_LANGUAGE = "ko"
 COMPACT_OBSERVATION_RECOVERY_MAX_TOKENS = 8000
 ACROSS_SECTION_MAX_LENGTH_KM = 450.0
@@ -113,8 +113,9 @@ OPERATIONAL_DIAGNOSTIC_IDS = {
     "horizontal_convergence",
     "vertical_wind_shear",
     "temporal_evolution",
+    "synoptic_context",
 }
-SPATIAL_ONLY_DIAGNOSTIC_IDS = {"multivariable_composite", "vertical_cross_section", "time_height_section", "vertical_wind_shear"}
+SPATIAL_ONLY_DIAGNOSTIC_IDS = {"multivariable_composite", "vertical_cross_section", "time_height_section", "vertical_wind_shear", "synoptic_context"}
 SECTION_DIAGNOSTIC_IDS = {"vertical_cross_section", "time_height_section"}
 CANDIDATE_SCOPE_ONLY_DIAGNOSTIC_IDS = {"time_height_section"}
 MINIMUM_FORECAST_HOURS_BY_DIAGNOSTIC = {
@@ -127,6 +128,7 @@ DIAGNOSTIC_REQUIRED_VARIABLE_ROLES: dict[str, set[str]] = {
     "horizontal_convergence": {"low_level_forcing"},
     "vertical_wind_shear": {"organization_persistence"},
     "multivariable_composite": {"synoptic_support", "uncertainty"},
+    "synoptic_context": {"synoptic_support"},
 }
 VERIFICATION_SIGNAL_COMPONENTS = (
     "direct_precipitation",
@@ -134,6 +136,7 @@ VERIFICATION_SIGNAL_COMPONENTS = (
     "low_level_forcing",
     "mid_upper_forcing",
     "organization_persistence",
+    "synoptic_support",
 )
 VERIFICATION_MODES = (
     "spatial_distribution",
@@ -162,6 +165,7 @@ VERIFICATION_SIGNAL_TO_ROLE = {
     "low_level_forcing": "low_level_forcing",
     "mid_upper_forcing": "midlevel_forcing",
     "organization_persistence": "organization_persistence",
+    "synoptic_support": "synoptic_support",
 }
 VERIFICATION_SIGNAL_TO_SPATIAL_DIAGNOSTIC = {
     "direct_precipitation": "detailed_spatial_map",
@@ -169,6 +173,7 @@ VERIFICATION_SIGNAL_TO_SPATIAL_DIAGNOSTIC = {
     "low_level_forcing": "horizontal_convergence",
     "mid_upper_forcing": "detailed_spatial_map",
     "organization_persistence": "vertical_wind_shear",
+    "synoptic_support": "synoptic_context",
 }
 _STEP04_FORECAST_HOUR_TOKEN = re.compile(
     r"(?i)(?<![A-Za-z0-9_])F\s*(\d{1,3})(?![A-Za-z0-9_])"

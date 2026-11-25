@@ -728,12 +728,25 @@ def _candidate_discovery_group_summary_projection(
 def _related_group_summaries(
     candidate: dict[str, Any],
     group_summaries: list[dict[str, Any]],
+    *,
+    synoptic_hours: list[int] | None = None,
 ) -> list[dict[str, Any]]:
     related_assets = {str(value) for value in candidate.get("related_overview_asset_ids", [])}
+    context_hours: set[int] = set()
+    if synoptic_hours:
+        window = candidate["time_window"]
+        context_hours = {
+            hour for hour in synoptic_hours
+            if window["forecast_hour_start"] <= hour <= window["forecast_hour_end"]
+        }
     selected = [
         summary
         for summary in group_summaries
         if related_assets & {str(value) for value in summary.get("source_asset_ids", [])}
+        or (
+            summary.get("analysis_tier") == "synoptic_context"
+            and context_hours.intersection(summary.get("forecast_hours", []))
+        )
     ]
     if not selected:
         raise Pass1Error(

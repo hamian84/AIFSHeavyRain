@@ -1373,6 +1373,25 @@ def _bounded_vector_subsample(u: Any, v: Any, *, initial_stride: int, max_arrow_
         stride += 1
 
 
+def common_quiver_color(style: dict[str, Any]) -> str:
+    """One shared vector color; no product or Step-specific branching."""
+    return str(style.get('quiver_color', 'black'))
+
+
+def draw_common_quiver(
+    ax: Any, *, x: Any, y: Any, u: Any, v: Any, style: dict[str, Any],
+    scale: float, width: float, zorder: float, pe: Any | None = None,
+) -> Any:
+    """Draw one shared wind-arrow artist for Step02 and Step05 map panels."""
+    artist = ax.quiver(
+        x, y, u, v, color=common_quiver_color(style),
+        scale=scale, width=width, zorder=zorder,
+    )
+    if pe is not None:
+        _apply_line_halo(artist, pe, style)
+    return artist
+
+
 def resolve_quiver_zorder(product: dict[str, Any], style: dict[str, Any]) -> float:
     """Resolve an optional vector draw order while preserving the legacy default."""
     import math
@@ -1406,14 +1425,13 @@ def render_shaded_plus_vector(shaded: Any, u: Any, v: Any, title: str, unit_labe
     u_display, v_display, vector_metadata = _prepare_quiver_components(
         u_val, v_val, product=product, style=style
     )
-    q = ax.quiver(
-        u_lon[::stride, ::stride], u_lat[::stride, ::stride],
-        u_display[::stride, ::stride], v_display[::stride, ::stride],
-        color='black', scale=float(product.get('quiver_scale', style.get('quiver_scale', 250))),
+    q = draw_common_quiver(
+        ax, x=u_lon[::stride, ::stride], y=u_lat[::stride, ::stride],
+        u=u_display[::stride, ::stride], v=v_display[::stride, ::stride],
+        style=style, scale=float(product.get('quiver_scale', style.get('quiver_scale', 250))),
         width=float(product.get('quiver_width', style.get('quiver_width', 0.0026))),
-        zorder=quiver_zorder,
+        zorder=quiver_zorder, pe=pe,
     )
-    _apply_line_halo(q, pe, style)
     quiver_key_enabled = bool(product.get('quiver_key_enabled', style.get('quiver_key_enabled', True)))
     quiver_key_position = str(product.get('quiver_key_position', style.get('quiver_key_position', 'axes'))).lower()
     if quiver_key_enabled and quiver_key_position not in {'none', 'off', 'false', 'disabled'}:
@@ -1432,6 +1450,7 @@ def render_shaded_plus_vector(shaded: Any, u: Any, v: Any, title: str, unit_labe
                 quiver_key_label,
                 labelpos=quiver_key_labelpos,
                 coordinates=quiver_key_coordinates,
+                color=common_quiver_color(style),
             )
             _style_quiver_key(qk, pe, style)
         except Exception:
@@ -1507,14 +1526,13 @@ def render_contour_plus_vector(
     u_display, v_display, vector_metadata = _prepare_quiver_components(
         u_values, v_values, product=product, style=style
     )
-    vectors = ax.quiver(
-        u_lon[::stride, ::stride], u_lat[::stride, ::stride],
-        u_display[::stride, ::stride], v_display[::stride, ::stride],
-        color='black', scale=quiver_scale,
+    vectors = draw_common_quiver(
+        ax, x=u_lon[::stride, ::stride], y=u_lat[::stride, ::stride],
+        u=u_display[::stride, ::stride], v=v_display[::stride, ::stride],
+        style=style, scale=quiver_scale,
         width=float(product.get('quiver_width', style.get('quiver_width', 0.0026))),
-        zorder=quiver_zorder,
+        zorder=quiver_zorder, pe=pe,
     )
-    _apply_line_halo(vectors, pe, style)
     if bool(style.get('quiver_key_enabled', True)):
         key = ax.quiverkey(
             vectors,
@@ -1524,6 +1542,7 @@ def render_contour_plus_vector(
             normalize_display_mathtext(style.get('quiver_key_label', vector_unit_label)),
             labelpos=str(style.get('quiver_key_labelpos', 'E')),
             coordinates=str(style.get('quiver_key_coordinates', 'axes')),
+            color=common_quiver_color(style),
         )
         _style_quiver_key(key, pe, style)
 
@@ -1626,13 +1645,13 @@ def draw_product_panel(
         stride = int(product.get('wind_stride', style.get('wind_stride', 3)))
         quiver_zorder = resolve_quiver_zorder(product, style)
         u_display, v_display, vector_metadata = _prepare_quiver_components(u_val, v_val, product=product, style=style)
-        q = ax.quiver(
-            u_lon[::stride, ::stride], u_lat[::stride, ::stride],
-            u_display[::stride, ::stride], v_display[::stride, ::stride],
-            color='black', scale=float(product.get('quiver_scale', style.get('quiver_scale', 250))),
-            width=float(product.get('quiver_width', style.get('quiver_width', 0.0026))), zorder=quiver_zorder,
+        q = draw_common_quiver(
+            ax, x=u_lon[::stride, ::stride], y=u_lat[::stride, ::stride],
+            u=u_display[::stride, ::stride], v=v_display[::stride, ::stride],
+            style=style, scale=float(product.get('quiver_scale', style.get('quiver_scale', 250))),
+            width=float(product.get('quiver_width', style.get('quiver_width', 0.0026))),
+            zorder=quiver_zorder, pe=pe,
         )
-        _apply_line_halo(q, pe, style)
         extra_metadata.update({
             'wind_stride': stride,
             'resolved_wind_stride': stride,
@@ -1763,13 +1782,13 @@ def draw_product_panel(
         stride = int(product.get('wind_stride', style.get('wind_stride', 3)))
         quiver_zorder = resolve_quiver_zorder(product, style)
         u_display, v_display, vector_metadata = _prepare_quiver_components(u_values, v_values, product=product, style=style)
-        vectors = ax.quiver(
-            u_lon[::stride, ::stride], u_lat[::stride, ::stride],
-            u_display[::stride, ::stride], v_display[::stride, ::stride],
-            color='black', scale=float(product.get('quiver_scale', style.get('quiver_scale', 250))),
-            width=float(product.get('quiver_width', style.get('quiver_width', 0.0026))), zorder=quiver_zorder,
+        vectors = draw_common_quiver(
+            ax, x=u_lon[::stride, ::stride], y=u_lat[::stride, ::stride],
+            u=u_display[::stride, ::stride], v=v_display[::stride, ::stride],
+            style=style, scale=float(product.get('quiver_scale', style.get('quiver_scale', 250))),
+            width=float(product.get('quiver_width', style.get('quiver_width', 0.0026))),
+            zorder=quiver_zorder, pe=pe,
         )
-        _apply_line_halo(vectors, pe, style)
         extra_metadata.update({
             'contour_levels': contour_levels,
             'contour_label': normalize_display_mathtext(product.get('contour_label', '')),

@@ -545,6 +545,10 @@ def finalize_step09(*, root: Any, init: str) -> dict[str, Any]:
         errors = _validate_step08_candidate(root, group, synthesis, results)
         errors.extend(_validate_step08_provenance(root, group, synthesis, results, str(step07.get("schema_version") or "")))
         signal = synthesis["signal_assessment"]
+        from func.shared.synoptic_policy import operational_synoptic_leaks
+        leaks = operational_synoptic_leaks(group, signal)
+        if leaks:
+            errors.append("SYNOPTIC_DECISION_EVIDENCE_LEAK " + ",".join(leaks))
         direct_status = signal.get("direct_precipitation_status")
         environment_status = signal.get("environment_support_status")
         if direct_status not in CANDIDATE_SIGNAL_STATUSES or environment_status not in CANDIDATE_SIGNAL_STATUSES:

@@ -9,6 +9,7 @@ import copy
 import csv
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -29,6 +30,7 @@ from func.shared.forecaster_quantitative import question_answer_errors
 from func.shared.tier_narrative import (TierNarrativeError, public_reason, canonical_guidance, assert_public_tier)
 from func.shared.korean_narrative import validate_forecaster_product_narrative
 from func.shared.runtime_paths import logical_ref, resolve_logical_ref, resolve_step04_output_dir, runtime_path
+from func.shared.synoptic_policy import EXPLANATION_ONLY_DIAGNOSTICS, operational_synoptic_leaks, synoptic_check_ids
 from func.shared.signal_validation import (
     CANDIDATE_SIGNAL_STATUSES,
     CANDIDATE_TYPES,
@@ -101,6 +103,9 @@ FEATURE_LABELS = {
     "omega700_upward": "700 hPa 상승운동 강도",
 }
 PHYSICAL_DIAGNOSTIC_LABELS = {
+    "QL_MSLP_WIND10": "지상 해면기압·10m 바람",
+    "QL_Z500_T500": "500hPa 기온·지위고도",
+    "QL_JET300_Z300": "300hPa 제트·지위고도",
     "QL_PRECIP_6H": "6시간 강수량",
     "QL_CONVERGENCE925_WIND925": "925 hPa 수렴 + 바람",
     "QL_MOISTURE_FLUX850_WIND850": "850 hPa 수증기 플럭스 크기 + 바람",
@@ -116,6 +121,7 @@ PHYSICAL_DIAGNOSTIC_LABELS = {
     "along_section_wind_cross_section": "연직단면 평행바람",
 }
 ROLE_LABELS = {
+    "synoptic_context": "종관 배경 분석",
     "signal_evidence": "신호 근거",
     "forecaster_question_reference": "예보관 질문 근거",
     "direct_precipitation": "모델 강수 예측",
@@ -1201,6 +1207,7 @@ def _decision_meanings_for_check(signal: dict[str, Any], check_id: str) -> list[
 
 def _publication_check_ids(
     signal: dict[str, Any], question_answers: list[dict[str, Any]] | None = None,
+    synoptic_ids: list[str] | tuple[str, ...] = (),
 ) -> list[str]:
     values: list[Any] = list(_require_list(signal.get("signal_evidence_check_ids"), code="PUBLICATION_CHECK_INVALID", message="signal_evidence_check_ids must be an array."))
     evidence = _require_list(signal.get("validated_precursor_evidence"), code="PUBLICATION_CHECK_INVALID", message="validated_precursor_evidence must be an array.")
@@ -1216,6 +1223,7 @@ def _publication_check_ids(
     # Step08/09 decision support. Keep them independent of monitoring tiers.
     for answer in question_answers or []:
         values.extend(answer["evidence_check_ids"])
+    values.extend(synoptic_ids)
     result = _ordered_unique(values)
     if not result:
         raise Pass2PipelineError("PUBLICATION_CHECK_INVALID", "Surface candidate has no publication checks.")
@@ -1598,6 +1606,9 @@ def _roles(
     check_evidence: dict[str, Any] | None = None,
     check_specification: dict[str, Any] | None = None,
 ) -> list[str]:
+    specification = check_specification if isinstance(check_specification, dict) else check_evidence
+    if isinstance(specification, dict) and specification.get("diagnostic_id") in EXPLANATION_ONLY_DIAGNOSTICS:
+        return ["synoptic_context"]
     roles: list[str] = []
     if check_id in {str(item) for item in signal.get("signal_evidence_check_ids", [])}:
         roles.append("signal_evidence")
@@ -1650,7 +1661,6 @@ def _roles(
     # "개별 판독 없음".  Hazard-magnitude Checks are intentionally excluded
     # here so movement/intensity Checks do not override the dedicated direct-
     # precipitation presence node.
-    specification = check_specification if isinstance(check_specification, dict) else check_evidence
     if isinstance(specification, dict) and specification.get("check_scope") != "multivariable_alignment":
         intent = specification.get("intent_contract")
         intent = intent if isinstance(intent, dict) else {}
@@ -1846,6 +1856,95 @@ def _question_answers(value: Any) -> list[dict[str, Any]]:
     return answers
 
 
+def _publish_synoptic_panel_gallery(
+    *, root: Path, candidate_id: str, synoptic_ids: list[str],
+    entries: dict[str, dict[str, Any]],
+    check_evidence_by_id: dict[str, dict[str, Any]],
+    blocks_by_check: dict[str, dict[str, Any]],
+    assets_by_hash: dict[str, dict[str, Any]], stage: Path,
+) -> tuple[list[str], list[dict[str, Any]]]:
+    if not synoptic_ids:
+        return [], []
+    from func.step05.synoptic_products import SYNOPTIC_PRODUCTS
+    valid_products = set(SYNOPTIC_PRODUCTS)
+    collected: list[tuple[str, dict[str, Any]]] = []
+    seen: set[tuple[str, str, int]] = set()
+    for check_id in synoptic_ids:
+        check = check_evidence_by_id.get(check_id)
+        if not isinstance(check, dict):
+            raise Pass2PipelineError("SYNOPTIC_CHECK_EVIDENCE_MISSING", check_id)
+        for request_id in check.get("request_ids", []):
+            entry = entries.get(str(request_id))
+            step05 = entry.get("step05") if isinstance(entry, dict) else None
+            images = step05.get("generated_images") if isinstance(step05, dict) else None
+            if not isinstance(images, list):
+                continue
+            result = step05.get("result") or {}
+            result_images = {image["path"]: image for image in result.get("generated_images", [])}
+            for artifact in images:
+                if not isinstance(artifact, dict):
+                    continue
+                physical = str(artifact.get("physical_diagnostic") or "")
+                hour = artifact.get("forecast_hour")
+                if physical not in valid_products or not isinstance(hour, int) or isinstance(hour, bool):
+                    continue
+                identity = (str(request_id), physical, hour)
+                if identity in seen:
+                    continue
+                seen.add(identity)
+                field_summary = result_images.get(artifact.get("path"), {})
+                collected.append((check_id, {
+                    "request_id": str(request_id),
+                    "physical_diagnostic": physical,
+                    "forecast_hour": hour,
+                    "source_forecast_hour": hour,
+                    "request_forecast_hours": [hour],
+                    "source_path": _source_path(root, artifact.get("path")),
+                    "source_identity": str(artifact.get("path")),
+                    "source_sha256": artifact.get("sha256"),
+                    "hours": [hour],
+                    "origin": "synoptic_context",
+                    "minimum": field_summary.get("min"),
+                    "maximum": field_summary.get("max"),
+                    "units": artifact.get("units"),
+                }))
+    if not collected:
+        raise Pass2PipelineError(
+            "SYNOPTIC_ARTIFACT_MISSING",
+            f"{candidate_id} has usable synoptic Checks but no verified generated maps.",
+        )
+    # Publish every verified forecast hour requested by a usable synoptic Check.
+    # Limiting the gallery to two hours nearest precipitation peaks can remove
+    # the initial synoptic state needed to assess the requested time evolution.
+    kept = sorted(
+        collected,
+        key=lambda item: (item[1]["forecast_hour"], SYNOPTIC_PRODUCTS.index(item[1]["physical_diagnostic"]), item[0]),
+    )
+    asset_ids: list[str] = []
+    statistics: list[dict[str, Any]] = []
+    for check_id, row in kept:
+        asset_id = _publish_asset(stage, assets_by_hash, candidate_id, check_id, row)
+        _append_unique(blocks_by_check[check_id]["asset_ids"], asset_id)
+        if asset_id in asset_ids:
+            continue
+        asset_ids.append(asset_id)
+        minimum, maximum = row["minimum"], row["maximum"]
+        if not all(isinstance(value, (int, float)) and math.isfinite(value) for value in (minimum, maximum)) or minimum > maximum:
+            raise Pass2PipelineError(
+                "SYNOPTIC_PUBLICATION_INVALID",
+                f"{candidate_id}/{check_id}: missing or invalid Step05 field extrema for {row['source_identity']}.",
+            )
+        statistics.append({
+            "asset_id": asset_id,
+            "physical_diagnostic": row["physical_diagnostic"],
+            "forecast_hour": int(row["forecast_hour"]),
+            "minimum": float(minimum),
+            "maximum": float(maximum),
+            "units": str(row.get("units") or ""),
+        })
+    return asset_ids, statistics
+
+
 def _surface_candidate(
     root: Path,
     init: str,
@@ -1888,8 +1987,6 @@ def _surface_candidate(
     question_answers = _question_answers(synthesis.get("forecaster_question_answers"))
     _require_usable_question_evidence(candidate_id, question_answers, step07_checks)
     decision_check_ids = set(_publication_check_ids(signal))
-    publication_checks = _publication_check_ids(signal, question_answers)
-    question_only_ids = set(publication_checks) - decision_check_ids
     entries = _request_entries(group)
     check_evidence_by_id = {
         str(item.get("check_id")): item
@@ -1905,6 +2002,18 @@ def _surface_candidate(
         )
         if isinstance(item, dict) and item.get("check_id")
     }
+    leaks = operational_synoptic_leaks(group, signal)
+    if leaks:
+        raise Pass2PipelineError("SYNOPTIC_DECISION_EVIDENCE_LEAK", f"{candidate_id}: {leaks}")
+    synoptic_ids = sorted(
+        check_id
+        for check_id in synoptic_check_ids(group)
+        if isinstance(step07_checks.get(check_id), dict)
+        and step07_checks[check_id].get("usable_for_synthesis") is True
+        and step07_checks[check_id].get("evidence_status") == "complete"
+    )
+    publication_checks = _publication_check_ids(signal, question_answers, synoptic_ids)
+    question_only_ids = set(publication_checks) - decision_check_ids - set(synoptic_ids)
     blocks: list[dict[str, Any]] = []
     selected: list[tuple[str, dict[str, Any]]] = []
     selected_contradictory = False
@@ -1920,17 +2029,12 @@ def _surface_candidate(
                 "PUBLICATION_CHECK_SPEC_MISSING",
                 f"{candidate_id} publication check has no Step06 check_evidence specification: {check_id}.",
             )
-        blocks.append(
-            _evidence_block(
-                result,
-                signal,
-                check_id,
-                check_evidence,
-                entries,
-                check_specifications_by_id.get(check_id),
-                question_only=check_id in question_only_ids,
-            )
+        block = _evidence_block(
+            result, signal, check_id, check_evidence, entries,
+            check_specifications_by_id.get(check_id),
+            question_only=check_id in question_only_ids,
         )
+        blocks.append(block)
         representative = _select_representative_image(root, result, entries, window, peak_hours)
         if representative is not None:
             selected.append((check_id, representative))
@@ -1960,6 +2064,12 @@ def _surface_candidate(
             )
             if related is not None:
                 _publish_asset(stage, assets_by_hash, candidate_id, check_id, related)
+    synoptic_image_asset_ids, synoptic_quantitative_summary = _publish_synoptic_panel_gallery(
+        root=root, candidate_id=candidate_id, synoptic_ids=synoptic_ids,
+        entries=entries,
+        check_evidence_by_id=check_evidence_by_id, blocks_by_check=blocks_by_check,
+        assets_by_hash=assets_by_hash, stage=stage,
+    )
     _sort_evidence_blocks_for_presentation(
         blocks,
         check_specifications_by_id=check_specifications_by_id,
@@ -2005,6 +2115,9 @@ def _surface_candidate(
         "publication_check_ids": publication_checks,
         "evidence_blocks": blocks,
     }
+    if synoptic_image_asset_ids:
+        surfaced["synoptic_image_asset_ids"] = synoptic_image_asset_ids
+        surfaced["synoptic_quantitative_summary"] = synoptic_quantitative_summary
     environment_localization = signal.get("environment_localization")
     if isinstance(environment_localization, dict) and environment_localization.get("status") == "localized":
         focus_check_id = str(environment_localization.get("evidence_check_id") or "")
@@ -4376,9 +4489,14 @@ def _render_evidence_detail_body(
         if decision_relevance else ''
     )
     majority_html = _render_majority_aggregation(block.get("majority_aggregation"), init)
-    quantitative_table = '' if majority_html else _render_quantitative(
-        block["quantitative_evidence"], block["asset_ids"], assets_by_id, init,
-        candidate_id=candidate["candidate_id"], check_id=block["check_id"]
+    is_synoptic = "synoptic_context" in block.get("roles", [])
+    quantitative_table = (
+        _render_synoptic_statistics(candidate, init, asset_ids=set(asset_ids))
+        if is_synoptic
+        else ('' if majority_html else _render_quantitative(
+            block["quantitative_evidence"], block["asset_ids"], assets_by_id, init,
+            candidate_id=candidate["candidate_id"], check_id=block["check_id"]
+        ))
     )
     return (
         '<div class="evidence-body">'
@@ -4389,8 +4507,9 @@ def _render_evidence_detail_body(
         '</div>'
         f'<section class="check-uncertainty"><h4>판독·근거 불확실성</h4>{_render_list(block["uncertainties"], init)}</section>'
         f'{majority_html}'
-        f'<section class="quantitative-detail"><h4>정량 분석값</h4>'
-        f'{_render_quantitative_series(block.get("quantitative_time_series", []), block["asset_ids"], assets_by_id, init, candidate_id=candidate["candidate_id"], check_id=block["check_id"])}'
+        f'<section class="quantitative-detail">'
+        f'{"" if is_synoptic else "<h4>정량 분석값</h4>"}'
+        f'{"" if is_synoptic else _render_quantitative_series(block.get("quantitative_time_series", []), block["asset_ids"], assets_by_id, init, candidate_id=candidate["candidate_id"], check_id=block["check_id"])}'
         f'{quantitative_table}</section>'
         f'{image_gallery}'
         '</div>'
@@ -4413,6 +4532,7 @@ def _render_evidence_matrix(
         ("mid_upper_forcing", "상승"),
         ("organization_persistence", "바람"),
         ("spatiotemporal_alignment", "일치"),
+        ("synoptic_context", "종관 배경"),
     )
     available_roles = {
         role for block in candidate["evidence_blocks"] for role in block.get("roles", [])
@@ -5789,15 +5909,65 @@ def _render_operational_brief_panel(
     )
 
 
-def _render_analysis_detail_disclosure(candidate: dict[str, Any], init: str) -> str:
+def _render_synoptic_statistics(
+    candidate: dict[str, Any], init: str, *, asset_ids: set[str] | None = None
+) -> str:
+    rows = candidate.get("synoptic_quantitative_summary", [])
+    if not isinstance(rows, list) or not rows:
+        return ""
+    lines: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict) or (
+            asset_ids is not None and row.get("asset_id") not in asset_ids
+        ):
+            continue
+        hour = row.get("forecast_hour")
+        if not isinstance(hour, int) or isinstance(hour, bool):
+            continue
+        minimum, maximum = row.get("minimum"), row.get("maximum")
+        if not isinstance(minimum, (int, float)) or not isinstance(maximum, (int, float)):
+            continue
+        label = _diagnostic_label(str(row.get("physical_diagnostic") or ""))
+        time_label = format_valid_time_kst(init, hour)
+        units = str(row.get("units") or "")
+        lines.append(
+            '<tr><td>' + escape(time_label) + '</td><td>' + escape(label) +
+            '</td><td>' + escape(f"{minimum:.2f}") + '</td><td>' +
+            escape(f"{maximum:.2f}") + '</td><td>' + escape(units) + '</td></tr>'
+        )
+    if not lines:
+        return ""
+    return (
+        '<div class="quantitative-detail"><h4>종관 일기도 정량 요약</h4>'
+        '<table><thead><tr><th>시각</th><th>기상장</th>'
+        '<th>최소</th><th>최대</th><th>단위</th></tr></thead><tbody>'
+        + "".join(lines) + '</tbody></table></div>'
+    )
+
+
+def _render_analysis_detail_disclosure(
+    candidate: dict[str, Any], init: str,
+    assets_by_id: dict[str, dict[str, Any]],
+) -> str:
     categories = candidate.get("validated_precursor_categories", [])
     category_summary = _render_precursor_chips(categories, candidate.get("environment_support_status"))
     environment_status_label, _ = _environment_status_presentation(candidate)
     persistence_status_label, _ = _environment_persistence_presentation(candidate)
+    synoptic_ids = [
+        asset_id for asset_id in candidate.get("synoptic_image_asset_ids", [])
+        if asset_id in assets_by_id
+    ]
+    synoptic_gallery = (
+        '<p class="synoptic-interpretation-note">종관 배경의 시각별 일기도와 격자 정량값은 '
+        '아래 후속 상세분석의 「종관 배경」에서 확인할 수 있습니다. '
+        '기압계의 분포만으로 강수 원인을 확정하지 않습니다.</p>'
+        if synoptic_ids else ""
+    )
     return (
         '<section class="analysis-core-panel" aria-label="종합판단">'
         '<div class="core-assessment"><span class="section-kicker">예보 분석</span><h3>종합판단</h3>'
-        f'{_render_comprehensive_assessment(candidate["final_assessment"], init)}</div>'
+        f'{_render_comprehensive_assessment(candidate["final_assessment"], init)}'
+        f'{synoptic_gallery}</div>'
         '</section>'
         '<details class="analysis-detail-disclosure">'
         '<summary><span><b>상세 분석 보기</b><small>모델 강수 예측·강수 발달 환경·예보관 확인</small></span>'
@@ -5845,7 +6015,7 @@ def _render_surface_candidate(
         f'{_render_decision_status(candidate)}'
         f'{_render_operational_brief_panel(candidate, assets_by_id, init, region_guide_regions or [], geography, forecast_timeline[1])}'
         f'{_render_compact_watch_facts(candidate, init, geography)}'
-        f'{_render_analysis_detail_disclosure(candidate, init)}'
+        f'{_render_analysis_detail_disclosure(candidate, init, assets_by_id)}'
         '</aside></div>'
         f'{_render_signal_chain(candidate, excluded_independent_roles, related_multivariable_assessments)}'
         '<details class="detail-zone-disclosure"><summary class="detail-zone-summary"><span><span class="section-kicker">상세분석</span><b>후속 상세분석</b><small>정량 분석값과 상세 예측장 판독 결과</small></span>'
@@ -6047,6 +6217,24 @@ dialog{{width:min(1680px,98vw);height:96dvh;max-width:98vw;max-height:96dvh;bord
 @media(max-width:1180px){{.evidence-master-detail{{grid-template-columns:310px minmax(0,1fr)}}}}
 @media(max-width:880px){{.evidence-master-detail{{grid-template-columns:1fr;min-height:0}}.evidence-master-list{{display:flex;gap:6px;max-height:none;overflow-x:auto;padding:6px;scroll-snap-type:x proximity}}.evidence-master-item{{flex:0 0 285px;margin:0;scroll-snap-align:start}}.evidence-detail-pane{{max-height:none}}.evidence-detail-head{{position:static}}.majority-region-groups{{grid-template-columns:1fr}}.majority-metrics{{grid-template-columns:1fr 1fr 1fr}}}}
 
+.synoptic-context-details table{{width:100%;table-layout:fixed;border-collapse:collapse;font-size:.75rem}}
+.synoptic-context-details th,.synoptic-context-details td{{padding:5px 3px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}}
+.synoptic-context-details th:first-child{{width:28%}}
+.synoptic-context-details th:nth-child(2){{width:26%}}
+.synoptic-context-details td:nth-child(2){{overflow-wrap:anywhere}}
+.synoptic-context-details td:nth-child(3),.synoptic-context-details td:nth-child(4){{font-variant-numeric:tabular-nums}}
+@media(max-width:480px){{
+  .synoptic-context-details table,.synoptic-context-details tbody{{display:block}}
+  .synoptic-context-details thead{{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}}
+  .synoptic-context-details tbody tr{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:6px 0;border-bottom:1px solid var(--line)}}
+  .synoptic-context-details td{{padding:2px 4px;border:0}}
+  .synoptic-context-details td:nth-child(-n+2){{grid-column:1/-1}}
+  .synoptic-context-details td:nth-child(2){{font-weight:700}}
+  .synoptic-context-details td:nth-child(n+3)::before{{display:block;font-size:.65rem;color:var(--muted);font-weight:700}}
+  .synoptic-context-details td:nth-child(3)::before{{content:"최소"}}
+  .synoptic-context-details td:nth-child(4)::before{{content:"최대"}}
+  .synoptic-context-details td:nth-child(5)::before{{content:"단위"}}
+}}
 </style>
 </head>
 <body>
@@ -6928,6 +7116,27 @@ def validate_published_product(root: Path, product_dir: Path) -> dict[str, Any]:
                 if candidate_id not in set(linked.get("candidate_ids", [])) or check_id not in set(linked.get("check_ids", [])):
                     raise Pass2PipelineError("FORECASTER_PRODUCT_INVALID", "minority_report_assets asset metadata does not match candidate/check linkage.")
     for candidate in product["surfaced_candidates"]:
+        synoptic_assets = candidate.get("synoptic_image_asset_ids", [])
+        if not isinstance(synoptic_assets, list) or len(synoptic_assets) != len(set(synoptic_assets)):
+            raise Pass2PipelineError("SYNOPTIC_PUBLICATION_INVALID", "Synoptic asset list is invalid.")
+        for asset_id in synoptic_assets:
+            asset = asset_map.get(asset_id)
+            if not isinstance(asset, dict) or candidate["candidate_id"] not in asset.get("candidate_ids", []):
+                raise Pass2PipelineError("SYNOPTIC_PUBLICATION_INVALID", f"Missing synoptic asset reference {asset_id}.")
+        for summary in candidate.get("synoptic_quantitative_summary", []):
+            if not isinstance(summary, dict) or summary.get("asset_id") not in synoptic_assets:
+                raise Pass2PipelineError("SYNOPTIC_PUBLICATION_INVALID", "Synoptic statistics lack a published image.")
+            source_refs = asset_map[summary["asset_id"]].get("source_refs", [])
+            if not any(
+                isinstance(ref, dict)
+                and ref.get("physical_diagnostic") == summary.get("physical_diagnostic")
+                and ref.get("forecast_hour") == summary.get("forecast_hour")
+                for ref in source_refs
+            ):
+                raise Pass2PipelineError("SYNOPTIC_PUBLICATION_INVALID", "Synoptic statistics and image time/diagnostic mismatch.")
+            minimum, maximum = summary.get("minimum"), summary.get("maximum")
+            if not all(isinstance(value, (int,float)) and math.isfinite(value) for value in (minimum, maximum)) or minimum > maximum:
+                raise Pass2PipelineError("SYNOPTIC_PUBLICATION_INVALID", "Synoptic quantitative extrema are invalid.")
         block_ids = {block["check_id"] for block in candidate["evidence_blocks"]}
         if block_ids != set(candidate["publication_check_ids"]):
             raise Pass2PipelineError("FORECASTER_PRODUCT_INVALID", "Evidence blocks do not match publication checks.")

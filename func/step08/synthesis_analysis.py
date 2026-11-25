@@ -1,6 +1,7 @@
 """Step step08 analysis responsibility; original function bodies preserved."""
 from __future__ import annotations
 from . import synthesis_context as _step_context
+from func.shared.synoptic_policy import EXPLANATION_ONLY_DIAGNOSTICS
 
 # Original func/step08/synthesis.py:1020
 def _public_check_assessment(result: dict[str, Any]) -> dict[str, Any]:
@@ -87,6 +88,7 @@ def _no_usable_status(
         checks[check_id]
         for check_id, specification in specifications.items()
         if check_id in checks
+        and specification.get("diagnostic_id") not in EXPLANATION_ONLY_DIAGNOSTICS
         and (
             specification.get("variable_role") == "hazard_magnitude"
             if direct
@@ -514,7 +516,7 @@ def _regenerate_step08_semantic_unit(
             "이미 검증된 signal_assessment와 operational_guidance는 변경하지 마십시오. "
             "기존의 강수·환경 판독 상태, 예보시간, 기상량의 관측가능성, 구조화 위치 합의, "
             "유효 Check와 기존 운영판단을 그대로 준수하며 종합판단 및 운영요약의 문장만 독립적으로 다시 생성하십시오. "
-            "final_assessment는 후보 핵심시간의 강수 전개를 중심으로 3~5문장, "
+            "final_assessment는 후보 핵심시간의 강수 전개를 중심으로 일반적으로 3~5문장, 검증된 종관근거가 충분하면 5~8문장, "
             "operational_brief의 각 문구는 120자 이내로 작성하십시오. "
             "기존 운영판단의 current_action 및 next_check와 충돌하는 새로운 기상학적 판단을 만들지 마십시오."
         )
@@ -524,7 +526,7 @@ def _regenerate_step08_semantic_unit(
         repair_context["authoritative_forecaster_question_answers"] = response.get("forecaster_question_answers")
         repair_context["constraints"] = (
             "현재 signal_assessment는 이미 검증된 기준 판단입니다. 이를 변경하거나 재해석하지 말고, uncertainties, final_assessment, "
-            "operational_brief, operational_guidance 전체를 같은 기준 판단에 맞춰 함께 다시 작성하십시오. operational_brief는 화면 상단의 짧은 운영요약이며 각 문구를 120자 이내로 유지하십시오. final_assessment는 후보 핵심 시간창의 강수 전개를 중심으로 3~5문장의 예보 분석 초안 수준으로 다시 작성하고, "
+            "operational_brief, operational_guidance 전체를 같은 기준 판단에 맞춰 함께 다시 작성하십시오. operational_brief는 화면 상단의 짧은 운영요약이며 각 문구를 120자 이내로 유지하십시오. final_assessment는 후보 핵심 시간창의 강수 전개를 중심으로 검증된 종관근거가 있으면 5~8문장까지 허용하는 예보 분석 초안 수준으로 다시 작성하고, "
             "지지·제한 환경과 최종 해석을 하나의 흐름으로 연결하십시오. current_action은 화면에 표시되지 않는 내부 판단 앵커이므로 final_assessment의 상세내용을 반복하지 마십시오."
         )
         signal = response.get("signal_assessment") if isinstance(response.get("signal_assessment"), dict) else {}

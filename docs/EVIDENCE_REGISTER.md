@@ -136,3 +136,10 @@
 - **수정본 제공 근거:** Step04 `AIFSHR_STEP04_VALIDATION_OPTIMIZATION_20261114.zip`은 이전 수정·시험 기록에 근거하며 이 문서 갱신 시 ZIP 바이트를 다시 확보하지 못했다. Step08 `AIFSHR_STEP08_GITHUB_MAIN_MODIFIED_20261114.zip`, SHA256 `75c9e742ee7bec3b618e944e61022320d26f7bb6422b9219ad66fa19fb5f0dc0`은 해당 바이너리 파일이 이 대화에 존재해 확인했다.
 - **C-009 사용자 시험 보고:** 2026-11-15 사용자 발화 "앞서 step04, 08을 수정한 코드로 테스트도 완료했어". **C1 등급**으로 기록. 재실행 성공 로그 및 최종 출력의 R1 독립 검증, 실제 운영 파일의 체크섬 대조, Git 반영 완료의 G1 증거로 승격하지 않음.
 - **별도 Step07 자료:** `daio(5).zip`, SHA256 `3c21a2b007324f9e54f59a785952dadc14f6bdc24c7315735bfc6ebfa9323db4`. `2026111400/CAND_008/CHK_CAND008_04` 위치 서술과 `relative_sector` 충돌을 확인한 실패 기록이며, Step04·08 수정의 효과를 뒷받침하는 근거는 아님.
+
+## 신규 근거 2026-11-18
+
+원본: hamian84/AIFSHeavyRain main commit 9c93f0bf525878fe35509d149e5383cf3174b195.
+변경: func/step05/synoptic_products.py, func/shared/synoptic_policy.py, Step04 스키마/프롬프트, Step05 카탈로그, Step08/09/10 소스 및 게시 스키마.
+시험: tests/test_synoptic_integration.py (합성 7건 통과).
+미확인: 실제 GRIB, 모델 응답, 전단계 운영 검증, 브라우저 및 관측 기반 예측성능.

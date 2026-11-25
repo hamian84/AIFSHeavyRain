@@ -1,10 +1,10 @@
 """Build the compact Step03-to-Step04 discovery request contract."""
 
 from __future__ import annotations
-
 import hashlib
 import json
 from collections import Counter
+from collections.abc import Collection
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -164,6 +164,7 @@ def build_support_catalog(
     feature_catalog_ref: str,
     feature_catalog: dict[str, Any] | None = None,
     diagnostic_catalog: dict[str, Any] | None = None,
+    raw_field_keys: Collection[tuple[str, int | None, int]] = (),
 ) -> dict[str, Any]:
     by_product: dict[str, dict[str, Any]] = {}
     for item in attachment_manifest.get("attachments", []):
@@ -249,9 +250,39 @@ def build_support_catalog(
                 if str(value) in by_product
             ]
             source_rows = [by_product[value] for value in availability_anchor_product_ids]
+            hour_sets = [set(row["allowed_forecast_hours"]) for row in source_rows]
+            allowed_hours = set.intersection(*hour_sets) if hour_sets else set()
+            product_contract = product_contracts.get(calculation_product_id, {})
+            # The availability requirement belongs to the calculation contract,
+            # not a particular diagnostic's hard-coded product ID. Step01
+            # supplies the files; Step03 only advertises executable hours.
+            if source_data_kind == "raw_aifs_grib" and contract.get("raw_field_availability") == "require_all":
+                raw_fields = product_contract.get("raw_fields") if isinstance(product_contract, dict) else None
+                if not isinstance(raw_fields, dict) or not raw_fields:
+                    raise ValueError(f"RAW_FIELD_CONTRACT_INVALID: {calculation_product_id}")
+                required_keys: set[tuple[str, int | None]] = set()
+                for field in raw_fields.values():
+                    if not isinstance(field, dict) or not isinstance(field.get("short_name"), str):
+                        raise ValueError(f"RAW_FIELD_CONTRACT_INVALID: {calculation_product_id}")
+                    if "levels" in field:
+                        levels = field["levels"]
+                        if not isinstance(levels, list) or not levels:
+                            raise ValueError(f"RAW_FIELD_CONTRACT_INVALID: {calculation_product_id}")
+                    elif "level" in field:
+                        levels = [field["level"]]
+                    else:
+                        raise ValueError(f"RAW_FIELD_CONTRACT_INVALID: {calculation_product_id}")
+                    for level in levels:
+                        required_keys.add((field["short_name"], level))
+                allowed_hours = {
+                    hour for hour in allowed_hours
+                    if all((short_name, level, hour) in raw_field_keys for short_name, level in required_keys)
+                }
+                if not allowed_hours:
+                    for diagnostic_id in contract.get("diagnostic_ids", []):
+                        diagnostic_execution_support.pop(str(diagnostic_id), None)
+                    continue
             if calculation_product_id not in by_product and source_rows:
-                hour_sets = [set(row["allowed_forecast_hours"]) for row in source_rows]
-                allowed_hours = set.intersection(*hour_sets) if hour_sets else set()
                 domain_source = next(
                     (row for row in source_rows if row.get("analysis_tier") == "temporal_core"),
                     source_rows[0],
@@ -289,7 +320,6 @@ def build_support_catalog(
                         diagnostic_catalog, calculation_product_id
                     ),
                 }
-            product_contract = product_contracts.get(calculation_product_id, {})
             if isinstance(product_contract, dict):
                 if bool(product_contract.get("quantitative_excerpt_supported", True)):
                     derived_feature_ids[calculation_product_id] = [
@@ -368,6 +398,11 @@ def build_support_catalog(
         if isinstance(diagnostic_catalog, dict)
         else {"contract_version": "legacy-unversioned", "diagnostics": {}}
     )
+    # A semantic capability without executable support must not be advertised
+    # to Step04, regardless of which diagnostic it describes.
+    for diagnostic_id in list(capability_registry["diagnostics"]):
+        if diagnostic_id not in diagnostic_execution_support:
+            capability_registry["diagnostics"].pop(diagnostic_id, None)
     capability_registry["contract_hash"] = _canonical_hash(capability_registry)
 
     return {
@@ -405,7 +440,7 @@ def build_support_catalog(
         "analysis_plan_support": {
             "plan_required_per_candidate": True,
             "minimum_variable_check_count": 3,
-            "maximum_variable_check_count": 10,
+            "maximum_variable_check_count": 12,
             "required_variable_roles": ["hazard_magnitude"],
             "recommended_explanatory_roles": [
                 "moisture_supply",

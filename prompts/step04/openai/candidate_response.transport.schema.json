@@ -516,7 +516,8 @@
               "temporal_evolution",
               "system_tracking",
               "frontogenesis",
-              "q_vector_convergence"
+              "q_vector_convergence",
+              "synoptic_context"
             ]
           },
           "data_type": {
@@ -539,6 +540,7 @@
               "QL_OMEGA700_Z500",
               "QL_MSLP_WIND10",
               "QL_JET300_Z300",
+              "SYNOPTIC_CONTEXT_CORE",
               "MULTIVARIABLE_COMPOSITE_CORE",
               "VERTICAL_WIND_SHEAR_850_500",
               "VERTICAL_CROSS_SECTION_CORE",
@@ -887,7 +889,7 @@
               ]
             },
             "minItems": 1,
-            "maxItems": 4
+            "maxItems": 6
           },
           "target_areas": {
             "type": "array",
@@ -1006,7 +1008,7 @@
               ]
             },
             "minItems": 1,
-            "maxItems": 8
+            "maxItems": 10
           },
           "variable_checks": {
             "type": "array",
@@ -1038,7 +1040,8 @@
                     "moisture_flux",
                     "horizontal_convergence",
                     "vertical_wind_shear",
-                    "temporal_evolution"
+                    "temporal_evolution",
+                    "synoptic_context"
                   ]
                 },
                 "cross_section_line": {
@@ -1183,7 +1186,7 @@
               "minLength": 1
             },
             "minItems": 1,
-            "maxItems": 6
+            "maxItems": 8
           }
         },
         "required": [

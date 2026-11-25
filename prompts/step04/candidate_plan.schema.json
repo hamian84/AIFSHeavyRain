@@ -379,7 +379,8 @@
             "moisture_flux",
             "horizontal_convergence",
             "vertical_wind_shear",
-            "temporal_evolution"
+            "temporal_evolution",
+            "synoptic_context"
           ]
         },
         "cross_section_line": {
@@ -705,7 +706,7 @@
         "hypotheses": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 4,
+          "maxItems": 6,
           "items": {
             "$ref": "#/$defs/hypothesis"
           }
@@ -724,7 +725,7 @@
           "items": {
             "$ref": "#/$defs/phase"
           },
-          "maxItems": 8
+          "maxItems": 10
         },
         "variable_checks": {
           "type": "array",
@@ -736,7 +737,7 @@
         "forecaster_questions": {
           "type": "array",
           "minItems": 1,
-          "maxItems": 6,
+          "maxItems": 8,
           "items": {
             "type": "string",
             "minLength": 1
@@ -783,7 +784,8 @@
             "temporal_evolution",
             "system_tracking",
             "frontogenesis",
-            "q_vector_convergence"
+            "q_vector_convergence",
+            "synoptic_context"
           ]
         },
         "product_id": {

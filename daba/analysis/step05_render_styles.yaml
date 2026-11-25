@@ -6,11 +6,13 @@ figure:
   dpi: 180
   outer_padding_mm: 2.0
 axes:
-  rect: [0.085, 0.075, 0.745, 0.825]
-  bottom: 0.075
+  # Reserve the lower band for longitude ticks, axis label, and up to two
+  # Step05 explanatory notes. The map extent and color scale are unchanged.
+  rect: [0.085, 0.150, 0.745, 0.750]
+  bottom: 0.150
   top: 0.900
 colorbar:
-  rect: [0.850, 0.075, 0.032, 0.825]
+  rect: [0.850, 0.150, 0.032, 0.750]
   label_fontsize: 10
   label_pad: 7
   tick_fontsize: 9
@@ -75,8 +77,6 @@ product_style_overrides:
     longitude_tick_interval: 1.0
     latitude_tick_interval: 1.0
   QL_MOISTURE_FLUX850_WIND850:
-    # 11 scalar intervals plus one extend color from a fixed cividis sample.
-    colors: ['#002D68', '#233C6E', '#3E4B6C', '#535A6D', '#666970', '#797977', '#8E8978', '#A39A74', '#BAAC6D', '#D1BF61', '#E9D34E', '#FEE838']
     # Fallback only when adaptive Step05 sampling is disabled.
     wind_stride: 4
     quiver_calm_threshold_ms: 0.0
@@ -89,6 +89,11 @@ product_style_overrides:
     longitude_tick_interval: 2.0
     latitude_tick_interval: 2.0
 product_presentation:
+  # Step05 output labels only. Numerical scales and drawing styles remain shared.
+  QL_Z500_T500:
+    colorbar_label: '500hPa 기온 (°C)'
+  QL_JET300_Z300:
+    colorbar_label: '300hPa 풍속 (m s$^{-1}$)'
   QL_CONVERGENCE925_WIND925:
     colorbar_label: '925 hPa 수평수렴 (10$^{-5}$ s$^{-1}$; 양수=수렴, 음수=발산)'
   QL_OMEGA700_Z500:

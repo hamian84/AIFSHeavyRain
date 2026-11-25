@@ -18,7 +18,7 @@ import yaml
 from func.shared import aifs_data
 from func.step02.aifs_feature_engine import load_yaml_mapping
 from func.shared.broad_map_style import resolve_render_style_config
-from func.shared.map_renderer import MapDomain, RenderContext, convert_geopotential_height, draw_product_panel, import_matplotlib, lat_lon_names, subset_to_domain
+from func.shared.map_renderer import MapDomain, RenderContext, convert_geopotential_height, draw_product_panel, import_matplotlib, lat_lon_names, subset_to_domain, common_quiver_color
 from func.shared.operational_regions import (
     load_operational_regions,
     operational_stats_for,
@@ -827,7 +827,7 @@ def _rendered_extent(ax: Any, domain: MapDomain) -> dict[str, float]:
     return rendered
 
 
-def _add_vector_reference(ax: Any, *, product_id: str, layout: dict[str, Any]) -> dict[str, Any] | None:
+def _add_vector_reference(ax: Any, *, product_id: str, layout: dict[str, Any], style: dict[str, Any]) -> dict[str, Any] | None:
     """Add a quiver key tied to the already-rendered Matplotlib quiver artist."""
     references = layout.get("vector_reference", {})
     config = references.get(product_id) if isinstance(references, dict) else None
@@ -852,7 +852,7 @@ def _add_vector_reference(ax: Any, *, product_id: str, layout: dict[str, Any]) -
             label=label,
             labelpos=str(config.get("label_position", "E")),
             coordinates=str(config.get("coordinates", "axes")),
-            color="black",
+            color=common_quiver_color(style),
             fontproperties={"size": float(config.get("fontsize", 8.5))},
         )
         key.text.set_bbox({"facecolor": "white", "edgecolor": "none", "alpha": 0.82, "boxstyle": "round,pad=0.12"})
@@ -1442,7 +1442,7 @@ def render_spatial_field_png(
             precipitation_rendering=precipitation_rendering,
             missing_rendering=missing_rendering,
         )
-        reference_vector = _add_vector_reference(ax, product_id=product_id, layout=layout)
+        reference_vector = _add_vector_reference(ax, product_id=product_id, layout=layout, style=resolved_style)
         if candidate_roi_annotation is not None:
             fig.text(0.085, 0.048,
                      "※ 붉은 점선·십자: 후보 핵심영역 / 주변 지도 전체의 신호를 핵심영역의 중첩 근거로 간주하지 않습니다.",

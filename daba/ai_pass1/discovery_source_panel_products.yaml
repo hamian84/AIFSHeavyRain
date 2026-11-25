@@ -265,6 +265,26 @@ products:
   unit_label: 500 hPa temperature (°C)
   contour_label: 500 hPa geopotential height (gpm)
   render_domain_id: korea_surrounding
+# Step05 종관 상세 이미지 호환 별칭입니다. Step02에서 중복 생산하지 않습니다.
+# 스타일은 QL_T500_Z500와 동일한 공통 프로파일을 사용합니다.
+- product_id: QL_Z500_T500
+  style_profile_id: QL_Z500_T500
+  product_tier: supplementary
+  required_for_pass1: false
+  enabled: false
+  display_title: AIFS 500 hPa 기온·지위고도
+  plot_type: raw_shaded_plus_raw_contour
+  shaded_field:
+    short_name: t
+    level: 500
+    conversion: temperature_c
+  contour_field:
+    short_name: z
+    level: 500
+    conversion: geopotential_height_gpm
+  unit_label: 500 hPa temperature (°C)
+  contour_label: 500 hPa geopotential height (gpm)
+  render_domain_id: source_tracking_context
 render_domains:
   korea_surrounding:
     name_ko: 한반도 주변 핵심 분석영역

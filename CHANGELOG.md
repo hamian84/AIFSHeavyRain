@@ -1,6 +1,26 @@
 # 변경 이력 (CHANGELOG)
 
-문서 최종 갱신일: **2026-11-15(KST)**. 2026-11-15 확인된 GitHub `main` 기준은 [`8afd3c3`](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e)이다. 2026-11-13까지의 이전 문서 기준은 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60)이다. 과거 기록: 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+문서 최종 갱신일은 **2026-11-19(KST)**이다. 이전 문서의 Git 커밋·날짜 설명은 당시 기준 기록으로 보존. 2026-11-15 확인된 GitHub `main` 기준은 [`8afd3c3`](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e)이다. 2026-11-13까지의 이전 문서 기준은 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60)이다. 과거 기록: 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+
+## [Unreleased] — 2026-11-19 `2026111812` 종관분석 시험서버 검증
+
+- `run_pipeline.ksh`에 단계별 외부 스위치와 재생성 옵션을 적용했다. 실제 종관 플래그와 정리·게시 스위치를 실행 로그에 기록한다.
+- Step03은 개요 시각과 원시 GRIB 필드 인덱스를 대조한다. Step04는 사용 가능한 제품 시각과 후보 시간창의 종관 개요를 계획 모델에 전달한다. 최종 응답 스키마의 Check·요청 제품 목록에 `SYNOPTIC_CONTEXT_CORE`를 추가했다.
+- Step08이 설명 전용 Check를 운영 신호 근거로 보내는 경우 해당 단계의 신호 판단 복구에서 처리한다. Step10은 설명 전용 역할을 표출 과정에서 직접 부여하고, Step06 해시 근거와 Step05 이미지별 최소·최대값을 연결한다. 좁은 화면에서 종관 정량표의 너비를 조정했다.
+- 명령, 실행 결과, 기존 산출물과의 비교는 [검증 이력](docs/VALIDATION_HISTORY.md)에 기록한다.
+
+## [Unreleased] — 2026-11-18 후보 중심 종관 심층분석 확장 [독립 개발본 / Git·운영 미적용]
+
+- 기준: 원본 GitHub main SHA 9c93f0bf525878fe35509d149e5383cf3174b195. Git push·merge, AWS 운영 소스 변경 없음.
+- Step03/04: 종관제품 실행능력 게이트, 설명 전용 synoptic_context, 가설·검증·질문·phase 제한 확대, transport/canonical/final 스키마 및 정규화 상수 동기화.
+- Step05: SYNOPTIC_CONTEXT_CORE 및 지상 MSLP/10m 바람, 500hPa 기온/지위고도, 300hPa 제트/지위고도 실제 PNG 렌더러, 최소·최대 통계, GRIB 격자·결측·단위 검사. 기존 공간장 스키마는 보존하고 신제품에만 정량 출력 허용.
+- Step06/07: 기존 요청·SHA-256 증거 계약·3회 판독 유지, 신규 종관해설 오해 방지 프롬프트.
+- Step08/09: 종관 해석을 원래 종합판단에 포함하고, 설명 전용 Check가 감시등급 판단 근거에 섞이지 않도록 검증.
+- Step10: 원래 종합판단 영역에서 설명용 근거 일기도·정량표 제공. 이미지 해시·후보·Check·시각 연계 및 JSON·HTML 일치 검사.
+- 시험: 격리 Python 3.12에서 합성 격자 일기도 3종, Step05 schema, 카탈로그, 기능 플래그, 운영 근거 격리, Step10 자산 게시/HTML 등 7개 unittest 통과; Python compileall 및 git diff --check 수행.
+- 미수행: 실제 초기시각 2026111800의 GRIB, LLM 호출, Step01~10 전체 실행·감시등급 회귀비교, 브라우저/운영 서버 웹 게시. 과거 실행 결과를 변경하지 않음.
+- 기존 NumPy/Xarray/Matplotlib/Pillow/PyYAML/jsonschema와 AIFSHR 기존 소스만 재사용. 새로운 외부 저장소 코드나 신규 운영 의존성 도입 없음.
+- 향후 연구: 와도 이류, Q벡터 수렴, 전선생성 및 추가 850hPa 온도이류 등은 검증되지 않아 본 변경에 미포함. 별도 실측 GRIB 시험 후 운영 적용.
 
 ## [Unreleased] — 2026-11-14~15 Step04·Step08 검증·복구 최적화 [사용자 시험 완료 보고 / Git 반영 전]
 

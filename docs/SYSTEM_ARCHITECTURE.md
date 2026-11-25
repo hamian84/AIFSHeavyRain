@@ -1,3 +1,17 @@
+## 2026-11-18 독립 개발본 변경사항 (main 미반영)
+
+Step01~02는 기존 수집/개요 유지.
+Step03: 카탈로그 및 실행 가능한 종관제품 SYNOPTIC_CONTEXT_CORE 가용성 등록(기본 비활성화).
+Step04: 설명용 종관 Check와 가설/분석계획 확장, 기존 후보 및 SYSTEM 직접강수 존재 앵커 불변.
+Step05: 지상 MSLP·10m 바람, 500hPa 기온·지위고도, 300hPa 제트·지위고도 이미지 3종 및 시각별 통계.
+Step06: 원래 요청 ID/이미지 SHA-256/정량증거 전달 계약 재사용.
+Step07: 기존 3회 판독으로 후보별 종관 모델 예측장 검증.
+Step08: 검증 가능한 종관환경을 원래 final_assessment에 통합.
+Step09: 설명 전용 종관 Check의 운영 판단 필드 혼입 방지.
+Step10: 종합판단 내 종관 이미지·정량 표 및 JSON·HTML·해시 참조 검증.
+WEB_PUBLISH 및 CLEANUP 구조와 4일 런타임 보존 정책은 수정하지 않음.
+추가 설명과 제약: docs/SYNOPTIC_INTEGRATION.md.
+
 # 운영 시스템 구조 및 입출력 계약
 
 **적용 기준:** GitHub `main` 병합 커밋 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60) (2026-11-08, PR #5). 이전 검토 기준은 `d37500b`와 작업 브랜치 코드 커밋 [`945320f`](https://github.com/hamian84/AIFSHeavyRain/commit/945320fed4003102e072197734dc033936df6dd3). 2026-11-03 UTC(`2026110300`) 수행자료는 당시 운영 검증 증거로 보존하며, 현행 Step04/07/08 모듈 경로는 PR #5가 병합된 `main`을 기준으로 확인했다. 일부 코드 내부 상세 구현은 대표 모듈·회귀 테스트·저장 산출물로 확인한 수준이며 모든 런타임 분기를 전수 실행한 것은 아니다.

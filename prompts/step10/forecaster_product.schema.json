@@ -713,6 +713,52 @@
             "general",
             "hidden"
           ]
+        },
+        "synoptic_image_asset_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^AST_[0-9a-f]{12}$"
+          },
+          "uniqueItems": true
+        },
+        "synoptic_quantitative_summary": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "asset_id",
+              "physical_diagnostic",
+              "forecast_hour",
+              "minimum",
+              "maximum",
+              "units"
+            ],
+            "properties": {
+              "asset_id": {
+                "type": "string",
+                "pattern": "^AST_[0-9a-f]{12}$"
+              },
+              "physical_diagnostic": {
+                "type": "string",
+                "minLength": 1
+              },
+              "forecast_hour": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "minimum": {
+                "type": "number"
+              },
+              "maximum": {
+                "type": "number"
+              },
+              "units": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     },

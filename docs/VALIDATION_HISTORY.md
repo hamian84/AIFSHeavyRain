@@ -205,3 +205,64 @@ CAND_003의 `CHK_CAND003_07`은 `uncertain / indeterminate`이며, uncertainty�
 | 관측 기반 예측성능 | **시험 대상 아님** | 시스템의 코드/계약 시험과 POD·FAR·CSI 등 기상학적 성능 검증은 별도 절차 |
 
 **후속 확인:** 운영 시험이 확정된 범위를 기록하려면 실제 `run_status.json`, Step04·08 종료 로그, 관련 후보 상태 및 Step09~10 연결 결과를 확보해야 한다. 로그가 없다는 이유로 사용자 시험 완료 보고 자체를 부정하지 않는다.
+
+## 2026-11-18 독립 종관 확장 소스 검증
+
+실행: 별도 Python 3.12, 합성 위경도 격자와 임시 PNG 기반 7개 단위시험 통과.
+검증: Step03 플래그/제품 노출, Step05 3종 지도 생성·유한값·정량, 산출물 JSON schema, Step07/08 기능 계약·설명 전용 근거 격리, Step10 참조 자산 생성 및 종합판단 HTML.
+정적: Python 구문, JSON/YAML 호환성, git diff --check.
+미실행: 실제 AIFS 2026111800 GRIB·AI 모델·Step01~10 통합·최종 브라우저 및 AWS 운영 게시. 성능향상/운영 안정성 전체 인증 아님.
+
+## 2026-11-19 시험서버 `2026111812` 종관분석 검증
+
+- 초기시각은 2026-11-18 12 UTC, 21 KST다. 기준 SHA는 `9c93f0bf525878fe35509d149e5383cf3174b195`, 브랜치는 `feature/synoptic-upgrade-20261118`이다. `AIFS_ROOT`의 물리 경로는 `/mnt/d/99.project/31.AIFSHeavyRain`이다. `WEB_PUBLISH=False`, `CLEANUP=False`로 실행했다.
+- 이전 결과는 `logs/2026111812/baseline-synoptic-off-CdTM4Q.tar.gz`에 보존했다. Step04 후보 3개·요청 17개, Step05 진단 PNG 35개, Step07 Check 16개, Step09 유효·표출 3개와 `priority`·`elevated`·`general` 각 1개, Step10 등록 자산 19개를 확인했다. 이전 로그에는 Step10 완료 뒤 `WEB_PUBLISH` 종료 코드 2가 기록돼 있다.
+- Step01 수집기의 종료 코드는 0이었다. 기존 GRIB 337개 재사용, 신규 다운로드·실패는 각각 0개였다. Step02의 기존 개요 데이터와 PNG 26개를 사용했다. 재생성한 Step03은 종료 코드 0이었고, 20개 가용 예측시각(F006~F120)과 `synoptic_support`를 제공했다.
+- 실제 GRIB의 F036, F108, F120에서 `msl`, 10 m 바람 두 성분, 500 hPa 기온·지위, 300 hPa 바람 두 성분·지위를 디코딩했다. 122~133°E, 30~41°N에서 제품별 2,025개 유한 격자점을 확인했다. Pa→hPa, K→°C, 두 풍속 성분으로 계산한 풍속의 최소·최대가 렌더러 통계와 일치했고 PNG 9개가 읽혔다. 원시 지위의 단위는 m²/s²였다.
+- 첫 활성화에서 제한 환경의 Codex CLI가 읽기 전용 파일시스템 오류로 종료됐다. 승인된 환경에서 Step04를 실행한 첫 결과는 후보 2개·요청 10개·종관 요청 0개였다. 후보 시간창에 맞는 종관 개요를 계획에 전달하자 모델이 후속 실행에서 종관 요청을 선택했고, `product_id` 허용값 누락으로 Step04가 종료 코드 1을 반환했다. 최종 응답의 Check·요청과 OpenAI 호환 응답 스키마에 제품 ID를 추가했다.
+- 계약 수정 뒤 Step04는 6분 31초에 종료 코드 0으로 완료했다. 패키지 `AIPASS1_FEA54459A2AE4FC1`에서 후보 3개, 가설 11개, Check 16개, 요청 16개, 질문 10개를 확인했다. 서해중부 해상 `CAND_002`의 `CHK_CAND002_04`는 `supplementary`와 `context`이며 `REQ_CAND002_005`로 F102·F108의 종관 기압배치 변화를 검사한다.
+- Step05는 종료 코드 0으로 요청 16개를 처리하고 진단 PNG 38개를 생성했다. 이 가운데 종관 PNG는 6개, 시간열 정량 항목은 3개이며 항목별 두 시각의 최소·최대가 있다. 실제 요청영역 123.0~128.5°E, 35.0~38.5°N에서 제품별 345개 격자점을 대조했다. Step06은 종료 코드 0이며 Check·요청 ID와 PNG 6개의 SHA-256이 일치했다.
+
+| 기상장 | F102 · 11월 23일 03 KST | F108 · 11월 23일 09 KST |
+|---|---:|---:|
+| 해면기압 | 1,020.43~1,028.99 hPa | 1,019.25~1,028.13 hPa |
+| 500 hPa 기온 | -25.89~-21.39 °C | -26.76~-19.13 °C |
+| 300 hPa 풍속 | 39.73~50.93 m/s | 48.49~60.94 m/s |
+
+500 hPa 지위고도의 범위는 F102에서 5,534.37~5,642.07 gpm, F108에서 5,521.93~5,651.79 gpm이었다. 300 hPa 지위고도는 각각 9,041.13~9,231.95 gpm과 9,039.61~9,263.62 gpm이었다. 두 시각 모두 원시 `z`를 9.80665 m/s²로 나눴다.
+
+- Step07 종관 Check의 독립 모델 판독 3회가 `observed`로 일치했다. 근거 상태는 `complete`이며 `usable_for_synthesis=true`였다. 합의 판독은 300 hPa 강풍대 재배치와 강화, 서쪽의 상대적 저압과 동쪽의 상대적 고압 사이 등압선 배치 변화를 근거로 인용했다.
+- Step08은 `H_CAND002_03`의 지지 근거로 `CHK_CAND002_04`를 참조하고 종합판단에 지상 등압선 배치와 300 hPa 강풍대의 재배치·강화를 설명했다. 이전과 이번 실행 모두 F108 서해중부 광역의 최대 6시간 강수량을 10.5 mm로 확인했다. 이번 결합 Check는 동반 신호를 판독했으나 구체적인 위치 합의가 없어 환경 지지를 `confirmed`에서 `partial`로 판단했다. 종관 Check ID는 운영 신호의 구조화 근거에 포함되지 않았다.
+- Step09는 후보 3개를 모두 유효로 판정했고 서해중부 해상과 중부 내륙을 표출했다. 종관 Check를 포함하지 않은 동해 해상 후보도 등급이 달라졌다. 동일 사례에서 모델이 다시 선택한 후보 영역·검증 근거가 달라져 등급 변화의 구조적 인과효과를 이 시험 한 번으로 추정할 수 없다.
+
+| 후보 | 이전 감시등급 | 이번 감시등급 | 이번 운영 판단 근거 |
+|---|---|---|---|
+| `CAND_001` 동해 해상 | `priority` | `hidden` | 강수영역의 연속성에 비해 수증기 공급 지속성과 강수·수렴·상승운동의 결합 근거가 부족함 |
+| `CAND_002` 서해중부 해상 | `elevated` | `general` | F108 국지 강수는 확인됐고, 결합 위치·연속 이동·환경 지속성 근거는 제한됨 |
+| `CAND_003` 중부 내륙 | `general` | `general` | F114 강수 핵과 F120 재편을 확인했고, 연속 이동과 후속 하층 지지는 제한됨 |
+
+- Step10 첫 실행은 설명 전용 Check의 표출 역할 처리 순서 때문에 `PUBLICATION_ROLE_INVALID`, 종료 코드 2로 중단됐다. 역할 처리와 모바일 정량표 폭을 수정해 Step10만 재실행했고 종료 코드 0을 확인했다. 최종 JSON에 종관 자산 6개와 같은 자산을 참조하는 정량표 6행이 있다. 일기도 6개의 최종 PNG 해시와 최소·최대값을 Step05 결과와 대조했다.
+- `validate_web_release.py`는 종료 코드 0이었다. 표출 후보 2개, 등록 자산 18개, HTML 참조 PNG 30개를 확인했다. Chrome 1440px와 390px에서 종합판단 안의 이미지 6개와 정량 행 6개, 상세분석, 서해중부 후보의 예보관 질문·답변 3개와 감시 시간축을 확인했다. 390px의 수치 줄바꿈을 모바일 행 레이아웃으로 해결했다. 브라우저 검증은 종료 코드 0이며 결과와 캡처는 `logs/2026111812/synoptic-web-render.json`, `synoptic-web-1440.png`, `synoptic-web-390.png`에 있다. 운영 웹 주소의 읽기 요청은 인증서 체인 검증에서 중단됐다.
+- Step04~10 단계별 시간은 `pipeline.log` 기준 이전/이번 순서로 Step04 12분 05초/6분 31초, Step05 2분 25초/2분 32초, Step06 10초/4초, Step07 11분 14초/14분 20초, Step08 3분 04초/3분 23초, Step09 2초/9초, Step10 17초/최종 재실행 18초였다. 실행 설정, 체크포인트, 자료 선택과 AI 재시도가 달라 처리 시간 차이를 종관 기능의 비용으로 환산할 수 없다.
+- 이번 Step04 후보 계획 복구는 3회였다. Step07은 16개 Check를 새로 판독했고, 만장일치 10개·다수결 6개·미합의 0개였다. 일반 Check 2개가 근거 검증 후 재시도됐고 종관 Check는 3회 독립 판독에서 완료됐다. Step08은 후보 3개를 새로 처리했고 의미·언어·물리량 재시도가 각각 0이었다. 종관 Check가 추가되면 해당 Check의 세 판독과 이미지 입력이 필요하다. `codex_cli` 실행에서는 토큰 사용량과 청구액이 기록되지 않았다.
+
+### 실행 및 검사 명령
+
+모든 파이프라인 실행에 `AIFSHR_ENABLE_SYNOPTIC_CONTEXT=1 WEB_PUBLISH=False CLEANUP=False`와 초기시각 `2026111812`를 전달했다. 단계별 스위치와 종료 코드는 `logs/2026111812/pipeline.log`에 있다.
+
+| 명령 | 최종 종료 코드 |
+|---|---:|
+| `/opt/miniforge3/envs/aifsheavyrain/bin/python -m compileall -q func scripts tests` | 0 |
+| `/opt/miniforge3/envs/aifsheavyrain/bin/python -B -m unittest discover -s tests -p test_synoptic_integration.py -v` | 0 · 7건 통과 |
+| `ksh -n scripts/run_pipeline.ksh` | 0 |
+| `ksh scripts/run_pipeline.ksh 2026111812` | Step01·03~10 최종 0 · Step02 개요 재사용 |
+| `/opt/miniforge3/envs/aifsheavyrain/bin/python -B scripts/validate_web_release.py --release-dir daou/2026111812` | 0 |
+| `git diff --check` | 0 |
+
+### 이번 작업에서 수정한 파일
+
+- 실행과 카탈로그 `scripts/run_pipeline.ksh`, `scripts/03_build_pass1_request.py`, `func/step03/pass1_request.py`, `func/shared/synoptic_policy.py`
+- 계획 입력과 검증 계약 `func/step04/pass1_analysis.py`, `func/step04/pass1_support.py`, `func/step04/pass1_workflow.py`, `prompts/step04/candidate_plan.ko.md`, `prompts/step04/candidate_response.schema.json`, `prompts/step04/openai/candidate_response.transport.schema.json`
+- 종합과 표출 `func/step08/synthesis_analysis.py`, `func/step08/synthesis_validation.py`, `func/step10/forecaster_product.py`
+- 회귀검사 `tests/test_synoptic_integration.py`
+- 문서 `README.md`, `CHANGELOG.md`, `docs/VALIDATION_HISTORY.md`, `docs/KNOWN_ISSUES.md`, `docs/SYNOPTIC_INTEGRATION.md`

@@ -298,3 +298,7 @@
 6. 새로운 날짜의 수정은 `CHANGELOG.md`와 해당 상세 이력을 동시에 갱신하되, 완료/제안 상태를 명시한다.
 
 **근거 및 재현 대상:** [EVIDENCE_REGISTER.md](EVIDENCE_REGISTER.md), [VALIDATION_HISTORY.md](VALIDATION_HISTORY.md).
+
+## 2026-11-18 후보 중심 종관진단 확장 (독립 개발본)
+
+공개 main 9c93f0b 전체 소스를 격리 복제하고 Step03/04 카탈로그와 진단계획, Step05 기상장 3종 및 정량자료, Step07/08 모델 해석 지침, Step09 등급 보호, Step10 종합판단 내 지도·정량 요약을 개선. 관련 문서와 새 단위시험을 추가함. 기존 운영·과거 결과 불변. 검증 범위는 VALIDATION_HISTORY.md.
