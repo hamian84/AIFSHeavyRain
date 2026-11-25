@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from func.step03.pass1_request import build_batch_plan, build_overview_attachment_manifest, build_support_catalog
+from func.shared.aifs_data import list_grib_files, parse_file_refs
 from func.shared.runtime_paths import configured_project_root, resolve_logical_ref, runtime_path
 from func.shared.pipeline_common import (
     add_output_mode_argument, canonical_hash, load_json, normalize_source_reference_paths, rel,
@@ -77,11 +78,18 @@ def main(argv: list[str] | None = None) -> int:
         if not diagnostic_catalog_path.is_file():
             raise FileNotFoundError("detailed diagnostic catalog is missing")
         diagnostic_catalog = _load_yaml(diagnostic_catalog_path)
+        # Check GRIB availability unconditionally; Step04, not a feature flag,
+        # chooses whether to request the supported synoptic diagnostic.
+        raw_index = {}
+        raw_dir = runtime_path(root, "dain", args.init, "raw", "aifs")
+        if any(path.stat().st_size > 0 for path in list_grib_files(raw_dir)):
+            raw_index, _unmatched = parse_file_refs(root, args.init, raw_dir)
         support_catalog = build_support_catalog(
             attachment_manifest=attachments_manifest,
             feature_catalog_ref=rel(root, overview_path),
             feature_catalog=overview.get("feature_catalog", {}),
             diagnostic_catalog=diagnostic_catalog,
+            raw_field_keys=raw_index.keys(),
         )
         support_catalog["diagnostic_catalog_ref"] = rel(root, diagnostic_catalog_path)
         support_catalog["diagnostic_catalog_sha256"] = sha256sum(diagnostic_catalog_path)

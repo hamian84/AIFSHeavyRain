@@ -1,5 +1,6 @@
 """Step step04 workflow responsibility; original function bodies preserved."""
 from __future__ import annotations
+from func.shared.synoptic_policy import synoptic_context_hours
 from . import pass1_context as _step_context
 AIFS_NATIVE_SPATIAL_INTERVAL_DEGREES = getattr(_step_context, 'AIFS_NATIVE_SPATIAL_INTERVAL_DEGREES')
 CANDIDATE_DISCOVERY_RECONCILIATION_ASSET_LIMIT = getattr(_step_context, 'CANDIDATE_DISCOVERY_RECONCILIATION_ASSET_LIMIT')
@@ -1843,6 +1844,7 @@ def _candidate_plan_transport_schema_for_operational_scope(
     *,
     candidate: dict[str, Any],
     operational_region_catalog: dict[str, Any],
+    support_catalog: dict[str, Any],
 ) -> dict[str, Any]:
     """Constrain compact provider output to modes executable for this candidate.
 
@@ -1853,6 +1855,19 @@ def _candidate_plan_transport_schema_for_operational_scope(
     regional statistics and would be rejected downstream.
     """
     scoped = copy.deepcopy(schema)
+    # Use the same planning capacity for all candidates. Product availability
+    # below constrains executable requests; it does not force a synoptic Check.
+    if not synoptic_context_hours(support_catalog):
+        def remove_synoptic(value):
+            if isinstance(value, dict):
+                if isinstance(value.get("enum"), list) and "synoptic_support" in value["enum"]:
+                    value["enum"] = [v for v in value["enum"] if v != "synoptic_support"]
+                for sub in value.values():
+                    remove_synoptic(sub)
+            elif isinstance(value, list):
+                for sub in value:
+                    remove_synoptic(sub)
+        remove_synoptic(scoped)
     overlap = _candidate_operational_region_overlap(
         candidate=candidate,
         operational_region_catalog=operational_region_catalog,
@@ -3746,6 +3761,7 @@ def create_or_resume_candidate_plans(
                 candidate_provider_schema,
                 candidate=candidate,
                 operational_region_catalog=operational_region_catalog,
+                support_catalog=support_catalog,
             )
         if use_compact_openai_plan:
             temporal_feasibility = _candidate_temporal_feasibility_contract(
@@ -3790,7 +3806,9 @@ def create_or_resume_candidate_plans(
         value_path = output_dir / f"{safe_id}.plan.validated.json"
         provider_path = output_dir / f"{safe_id}.plan.provider.json"
         checkpoint_path = output_dir / f"{safe_id}.plan.checkpoint.json"
-        related_summaries = _related_group_summaries(candidate, group_summaries)
+        related_summaries = _related_group_summaries(
+            candidate, group_summaries, synoptic_hours=synoptic_context_hours(support_catalog),
+        )
         checkpoint_base = {
                 "package_id": package_id,
                 "candidate_id": candidate_id,

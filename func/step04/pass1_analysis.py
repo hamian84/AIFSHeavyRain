@@ -1,6 +1,7 @@
 """Step step04 analysis responsibility; original function bodies preserved."""
 from __future__ import annotations
 from . import pass1_context as _step_context
+from func.shared.synoptic_policy import synoptic_context_hours
 AIFS_NATIVE_SPATIAL_INTERVAL_DEGREES = getattr(_step_context, 'AIFS_NATIVE_SPATIAL_INTERVAL_DEGREES')
 CANDIDATE_DISCOVERY_RECONCILIATION_ASSET_LIMIT = getattr(_step_context, 'CANDIDATE_DISCOVERY_RECONCILIATION_ASSET_LIMIT')
 CANDIDATE_DISCOVERY_RECONCILIATION_EVIDENCE_LIMIT = getattr(_step_context, 'CANDIDATE_DISCOVERY_RECONCILIATION_EVIDENCE_LIMIT')
@@ -1385,8 +1386,10 @@ def add_prompt_only_schema_constraint(
 def _related_asset_index(
     candidate: dict[str, Any],
     attachment_manifest: dict[str, Any],
+    *,
+    context_asset_ids: set[str],
 ) -> dict[str, Any]:
-    related = {str(value) for value in candidate.get("related_overview_asset_ids", [])}
+    related = context_asset_ids | {str(value) for value in candidate.get("related_overview_asset_ids", [])}
     minimal = _minimal_asset_index(attachment_manifest)
     assets = [item for item in minimal["assets"] if str(item.get("asset_id")) in related]
     return {"asset_count": len(assets), "assets": assets}
@@ -1461,6 +1464,14 @@ def build_candidate_plan_messages(
     candidate_available_verification_modes = list(
         candidate_operational_region_overlap["allowed_verification_modes"]
     )
+    synoptic_hours = synoptic_context_hours(support_catalog)
+    related_summaries = _related_group_summaries(candidate, group_summaries, synoptic_hours=synoptic_hours)
+    context_asset_ids = {
+        str(asset_id) for summary in related_summaries
+        if synoptic_hours and summary.get("analysis_tier") == "synoptic_context"
+        for asset_id in summary.get("source_asset_ids", [])
+    }
+    related_assets = _related_asset_index(candidate, attachment_manifest, context_asset_ids=context_asset_ids)
     if compact_transport:
         phase_hours = _compact_candidate_phase_hours(candidate, attachment_manifest)
         compact_input = {
@@ -1469,9 +1480,12 @@ def build_candidate_plan_messages(
             "immutable_candidate": candidate,
             "candidate_evidence": candidate_evidence,
             "related_precursor_opportunities": related_precursor_opportunities or [],
-            "related_group_summaries": _related_group_summaries(candidate, group_summaries),
-            "related_asset_index": _related_asset_index(candidate, attachment_manifest),
-            "available_verification_signals": list(VERIFICATION_SIGNAL_COMPONENTS),
+            "related_group_summaries": related_summaries,
+            "related_asset_index": related_assets,
+            "available_verification_signals": [
+                component for component in VERIFICATION_SIGNAL_COMPONENTS
+                if component != "synoptic_support" or synoptic_hours
+            ],
             "available_verification_modes": candidate_available_verification_modes,
             "candidate_operational_region_overlap": candidate_operational_region_overlap,
             "verification_mode_guidance": {
@@ -1512,6 +1526,11 @@ def build_candidate_plan_messages(
             ),
             "plan_chunk_index": int(plan_chunk_index),
         }
+        if synoptic_hours:
+            compact_input["synoptic_context_product"] = {
+                "product_id": "SYNOPTIC_CONTEXT_CORE",
+                "allowed_forecast_hours": synoptic_hours,
+            }
         # Keep the original model input and checkpoint semantics unchanged for
         # already feasible multi-hour candidates.
         temporal_contract = _candidate_temporal_feasibility_contract(
@@ -1561,8 +1580,8 @@ def build_candidate_plan_messages(
         "immutable_candidate": candidate,
         "candidate_evidence": candidate_evidence,
         "related_precursor_opportunities": related_precursor_opportunities or [],
-        "related_group_summaries": _related_group_summaries(candidate, group_summaries),
-        "related_asset_index": _related_asset_index(candidate, attachment_manifest),
+        "related_group_summaries": related_summaries,
+        "related_asset_index": related_assets,
         "supported_analysis_data_requests": _minimal_support_catalog(support_catalog),
         "feature_index": _minimal_feature_index(feature_catalog),
         "operational_region_index": _minimal_operational_region_index(

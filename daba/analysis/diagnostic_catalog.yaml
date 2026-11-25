@@ -1,5 +1,5 @@
-catalog_version: 3.8.0
-capability_contract_version: 1.1.0
+catalog_version: 3.9.0
+capability_contract_version: 1.2.0
 regional_statistics:
   aggregation_method: regional_mask_area_weighted_statistics
   field_scope: every_requested_spatial_field
@@ -20,6 +20,18 @@ regional_ranking_contracts:
   vertical_wind_shear: {representative_variable: vertical_wind_shear, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
   signal_overlap_count: {representative_variable: signal_overlap_count, statistic: p95, tail: upper, sort_direction: descending, time_reducer: maximum, score_transform: identity}
 diagnostics:
+  - diagnostic_id: synoptic_context
+    description: 강수후보 관련 지상·500hPa·300hPa 종관 배경을 판독하고 강수·역학장 근거의 해석 맥락에 활용하는 진단
+    signal_categories: [synoptic_support]
+    required_variables: [msl, 10u, 10v, z, t, u, v]
+    required_levels: [500, 300]
+    output_types: [png, quantitative_json]
+    spatial_requirement: candidate_or_context_domain
+    temporal_requirement: one_or_more_forecast_hours
+    maturity: operational
+    implementation_status: step05_planned
+    source_data_kind: raw_aifs_grib
+    calculation_version: 1.0.0
   - diagnostic_id: detailed_spatial_map
     description: 후보 영역의 단일 시각 수평장과 기본 영역 통계를 생성한다.
     signal_categories: [direct_precipitation, moisture_supply, low_level_forcing, mid_upper_forcing]
@@ -205,6 +217,26 @@ diagnostics:
 # Diagnostic compatibility is explicit. A request is never silently converted to
 # a different product or diagnostic when this registry rejects the pair.
 product_contracts:
+  SYNOPTIC_CONTEXT_CORE:
+    signal_components: [synoptic_support]
+    signal_component_requirements:
+      synoptic_support:
+        all_physical_diagnostics: [QL_MSLP_WIND10, QL_Z500_T500, QL_JET300_Z300]
+    requested_variables: [msl, 10u, 10v, z, t, u, v]
+    requested_pressure_levels: [500, 300]
+    produced_variables: [msl_hpa, t500_c, z500_gpm, upper_jet300_ms]
+    quantitative_excerpt_supported: false
+    calculator: synoptic_context_core
+    source_data_kind: raw_aifs_grib
+    raw_fields:
+      msl: {short_name: msl, level: null}
+      u10: {short_name: 10u, level: null}
+      v10: {short_name: 10v, level: null}
+      t500: {short_name: t, level: 500}
+      z500: {short_name: z, level: 500}
+      u300: {short_name: u, level: 300}
+      v300: {short_name: v, level: 300}
+      z300: {short_name: z, level: 300}
   QL_PRECIP_6H:
     signal_components: [direct_precipitation]
     signal_component_requirements:
@@ -376,6 +408,26 @@ product_contracts:
 # separate.  Native compatible pairs use the compatibility registry below;
 # only non-native pairs need an explicit calculation contract here.
 calculation_contracts:
+  SYNOPTIC_CONTEXT_CORE:
+    diagnostic_ids: [synoptic_context]
+    calculation_product_id: SYNOPTIC_CONTEXT_CORE
+    source_data_kind: raw_aifs_grib
+    availability_anchor_product_ids: [QL_OMEGA700_Z500]
+    raw_data_profile_ref: daba/collection/aifs_download_namelist.yaml
+    # Generic Step03 contract: all listed product raw_fields must be present.
+    # Other raw-GRIB diagnostics retain their existing availability contracts.
+    raw_field_availability: require_all
+    required_pressure_level_fields:
+      t: [500]
+      z: [500, 300]
+      u: [300]
+      v: [300]
+    required_surface_fields: [msl, 10u, 10v]
+    input_variables: [msl, 10u, 10v, t, z, u, v]
+    pressure_levels: [500, 300]
+    produced_variables: [msl_hpa, t500_c, z500_gpm, upper_jet300_ms]
+    compatible_evidence_products: [QL_OMEGA700_Z500, QL_PRECIP_6H, QL_TCW_WIND850]
+    implementation_status: step05_planned
   MULTIVARIABLE_COMPOSITE_CORE:
     diagnostic_ids: [multivariable_composite]
     calculation_product_id: MULTIVARIABLE_COMPOSITE_CORE
@@ -446,6 +498,23 @@ calculation_contracts:
     implementation_status: step05_planned
 
 compatibility:
+  synoptic_context:
+    supported_verification_modes: [spatial_distribution, spatial_evolution]
+    semantic_profiles:
+      SYNOPTIC_CONTEXT_CORE:
+        execution_product_id: SYNOPTIC_CONTEXT_CORE
+        signal_components: [synoptic_support]
+        observable_ids: [mean_sea_level_pressure, wind_vector_10m, temperature_500, geopotential_height_500, upper_jet300_ms, geopotential_height_300, wind_vector_300]
+    required_variables: [msl, 10u, 10v, t, z, u, v]
+    optional_variables: []
+    produced_variables: [msl_hpa, t500_c, z500_gpm, upper_jet300_ms]
+    supported_pressure_levels: [500, 300]
+    temporal_form: three_maps_for_each_requested_time
+    spatial_form: candidate_or_context_domain
+    compatible_product_ids: [SYNOPTIC_CONTEXT_CORE]
+    compatible_question_types: [spatial_field]
+    renderer: synoptic_context_renderer
+    style_id: synoptic
   detailed_spatial_map:
     supported_verification_modes: [spatial_distribution, regional_intensity, spatial_evolution]
     semantic_profiles:

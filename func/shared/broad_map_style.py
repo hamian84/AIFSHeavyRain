@@ -17,7 +17,7 @@ from PIL import Image
 
 SUPPORTED_STYLE_KEYS = {
     "shape_search_dirs", "dpi", "figsize", "colorbar_orientation",
-    "wind_stride", "quiver_scale", "quiver_width", "quiver_key_enabled",
+    "wind_stride", "quiver_scale", "quiver_width", "quiver_color", "quiver_zorder", "quiver_key_enabled",
     "quiver_key_position", "quiver_key_x", "quiver_key_y", "quiver_key_length",
     "quiver_key_labelpos", "quiver_key_coordinates", "quiver_key_label",
     "halo_enabled", "halo_foreground", "halo_linewidth_text", "halo_linewidth_line",
@@ -53,7 +53,7 @@ PRODUCT_KEYS = {
     "title", "meaning", "lead_hours", "style",
     "render_domain_id", "render_domain_name_ko", "render_domain",
     # map_renderer가 product-level fallback으로 직접 읽는 key
-    "wind_stride", "quiver_scale", "quiver_width", "quiver_key_enabled",
+    "wind_stride", "quiver_scale", "quiver_width", "quiver_zorder", "quiver_key_enabled",
     "quiver_key_position", "quiver_key_x", "quiver_key_y",
     "quiver_key_length", "quiver_key_labelpos", "quiver_key_coordinates",
     "quiver_key_label", "quiver_calm_threshold_ms",
@@ -76,6 +76,19 @@ def _load_yaml(path: Path) -> dict[str, Any]:
     if not isinstance(value, dict):
         raise ValueError(f"render style YAML root must be mapping: {path}")
     return value
+
+
+def load_common_render_defaults(root: Path) -> dict[str, Any]:
+    """Read the single operational default map style shared by all map stages."""
+    catalog = _load_yaml(resolve_logical_ref(root, 'daba/ai_pass1/discovery_source_panel_products.yaml'))
+    style_file = catalog.get('render_style_file')
+    if not style_file:
+        raise ValueError('common render_style_file missing from product catalog')
+    style_doc = _load_yaml(resolve_logical_ref(root, str(style_file)))
+    defaults = style_doc.get('default_style')
+    if not isinstance(defaults, dict):
+        raise ValueError('common render default_style must be a mapping')
+    return dict(defaults)
 
 
 def resolve_render_style_config(root: Path, config: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:

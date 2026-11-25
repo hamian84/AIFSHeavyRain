@@ -35,10 +35,12 @@ from func.shared.operational_regions import (
     selectable_pass1_regions,
 )
 from func.step05.renderer import Step05RenderError, render_spatial_field_png
+from func.step05.synoptic_products import SYNOPTIC_PRODUCTS, render_synoptic_product_png, synoptic_features_from_images
 from func.shared.runtime_paths import logical_ref, resolve_logical_ref, resolve_step04_output_dir, runtime_path
 
 
 PHYSICAL_PRODUCTS_BY_DIAGNOSTIC = {
+    "synoptic_context": SYNOPTIC_PRODUCTS,
     "accumulated_precipitation": ("QL_PRECIP_6H",),
     "moisture_flux": ("QL_MOISTURE_FLUX850_WIND850",),
     "horizontal_convergence": ("QL_CONVERGENCE925_WIND925",),
@@ -174,6 +176,7 @@ _KNOWN_IMAGE_PRODUCTS = frozenset(
     set(_MAP_PRODUCTS)
     | {"VERTICAL_WIND_SHEAR_850_500", "TEMPORAL_EVOLUTION", "TIME_HEIGHT_SECTION_CORE", "VERTICAL_CROSS_SECTION_CORE"}
     | set(_CORE_PANEL_CONFIG)
+    | set(SYNOPTIC_PRODUCTS)
 )
 
 
@@ -904,11 +907,17 @@ def render_vertical_wind_shear_png(
             "quiver_min_display_speed_ms": None, "quiver_max_display_speed_ms": None,
             "levels": palette["levels"], "ticks": palette["ticks"], "colors": palette["colors"], "extend": palette["extend"], **map_style,
         }
+        # Even this standalone Step05 map uses the same global vector color.
+        from func.shared.broad_map_style import load_common_render_defaults
+        shared_defaults = load_common_render_defaults(root)
         panel = draw_product_panel(
             ax,
             product={"plot_type": "shaded_feature_plus_raw_vector", "style": style},
             fields={"shaded": field, "u": shear_u, "v": shear_v},
-            panel_title="", domain=domain, context=RenderContext(project_root=root, domain=domain, style={}), overview_mode=False,
+            panel_title="", domain=domain,
+            context=RenderContext(project_root=root, domain=domain,
+                                  style={"quiver_color": shared_defaults["quiver_color"]}),
+            overview_mode=False,
         )
         _check_extent(ax, domain)
         mesh = panel.get("mesh")
@@ -923,7 +932,10 @@ def render_vertical_wind_shear_png(
         if len(quivers) != 1:
             raise Step05DiagnosticError("PNG_RENDER_FAILED", f"vertical_wind_shear expected one quiver, got {len(quivers)}.")
         ref_x, ref_y = _text_position(layout, "reference", (0.55, 0.915))
-        ax.quiverkey(quivers[0], ref_x, ref_y, 5.0, "전단벡터 ΔV = V850 - V500 | 5 m s$^{-1}$", coordinates="figure", labelpos="E", fontproperties={"size": 8.5})
+        from func.shared.map_renderer import common_quiver_color
+        ax.quiverkey(quivers[0], ref_x, ref_y, 5.0, "전단벡터 ΔV = V850 - V500 | 5 m s$^{-1}$",
+                     coordinates="figure", labelpos="E", color=common_quiver_color(panel["style"]),
+                     fontproperties={"size": 8.5})
         title_x, title_y = _text_position(layout, "title", (0.085, 0.987))
         metadata_x, metadata_y = _text_position(layout, "metadata", (0.085, 0.950))
         valid = _valid_time(init, hour)
@@ -1644,6 +1656,14 @@ def render_request_images(
                     )
                 except Step05RenderError as exc:
                     raise Step05DiagnosticError(exc.code, str(exc)) from exc
+            elif product in SYNOPTIC_PRODUCTS:
+                assert hour is not None
+                # A synoptic request already declares its exact spatial scope.
+                # No candidate/domain overlays or auxiliary ROI inputs are needed.
+                rendered = render_synoptic_product_png(
+                    root=root, init=init, request=request, hour=hour,
+                    output_path=output, fields=fields, product_id=product,
+                )
             elif product == "VERTICAL_WIND_SHEAR_850_500":
                 assert hour is not None
                 rendered = render_vertical_wind_shear_png(
@@ -1681,6 +1701,9 @@ def result_document(
     selected_domain = target.bbox if target is not None and target.kind == "requested_domain" else target.candidate_bbox if target is not None else None
     feature_payload = features or {}
     image_payload = generated_images or []
+    if (status == "success" and request.get("diagnostic_id") == "synoptic_context"
+            and request.get("data_type") == "spatial_field"):
+        feature_payload = {**feature_payload, **synoptic_features_from_images(image_payload)}
     available_components = (
         actual_signal_components(
             load_diagnostic_catalog(root),

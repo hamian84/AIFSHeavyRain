@@ -1,6 +1,7 @@
 """Step step08 validation responsibility; original function bodies preserved."""
 from __future__ import annotations
 from . import synthesis_context as _step_context
+from func.shared.synoptic_policy import operational_synoptic_leaks, synoptic_check_ids
 
 # Original func/step08/synthesis.py:236
 def _step08_exclusion_narrative_errors(value: dict[str, Any], checks: dict[str, dict[str, Any]]) -> list[str]:
@@ -1607,6 +1608,9 @@ def _signal_grounding_contract(
     precursor_paths = _usable_precursor_evidence_paths(group, checks)
     confirmed_environment_paths = _confirmed_environment_precursor_evidence_paths(group, checks)
     specifications = _check_specifications(group)
+    explanation_only_ids = synoptic_check_ids(group)
+    operational_check_ids = sorted(_usable_check_ids(checks) - explanation_only_ids)
+    context_check_ids = sorted(_usable_check_ids(checks) & explanation_only_ids)
     precursor_claim_paths = {
         category: {
             check_id: sorted(positive_support_claim_keys(category, specifications.get(check_id)))
@@ -1658,7 +1662,7 @@ def _signal_grounding_contract(
         analysis_phases=group["candidate_context"]["analysis_plan"].get("analysis_phases", []),
     )
     return {
-        "usable_signal_evidence_check_ids": sorted(_usable_check_ids(checks)),
+        "usable_signal_evidence_check_ids": operational_check_ids,
         "precursor_evidence": {
             "allowed_category_check_ids": precursor_paths,
             "positive_support_claim_keys_by_category_check": precursor_claim_paths,
@@ -1699,9 +1703,12 @@ def _signal_grounding_contract(
         },
         "physical_synthesis": {
             "usable_check_ids": sorted(_usable_check_ids(checks)),
+            "context_only_check_ids": context_check_ids,
             "direct_presence_anchor_check_ids": list(direct_status_contract.get("presence_anchor_check_ids", [])),
             "rule": (
                 "mechanism_evidence에는 강수 발생·유지 메커니즘의 성립 여부를 판단한 usable Check를, monitoring_evidence에는 강수 강도·범위·지속성·예보권역 영향·이동 등 운영상 감시 가치를 판단한 usable Check를 기록하십시오. "
+                "context_only_check_ids의 종관 Check는 기압계 배치와 강수·수분·수렴·상승운동 근거 사이의 기상학적 관계를 설명할 때 두 evidence 목록에서 effect=context로만 참조할 수 있습니다. "
+                "종관 맥락만으로 supporting/limiting/mixed 근거를 만들거나 독립 신호 상태·운영 감시등급을 변경하지 마십시오. "
                 "각 evidence 객체는 check_id, effect(supporting/limiting/mixed/context), reason을 가져야 하며 partially_observed Check의 지지와 제한이 함께 중요하면 mixed로 보존하십시오. "
                 "Step07 assessment는 expected_signal의 확인 여부이므로 observed 자체를 자동으로 지지 근거로 해석하지 마십시오. "
                 "Step04 hypothesis의 supporting_check_ids/opposing_check_ids와 expected_signal, Step07 findings/contradictory_findings/uncertainties를 함께 읽어 각 Check의 판단 역할을 결정하십시오. "
@@ -1859,6 +1866,12 @@ def validate_candidate_synthesis(
     signal = value.get("signal_assessment")
     if not isinstance(signal, dict):
         raise Pass2PipelineError("SIGNAL_ASSESSMENT_INVALID", f"{candidate_id} has no signal_assessment.")
+    leaks = operational_synoptic_leaks(group, signal)
+    if leaks:
+        raise Pass2PipelineError(
+            "PHYSICAL_DECISION_INVALID",
+            f"{candidate_id} signal_assessment uses synoptic Checks as status anchors or non-context evidence: {', '.join(leaks)}.",
+        )
     direct_status = signal.get("direct_precipitation_status")
     environment_status = signal.get("environment_support_status")
     if direct_status not in CANDIDATE_SIGNAL_STATUSES or environment_status not in CANDIDATE_SIGNAL_STATUSES:

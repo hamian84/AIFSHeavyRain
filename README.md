@@ -1,3 +1,15 @@
+## 2026-11-19 종관 심층분석 시험서버 검증
+
+시험 코드는 GitHub `main`의 `9c93f0bf525878fe35509d149e5383cf3174b195`를 기반으로 합니다.
+사용자 승인 전 GitHub main 또는 AWS 운영 서버에 반영하지 마십시오.
+기존 10단계는 유지하며, SYNOPTIC_CONTEXT_CORE 설명 전용 종관진단은 AIFSHR_ENABLE_SYNOPTIC_CONTEXT=0을 기본값으로 사용합니다.
+독립 시험공간에서 1로 활성화하면 Step03 실행가능 카탈로그 → Step04 설명용 Check → Step05 지상 해면기압·10m 바람, 500hPa 기온·지위고도, 300hPa 제트·지위고도 PNG/정량요약 → Step06 SHA 증거 → Step07 판독 → Step08 종합판단 → Step09 운영 판단 보호 → Step10 원래 종합판단 내부 일기도·통계 표가 연결됩니다.
+Step04 최대 가설 6, chunk당 검증 요청 12, 질문 8, phase 10. 단순 후보에는 필요한 분석만 선택합니다.
+기존 직접강수 확인 앵커, 선행환경만으로 후보가 생성될 수 있는 정책, 3회 판독, 감시등급 기준은 변경하지 않습니다.
+`2026111812` 시험에서 기존 AIFS GRIB와 Step02 개요를 사용해 Step10까지 연결을 확인했습니다. 서해중부 후보의 종관 Check는 독립 판독 3회가 일치했고, 로컬 종합판단에 일기도 6개와 두 예측시각의 정량표가 생성됐습니다. 단위시험 7건이 통과했습니다.
+실행 방법과 시험 근거는 [종관분석 통합 가이드](docs/SYNOPTIC_INTEGRATION.md)와 [검증 이력](docs/VALIDATION_HISTORY.md)에 있습니다.
+이하의 2026-11-15 등 과거 문구는 작성 당시 기준의 이력이며 현행 main SHA를 의미하지 않습니다.
+
 # AIFSHeavyRain — AIFS 기반 위험강수 감시 우선순위 예보지원 시스템
 
 > 문서 갱신일: **2026-11-15(KST)**. 현재 확인된 공개 GitHub `main`: [`8afd3c3`](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e). Step04·Step08 수정 코드는 **사용자 시험 완료 보고/공개 Git 미반영** 상태이며, 변경사항과 검증 수준은 기존 [CHANGELOG.md](CHANGELOG.md)의 2026-11-14~15 항목에서 관리한다.

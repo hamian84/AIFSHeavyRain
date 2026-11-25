@@ -1,5 +1,5 @@
 schema_version: 1.2.1
-profile_version: 1.2.1
+profile_version: 1.2.6
 default_style:
   shape_search_dirs:
   - daba/map
@@ -20,6 +20,8 @@ default_style:
   wind_stride: 3
   quiver_scale: 250
   quiver_width: 0.0026
+  # One global vector color for all map products (Step02 and Step05).
+  quiver_color: '#165A86'
   halo_enabled: true
   halo_foreground: white
   halo_linewidth_text: 2.6
@@ -110,33 +112,34 @@ style_profiles:
     - 50.0
     - 70.0
     - 100.0
-    colors:
+    # Canonical RGB swatches; 300 hPa jet reuses nonwhite colors by scalar aliases.
+    colors: &aifshr_precip_colors
     - '#ffffff'
-    - '#b7e67a'
-    - '#7bdc47'
-    - '#50c43a'
-    - '#2fa52d'
-    - '#178420'
-    - '#6195a5'
-    - '#4790af'
-    - '#397faf'
-    - '#306b94'
-    - '#2a5571'
-    - '#778192'
-    - '#535c79'
-    - '#2a3769'
-    - '#1a2359'
-    - '#181f51'
-    - '#c47ad6'
-    - '#a84cc9'
-    - '#8a2bb4'
-    - '#74189f'
-    - '#5c0d86'
-    - '#ff9a70'
-    - '#ef5a3c'
-    - '#cf3f2d'
-    - '#b92b21'
-    - '#781414'
+    - &aifshr_precip_rgb_01 '#b7e67a'
+    - &aifshr_precip_rgb_02 '#7bdc47'
+    - &aifshr_precip_rgb_03 '#50c43a'
+    - &aifshr_precip_rgb_04 '#2fa52d'
+    - &aifshr_precip_rgb_05 '#178420'
+    - &aifshr_precip_rgb_06 '#6195a5'
+    - &aifshr_precip_rgb_07 '#4790af'
+    - &aifshr_precip_rgb_08 '#397faf'
+    - &aifshr_precip_rgb_09 '#306b94'
+    - &aifshr_precip_rgb_10 '#2a5571'
+    - &aifshr_precip_rgb_11 '#778192'
+    - &aifshr_precip_rgb_12 '#535c79'
+    - &aifshr_precip_rgb_13 '#2a3769'
+    - &aifshr_precip_rgb_14 '#1a2359'
+    - &aifshr_precip_rgb_15 '#181f51'
+    - &aifshr_precip_rgb_16 '#c47ad6'
+    - &aifshr_precip_rgb_17 '#a84cc9'
+    - &aifshr_precip_rgb_18 '#8a2bb4'
+    - &aifshr_precip_rgb_19 '#74189f'
+    - &aifshr_precip_rgb_20 '#5c0d86'
+    - &aifshr_precip_rgb_21 '#ff9a70'
+    - &aifshr_precip_rgb_22 '#ef5a3c'
+    - &aifshr_precip_rgb_23 '#cf3f2d'
+    - &aifshr_precip_rgb_24 '#b92b21'
+    - &aifshr_precip_rgb_25 '#781414'
     extend: max
     map_halo_enabled: true
     map_halo_color: '#FFFFFF'
@@ -408,53 +411,72 @@ style_profiles:
     - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
     - '음영: 925 hPa 수평수렴 (10$^{-5}$ s$^{-1}$; 양수=수렴) | 화살표: 925 hPa 바람'
   QL_JET300_Z300:
+    # Wind-specific bins in m/s: color sequence is shared, not precipitation units.
     levels:
     - 0
-    - 5
-    - 10
-    - 15
+    - 4
+    - 8
+    - 12
+    - 16
     - 20
-    - 25
-    - 30
-    - 35
+    - 24
+    - 28
+    - 32
+    - 36
     - 40
-    - 45
-    - 50
-    - 55
+    - 44
+    - 48
+    - 52
+    - 56
     - 60
-    - 65
-    - 70
-    - 75
+    - 64
+    - 68
+    - 72
+    - 76
     - 80
-    - 85
-    - 90
+    - 84
+    - 88
+    - 92
+    - 96
+    - 100
     ticks:
     - 0
     - 20
     - 40
     - 60
     - 80
-    - 90
+    - 100
+    # Same green/cyan/blue/violet/red hue groups as 6-hour precipitation.
+    # Wind-specific zero-to-100 m/s bins: five 4 m/s shades per 20 m/s band.
+    # The precipitation-only white bin is intentionally omitted to align hue
+    # transitions with 20/40/60/80/100 m/s ticks; last color is >100 m/s.
     colors:
-    - '#f7f7f7'
-    - '#e8f1fa'
-    - '#d5e8f5'
-    - '#b9d9ec'
-    - '#92c5de'
-    - '#6baed6'
-    - '#4393c3'
-    - '#2b8cbe'
-    - '#0868ac'
-    - '#084081'
-    - '#fff7bc'
-    - '#fee391'
-    - '#fec44f'
-    - '#fe9929'
-    - '#ec7014'
-    - '#cc4c02'
-    - '#d7301f'
-    - '#b2182b'
-    - '#7f0000'
+    - *aifshr_precip_rgb_01
+    - *aifshr_precip_rgb_02
+    - *aifshr_precip_rgb_03
+    - *aifshr_precip_rgb_04
+    - *aifshr_precip_rgb_05
+    - *aifshr_precip_rgb_06
+    - *aifshr_precip_rgb_07
+    - *aifshr_precip_rgb_08
+    - *aifshr_precip_rgb_09
+    - *aifshr_precip_rgb_10
+    - *aifshr_precip_rgb_11
+    - *aifshr_precip_rgb_12
+    - *aifshr_precip_rgb_13
+    - *aifshr_precip_rgb_14
+    - *aifshr_precip_rgb_15
+    - *aifshr_precip_rgb_16
+    - *aifshr_precip_rgb_17
+    - *aifshr_precip_rgb_18
+    - *aifshr_precip_rgb_19
+    - *aifshr_precip_rgb_20
+    - *aifshr_precip_rgb_21
+    - *aifshr_precip_rgb_22
+    - *aifshr_precip_rgb_23
+    - *aifshr_precip_rgb_24
+    - *aifshr_precip_rgb_25
+    - *aifshr_precip_rgb_25
     extend: max
     contour_levels:
     - 8800
@@ -474,6 +496,21 @@ style_profiles:
     contour_linewidth: 1.05
     contour_halo_color: '#FFFFFF'
     contour_halo_linewidth: 2.4
+    contour_label_halo_linewidth: 3.4
+    # Preserve Step05 300 hPa vectors while using the common vector style.
+    wind_stride: 5
+    # The much faster 300 hPa winds require a shorter arrow scale.
+    quiver_scale: 1100
+    quiver_width: 0.0019
+    quiver_zorder: 16
+    quiver_key_enabled: true
+    quiver_key_position: axes
+    quiver_key_x: 0.8
+    quiver_key_y: 0.04
+    quiver_key_coordinates: axes
+    quiver_key_labelpos: E
+    quiver_key_length: 40
+    quiver_key_label: 40 m s$^{-1}$
     title_info_lines:
     - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
     - '음영: 300 hPa 풍속 (m s$^{-1}$) | 등치선: 300 hPa 지위고도 (gpm)'
@@ -540,52 +577,99 @@ style_profiles:
     - 250
     - 300
     - 350
+    # Canonical Cividis colors previously defined only in Step05.
     colors:
-    - '#f7fcf5'
-    - '#e5f5e0'
-    - '#c7e9c0'
-    - '#a1d99b'
-    - '#74c476'
-    - '#41ab5d'
-    - '#238b45'
-    - '#006d2c'
-    - '#fff7bc'
-    - '#fec44f'
-    - '#fe9929'
-    - '#cc4c02'
+    - '#002D68'
+    - '#233C6E'
+    - '#3E4B6C'
+    - '#535A6D'
+    - '#666970'
+    - '#797977'
+    - '#8E8978'
+    - '#A39A74'
+    - '#BAAC6D'
+    - '#D1BF61'
+    - '#E9D34E'
+    - '#FEE838'
     extend: max
     wind_stride: 3
     title_info_lines:
     - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
     - '음영: 850 hPa 수증기 플럭스 크기 (g kg$^{-1}$ m s$^{-1}$) | 화살표: 850 hPa 바람'
-  QL_T500_Z500:
+  QL_T500_Z500: &aifshr_z500_temp_style
+    # Annual fixed 500-hPa temperature scale: discrete 4 C intervals.
+    # Four AIFSHR chromatic groups: violet (-60..-40), navy (-40..-20),
+    # blue (-20..-4), red (+4..+12), with a white -4..+4 neutral band.
+    # Individual 4 C steps use progressively changing AIFSHR canonical RGB swatches.
+    # First/last colors represent out-of-range under/over extensions.
     levels:
+    - -60
+    - -56
+    - -52
+    - -48
+    - -44
     - -40
-    - -35
-    - -30
-    - -25
+    - -36
+    - -32
+    - -28
+    - -24
     - -20
-    - -15
-    - -10
-    - -5
+    - -16
+    - -12
+    - -8
+    - -4
     - 0
+    - 4
+    - 8
+    - 12
     ticks:
+    - -60
+    - -56
+    - -52
+    - -48
+    - -44
     - -40
-    - -30
+    - -36
+    - -32
+    - -28
+    - -24
     - -20
-    - -10
+    - -16
+    - -12
+    - -8
+    - -4
     - 0
+    - 4
+    - 8
+    - 12
     colors:
-    - '#313695'
-    - '#4575b4'
-    - '#74add1'
-    - '#abd9e9'
-    - '#e0f3f8'
-    - '#fee090'
-    - '#fdae61'
-    - '#f46d43'
-    - '#d73027'
+    - '#3D075B'  # below -60 C
+    - *aifshr_precip_rgb_20  # -60 to -56: dark violet
+    - *aifshr_precip_rgb_19  # -56 to -52: violet
+    - *aifshr_precip_rgb_18  # -52 to -48: violet
+    - *aifshr_precip_rgb_17  # -48 to -44: violet
+    - *aifshr_precip_rgb_16  # -44 to -40: light violet
+    - *aifshr_precip_rgb_15  # -40 to -36: deep navy
+    - *aifshr_precip_rgb_14  # -36 to -32: navy
+    - *aifshr_precip_rgb_13  # -32 to -28: navy
+    - *aifshr_precip_rgb_12  # -28 to -24: navy
+    - *aifshr_precip_rgb_11  # -24 to -20: light navy
+    - *aifshr_precip_rgb_10  # -20 to -16: deep blue
+    - *aifshr_precip_rgb_09  # -16 to -12: blue
+    - *aifshr_precip_rgb_08  # -12 to -8: blue
+    - *aifshr_precip_rgb_06  # -8 to -4: light blue
+    - '#FFFFFF'  # -4 to 0: white
+    - '#FFFFFF'  # 0 to +4: white
+    - *aifshr_precip_rgb_21  # +4 to +8: light red
+    - *aifshr_precip_rgb_23  # +8 to +12: deep red
+    - *aifshr_precip_rgb_25  # above +12 C: dark red
     extend: both
+    # Same shared contour+halo renderer as 300 hPa and omega/height products.
+    contour_color: '#4A3426'
+    contour_linewidth: 1.05
+    contour_halo_color: '#FFFFFF'
+    contour_halo_linewidth: 2.4
+    contour_label_halo_linewidth: 3.4
     contour_levels:
     - 5400
     - 5440
@@ -605,3 +689,6 @@ style_profiles:
     title_info_lines:
     - 초기시각 {init_time_kst} KST | 유효시각 {valid_time_kst} KST
     - '음영: 500 hPa 기온 (°C) | 등치선: 500 hPa 지위고도 (gpm)'
+  # Backward/forward compatible style name for Step05 product QL_Z500_T500.
+  # Both product IDs resolve to the single shared style definition above.
+  QL_Z500_T500: *aifshr_z500_temp_style

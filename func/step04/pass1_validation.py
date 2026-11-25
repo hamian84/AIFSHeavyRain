@@ -108,6 +108,11 @@ def _derive_diagnostic_check_from_verification_request(row: dict[str, Any]) -> d
                 f"requires exactly one signal component; actual={components}"
             )
         component = components[0]
+        if component == "synoptic_support":
+            if mode not in {"spatial_distribution", "spatial_evolution"}:
+                raise ValueError("SYNOPTIC_VERIFICATION_MODE_INVALID: use spatial_distribution/spatial_evolution")
+            if row.get("evidence_role") != "context":
+                raise ValueError("SYNOPTIC_EVIDENCE_ROLE_INVALID: evidence_role=context required")
         variable_role = VERIFICATION_SIGNAL_TO_ROLE[component]
         if mode == "precipitation_amount":
             if component != "direct_precipitation":

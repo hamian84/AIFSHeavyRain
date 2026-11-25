@@ -46,7 +46,7 @@
     },
     "hypotheses": {
       "type": "array",
-      "maxItems": 4,
+      "maxItems": 6,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -85,7 +85,7 @@
     "analysis_phases": {
       "type": "array",
       "minItems": 0,
-      "maxItems": 8,
+      "maxItems": 10,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -128,7 +128,7 @@
     "forecaster_questions": {
       "type": "array",
       "minItems": 0,
-      "maxItems": 6,
+      "maxItems": 8,
       "items": {
         "type": "string",
         "minLength": 1
@@ -235,7 +235,7 @@
     "verification_requests": {
       "type": "array",
       "minItems": 0,
-      "maxItems": 10,
+      "maxItems": 12,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -255,7 +255,8 @@
                 "moisture_supply",
                 "low_level_forcing",
                 "mid_upper_forcing",
-                "organization_persistence"
+                "organization_persistence",
+                "synoptic_support"
               ]
             }
           },
@@ -465,7 +466,8 @@
                       "moisture_supply",
                       "low_level_forcing",
                       "mid_upper_forcing",
-                      "organization_persistence"
+                      "organization_persistence",
+                      "synoptic_support"
                     ]
                   }
                 },

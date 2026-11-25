@@ -755,11 +755,17 @@
           },
           "data_type": {
             "const": "spatial_field"
+          },
+          "diagnostic_id": {
+            "not": {
+              "const": "synoptic_context"
+            }
           }
         },
         "required": [
           "status",
-          "data_type"
+          "data_type",
+          "diagnostic_id"
         ]
       },
       "then": {
@@ -769,6 +775,37 @@
           },
           "generated_images": {
             "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "success"
+          },
+          "data_type": {
+            "const": "spatial_field"
+          },
+          "diagnostic_id": {
+            "const": "synoptic_context"
+          }
+        },
+        "required": [
+          "status",
+          "data_type",
+          "diagnostic_id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "features": {
+            "minProperties": 3,
+            "maxProperties": 3
+          },
+          "generated_images": {
+            "minItems": 3
           }
         }
       }
