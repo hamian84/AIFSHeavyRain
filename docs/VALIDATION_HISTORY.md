@@ -1,6 +1,6 @@
 # 실행·검증 이력
 
-**기준일:** 2026-11-13(KST; 11월 11일 실패 자료 및 사용자 운영 확인 추가). 초기시각(init)은 UTC `YYYYMMDDHH`를 사용하며 웹 표출 시간은 KST다. 이 문서는 실행 스냅샷과 검증 계약의 일치 여부를 기록한다. 관측 대비 예측 정확도 검증은 이 자료에 포함되지 않는다.
+**기준일:** 2026-11-26(KST; Step04 재수행 및 운영 웹 검토 추가. 이전 검증 기록은 당시 기준으로 보존). 초기시각(init)은 UTC `YYYYMMDDHH`를 사용하며 웹 표출 시간은 KST다. 이 문서는 실행 스냅샷과 검증 계약의 일치 여부를 기록한다. 관측 대비 예측 정확도 검증은 이 자료에 포함되지 않는다.
 
 ## 1. 검증 범위·원천
 
@@ -266,3 +266,18 @@ CAND_003의 `CHK_CAND003_07`은 `uncertain / indeterminate`이며, uncertainty�
 - 종합과 표출 `func/step08/synthesis_analysis.py`, `func/step08/synthesis_validation.py`, `func/step10/forecaster_product.py`
 - 회귀검사 `tests/test_synoptic_integration.py`
 - 문서 `README.md`, `CHANGELOG.md`, `docs/VALIDATION_HISTORY.md`, `docs/KNOWN_ISSUES.md`, `docs/SYNOPTIC_INTEGRATION.md`
+
+## 2026-11-26 `2026112512` Step04 수정 후 운영 재수행 검토
+
+| 근거 | 확인 결과 |
+|---|---|
+| 사용자 실패 로그 | Step03 OK, Step04 `QUANTITATIVE_SCOPE_CONTRACT_INVALID` (`chunk01:C04/CLM01`, `specific + weaken`) 및 `STEP04_ATOMIC_REPAIR_NONPROGRESS`, 02:01:52 UTC 실패 |
+| 수정본 격리 시험 | Python 4개 모듈 compile, 기존 3개 후보의 compact/noncompact·권역 가용/불가 12개 격리 입력 사례(권역 겹침 helper 대역), 모의 provider 복구 3개 시나리오 통과(수정 보고서 기준) |
+| 사용자 재수행 보고 | 완료 |
+| 웹 직접 판독(W1) | 초기 2026-11-25 21:00 KST, 생성 2026-11-26 11:42 KST, 표출 1·비표출 0 |
+| Step07 근거 표출 | 확인 4, 부분 확인 2, 판정 3/3 5건·2/3 1건 |
+| 서버 Git 점검 | `fix/step04-verification-contract-20261126`, 5개 파일, 224줄 추가·44줄 삭제, diff 공백 오류 없음(사용자 터미널 출력) |
+
+- 표출 후보 동해중부 강수, F072~F084(11.28. 21시~11.29. 09시 KST), F078 최대 6시간 강수 6.8 mm(비교 F072 5.1 mm), 중점 감시. 핵심시각 환경 결합 확인, 지속성 제한.
+- F078→F084 925 hPa 평균 수렴(10^-5 s^-1): 동해중부 3.09→-0.60, 강원영동 -4.99→3.16. 2권역 중 수렴 강화 아님 1·강화 1로 표시되며 종합 서술과 일치한다. 종관 배경 Check는 F072/F084의 3종 일기도 참조와 정량 요약을 표출했다.
+- 이전 실패 자료의 후보 3건과 재수행 표출 후보 1건은 동일 후보 구성이 아니다. 원인 확정이나 동일 오류의 직접 재현 해소로 확대하지 않는다. 재수행 내부 로그, 자동 복구 경로, 실제 원본 이미지 로딩·상호작용, 전체 Step01~10 상태 JSON 및 관측 기반 예측성능은 독립 검증하지 않았다.

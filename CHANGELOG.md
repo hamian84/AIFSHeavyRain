@@ -1,6 +1,16 @@
 # 변경 이력 (CHANGELOG)
 
-문서 최종 갱신일은 **2026-11-19(KST)**이다. 이전 문서의 Git 커밋·날짜 설명은 당시 기준 기록으로 보존. 2026-11-15 확인된 GitHub `main` 기준은 [`8afd3c3`](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e)이다. 2026-11-13까지의 이전 문서 기준은 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60)이다. 과거 기록: 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+문서 최종 갱신일은 **2026-11-26(KST)**이다. 이전 문서의 Git 커밋·날짜 설명은 당시 기준 기록으로 보존. 2026-11-15 확인된 GitHub `main` 기준은 [`8afd3c3`](https://github.com/hamian84/AIFSHeavyRain/commit/8afd3c329d4fa1358adeb9e6d2035bb371e8732e)이다. 2026-11-13까지의 이전 문서 기준은 [`15b0e07`](https://github.com/hamian84/AIFSHeavyRain/commit/15b0e076f897a77cdd7f5fd6d6ea8ee966997b60)이다. 과거 기록: 2026-11-04 작성 당시 기준 `main`: [`d37500b`](https://github.com/hamian84/AIFSHeavyRain/commit/d37500b6ef7cae11028545b52acbb4b1e69a1c6f). 2026-11-06 운영 검토의 공개 기준 커밋은 `ffa5f78`이며 실제 로컬 코드 Diff 확인 전이다. 이 문서는 실제 Git 변경을 우선 기록한다. 최초 Git 등록 이전 개발사는 [날짜별 개발 이력](docs/DEVELOPMENT_HISTORY.md)에 복원 기록으로 분리한다.
+
+## [Unreleased] — 2026-11-26 Step04 예측시간 및 정량·정성 검증 계약 개선
+
+- 기준 `main=c619c10`; 작업 브랜치 `fix/step04-verification-contract-20261126`. `init=2026112512`의 예측시간 범위 위반 및 `QUANTITATIVE_SCOPE_CONTRACT_INVALID` / `STEP04_ATOMIC_REPAIR_NONPROGRESS`로 인한 계획 중단에 대응했다.
+- 후보 시간창과 제품별 실행 가능 시간의 교집합을 계획 입력·검증·확장에 일관되게 적용한다. 개요의 참조 시각은 상세 진단 실행 시각과 구분한다.
+- 후보별 `quantitative_execution_options`와 오류별 복구 정보를 제공한다. 영상 전용 진단에 실행 불가능한 정량 범위를 만들지 않고 정성적 공간 명제와 실제 정량 비교를 구분한다.
+- Check 단위 정량 계약 복구가 반복 실패하거나 기존 예산을 소진하면 기존 bounded chunk 복구로 전환한다. 검증 기준, 복구 예산의 수치, Step07 정량계약, 운영 감시등급은 변경하지 않았다.
+- 수정 파일: `func/step04/pass1_analysis.py`, `pass1_support.py`, `pass1_validation.py`, `pass1_workflow.py`, `prompts/step04/candidate_plan.ko.md`. 프롬프트 변경 후 Step03부터 재생성 필요.
+- 수정본 문법검사 및 격리 회귀시험 통과(수정 보고서 기준). 사용자 운영 재수행 완료 보고, 웹 생성시각 2026-11-26 11:42 KST 및 표출 1건·비표출 0건 확인. 서버 변경 통계 5개 파일, 224줄 추가·44줄 삭제, `git diff --check` 오류 없음.
+- 미확인: 동일 실패 CAND_001/CLM01의 재현, 자동 복구 실행 여부, 기존 실패 자료 후보 3건과 재수행 웹 후보 1건의 차이 원인, 이미지 실제 로딩, 관측 대비 성능. 종관 해석 개선은 별도 변경으로 관리한다.
 
 ## [Unreleased] — 2026-11-19 `2026111812` 종관분석 시험서버 검증
 

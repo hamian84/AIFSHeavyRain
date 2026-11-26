@@ -9,7 +9,8 @@
 - `candidate_area`는 위험 핵심영역이며 변경하지 마십시오.
 - 후보환경을 보기 위해 확장영역이 실제로 필요할 때만 `context_domain`을 하나 지정하십시오. 후보영역 전체를 포함해야 하며 가용영역을 벗어나면 안 됩니다.
 - 확장영역이 필요하지 않으면 `context_domain=null`, `context_domain_reason=null`로 반환하십시오.
-- 각 `analysis_phases`에는 실제 `forecast_hours`를 입력의 `available_forecast_hours`에서 선택하십시오.
+- 각 `analysis_phases`에는 실제 `forecast_hours`를 입력의 `available_forecast_hours`에서 선택하십시오. `related_group_summaries`, `related_asset_index`는 넓은 시간의 개요자료일 수 있으며 후보 실행시간을 확장하는 권한이 아닙니다. 범위 밖 관측은 배경 해석에만 활용하십시오.
+- `product_execution_hours`의 각 `candidate_execution_hours`는 후보 분석시간과 해당 제품 실행가능 시간의 교집합입니다. 검증요청의 예상 신호, 대표 공간장 시각, 정량 범위는 실제 실행 가능한 시각으로 구성하십시오. 비교에 필요한 두 실행시각이 없으면 자료가 지원하는 단일 시각 명제를 선택하거나 불필요한 선택 진단을 생략하십시오. 후보나 핵심시각을 변경하지 마십시오.
 - 모든 `candidate_peak_forecast_hours`는 하나 이상의 `peak` 단계에 포함해야 합니다.
 - `direct_precipitation` 또는 `mixed` 후보의 핵심 시각은 강수 최대 예상 시각입니다. `precursor_environment` 후보의 핵심 시각은 강수 최대가 아니라 선행환경의 시공간 중첩이 가장 뚜렷한 대표시각입니다.
 - `context`를 제외한 분석단계는 시간축에서 중복·교차하지 않도록 구성하십시오. 같은 시각을 여러 단계에 반복 배치하지 마십시오.
@@ -58,7 +59,7 @@
 - `claim_components`: 이 명제를 직접 구성하는 `signal_components`의 부분집합
 - `phase_keys`: 이 명제가 적용되는 분석단계. 반드시 요청의 `phase_keys` 안에서 선택
 - `expected_state`: `present`, `absent`, `increase`, `decrease`, `strengthen`, `not_strengthen`, `weaken`, `greater_than`, `less_than`, `overlap`, `not_overlap`, `move`, `persist`, `split`, `merge`, `expand`, `contract`, `reorganize`, `located_at`, `peak_at` 중 하나. `not_strengthen`은 현재 `convergence925_1e5_s`의 `scope_quantifier=majority`에서만 사용하십시오.
-- `scope_quantifier`: 명제가 적용되는 범위의 양화. `all`, `majority`, `at_least_one`, `specific` 중 하나
+- `scope_quantifier`: 명제가 적용되는 실제 범위의 양화. `all`, `majority`, `at_least_one`, `specific` 중 하나. 아래 정량계약의 특정 조합은 단순히 특정 위치라는 뜻으로 사용할 수 없습니다.
 - `scope_description`: `후보영역 전체`, `후보영역과 겹치는 운영권역 대부분`, `제주 주변`처럼 실제 범위를 짧고 구체적으로 작성
 - `quantitative_scope`: 정량 명제의 **자료 범위와 비교 의미를 분리해 선언하는 계약**입니다. 지원 대상이 아니면 `null`입니다.
   - `quantitative_scope.forecast_hours`에 넣는 **모든 F시각은 해당 verification_request의 `phase_keys`와 그 atomic claim의 `phase_keys`가 가리키는 `analysis_phases[].forecast_hours`에 실제로 포함**되어야 합니다. 예를 들어 F072와 F078을 비교한다면 F072 phase와 F078 phase를 모두 선언하고 request와 claim이 두 phase를 모두 참조해야 합니다.
@@ -92,7 +93,9 @@
 - 직접강수의 `move`를 사용자 후보명 이동근거로 검증하려는 Check는 atomic claim을 **`direct_precipitation + move` 1개로만** 구성하고 `scope_quantifier=specific`으로 두어 식별 가능한 **주강수영역 또는 주강수 중심** 하나의 연속 이동을 검증하십시오. `at_least_one`처럼 여러 중심 중 일부의 이동만으로 후보 전체를 이동형으로 명명하지 마십시오. 이동과 `reorganize`, `split`, `merge`, `expand`, `contract` 등을 함께 확인해야 하면 별도의 spatial_evolution verification_request로 분리하십시오.
 - claim은 현재 요청의 `evidence_role`을 그대로 상속합니다. claim 안에서 후보 지지/억제 방향을 새로 판단하거나 다른 `evidence_role`을 만들지 마십시오.
 - `expected_signal` 자연어는 계속 작성하십시오. `atomic_claims`는 이를 대체하는 문장이 아니라 **기계 검증을 위한 구조화 분해**입니다.
-- `scope_quantifier=specific`이고 `expected_state`가 `greater_than`, `less_than`, `increase`, `decrease`, `strengthen`, `weaken`, `peak_at` 중 하나이며 운영권역 정량값으로 검증하는 claim이면 `quantitative_scope`를 반드시 작성하십시오. 이때 `region_scope=explicit_regions`, `region_ids`는 정확히 1개여야 합니다.
+- **Step04와 Step07의 기존 정량계약:** 하나의 atomic claim에서 `scope_quantifier=specific`과 `expected_state=greater_than/less_than/increase/decrease/strengthen/weaken`의 조합은 운영권역 정량 비교로 해석되므로 `quantitative_scope=null`이 허용되지 않습니다. `peak_at`을 운영권역 정량값으로 검증할 때도 기존 정량 구조를 사용하십시오. `region_scope=explicit_regions`, `region_ids`는 정확히 1개입니다.
+- `quantitative_execution_options`는 현재 후보에서 실제 실행되는 정량 비교 조합입니다. 정량 비교를 선택할 때는 동일한 `signal_component`, `verification_mode`, `feature_ids`, `forecast_hours`를 가진 항목과 `candidate_operational_region_overlap.selectable_regions`에서 선택하십시오. 빈 목록이면 해당 후보에서 이 방식의 정량 비교가 불가능합니다. 전체 feature_index에 존재한다고 해당 Check에서 실행할 수 있는 것은 아닙니다.
+- **영상 중심 정성 검증:** `spatial_distribution`, `spatial_evolution`, `multivariable_alignment`, 연직 구조 모드는 운영권역 정량계약을 생성하지 않습니다. 영상으로 실제 확인할 위치·지속·이동·분리·결합·면적 변화를 구체적으로 기술하십시오. 예를 들어 제트축의 위치나 이동, 등압선 밀집 영역의 위치·범위 변화는 영상의 해당 상태에 맞춰 표현할 수 있습니다. 단순히 강도가 약해진다는 명제를 면적 축소나 다른 양화사로 바꾸지 마십시오. 정성적 강화/약화는 원래 명제에 실제로 부합하는 공간 양화사와 범위를 선택할 때만 사용하십시오. `specific + located_at/move` 등 위치·이동 명제는 기존대로 허용됩니다. 정량·정성 어느 쪽으로도 원래 명제를 표현할 수 없다면 지원되지 않는 값을 만들거나 기상학적 의미를 변경하지 말고 실제로 검증할 수 있는 별도 관찰 명제를 계획하십시오.
 - 위 specific 정량계약 또는 `majority + not_strengthen` 정량계약을 사용하는 verification_request는 해당 정량명제가 Step07에서 독립적으로 검증될 수 있도록 **atomic_claims를 그 명제 1개로만 구성**하십시오. 다른 판정 기준은 별도 verification_request로 분리하십시오.
 - `scope_quantifier=majority`에서 **925 hPa 수렴이 대부분 권역에서 강화되지 않는지**를 정량 검증하려면 `expected_state=not_strengthen`, `feature_id=convergence925_1e5_s`, `region_scope=candidate_overlap`, `region_ids=[]`, 비교할 2개 시각을 `forecast_hours`에 시간순으로, `comparison_forecast_hours=null`, `statistic=mean`으로 작성하십시오. 현재 다른 feature의 majority 물리상태는 이 계약으로 일반화하지 마십시오.
 - 925 hPa 수렴(convergence925_1e5_s)의 majority + strengthen 명제도 정량 비교를 하려면 majority + not_strengthen과 동일한 quantitative_scope를 선언하십시오. expected_state=strengthen, region_scope=candidate_overlap, region_ids=[], forecast_hours=[시작 F, 종료 F]의 시간 오름차순 2개, comparison_forecast_hours=null, statistic=mean으로 작성하십시오. 정량 비교 시각이 analysis_phases에 없으면 다른 시각으로 대체하지 말고 원래 계획의 phase를 일치시키십시오. 다른 물리변수나 범위에 일반화하지 마십시오.
@@ -119,7 +122,7 @@
 
 - synoptic_support: 강수 후보 주변 기압계와 상층 구조를 판독하는 종관 배경 진단입니다. Step03 실행 가능 목록에 SYNOPTIC_CONTEXT_CORE가 포함될 때만 선택하십시오. 지상 해면기압·10m 바람, 500hPa 기온·지위고도, 300hPa 제트·지위고도의 개별 영상을 한 Check의 증거로 만듭니다. spatial_distribution 또는 spatial_evolution 모드를 사용하고 evidence_role=context로 작성하십시오. priority는 다른 진단과 마찬가지로 후보별 중요도에 따라 required 또는 supplementary를 선택할 수 있습니다. 단, 이 우선순위는 운영 감시등급을 직접 결정하지 않습니다.
 - `SYNOPTIC_CONTEXT_CORE`가 가용하면 `related_group_summaries`의 후보 시간대 종관 개요를 보고, 해당 후보의 강수 발생·발달·이동 가능성이나 불확실성을 해석하는 데 기압계 분석이 유익한지 **후보별로 자율 판단**하십시오. 필요할 때 `synoptic_support` 검증을 계획하고, 불필요하면 요청하지 마십시오. 모든 후보에 동일한 종관분석을 강제하지 않습니다.
-- 종관분석을 선택하면 주요 저기압·고기압·기압골과 500 hPa 고도/기온장·300 hPa 제트의 위치·변화를 후보 강수의 시간창과 연결해 확인할 수 있는 관찰 명제를 작성하십시오. 지상 기압경도나 상층 제트의 전후시각 변화와 후보 지역 강수의 대응을 검토하되, 자료만으로 전선·저기압 중심 이동이나 강수 인과관계를 단정하지 마십시오. 시각은 제품의 `allowed_forecast_hours`에서 선택하고, 후보 밖 기압계를 볼 필요가 있을 때 `context_domain`을 지정하십시오. 별도의 운영권역 정량 명제는 생성하지 마십시오.
+- 종관분석을 선택하면 주요 저기압·고기압·기압골과 500 hPa 고도/기온장·300 hPa 제트의 위치·변화를 후보 강수의 시간창과 연결해 확인할 수 있는 관찰 명제를 작성하십시오. 지상 기압경도나 상층 제트의 전후시각 변화와 후보 지역 강수의 대응을 검토하되, 자료만으로 전선·저기압 중심 이동이나 강수 인과관계를 단정하지 마십시오. 시각은 `synoptic_context_product.allowed_forecast_hours` 또는 `product_execution_hours`의 SYNOPTIC_CONTEXT_CORE 후보 실행시간에서 선택하고, 위치·이동 방향·공간구조처럼 실제 영상에서 반증 가능한 예상 상태를 선택하십시오. 강도 변화가 필요하면 위 정성/정량 계약에 맞는 진단과 명제 범위를 선택하십시오. 단순히 기압계나 제트가 변한다고 작성하지 마십시오. 후보 밖 기압계를 볼 필요가 있을 때 `context_domain`을 지정하십시오. 별도의 운영권역 정량 명제는 생성하지 마십시오.
 - 종관 배경이 후보의 해석을 바꿀 근거가 없으면 검증을 생략할 수 있습니다. 기압계와 강수영역이 겹치는 사실만으로 원인이나 강수·수분·상승운동의 존재를 판단하지 마십시오.
 - synoptic_support를 이용하여 기존 직접강수 SYSTEM Check 또는 수증기·하층수렴·중층상승 Check를 대체하지 마십시오. 실행 가능 목록에 없다면 해당 종관 요청을 생성하지 마십시오.
 
