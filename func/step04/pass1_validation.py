@@ -228,6 +228,7 @@ def _canonicalize_step04_candidate_plan_forecast_hours(
     *,
     candidate: dict[str, Any],
     attachment_manifest: dict[str, Any],
+    support_catalog: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Normalize forecast-hour spelling in Step04 human-readable plan text.
 
@@ -235,7 +236,9 @@ def _canonicalize_step04_candidate_plan_forecast_hours(
     and never changes the meteorological claim selected by the model.
     """
     normalized = copy.deepcopy(value)
-    allowed_hours = set(_available_candidate_forecast_hours(candidate, attachment_manifest))
+    allowed_hours = set(_available_candidate_forecast_hours(
+        candidate, attachment_manifest, support_catalog=support_catalog
+    ))
     if not allowed_hours:
         return normalized
 
@@ -315,6 +318,7 @@ def _normalize_ai_verification_chunk_for_validation(
     transport_schema: dict[str, Any],
     candidate: dict[str, Any],
     attachment_manifest: dict[str, Any],
+    support_catalog: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     # Apply the same representation-only normalizer before provider-schema
     # validation so harmless duplicates/order issues do not fail before reaching
@@ -337,6 +341,7 @@ def _normalize_ai_verification_chunk_for_validation(
         normalized,
         candidate=candidate,
         attachment_manifest=attachment_manifest,
+        support_catalog=support_catalog,
     )
     requests = normalized.pop("verification_requests", None)
     if not isinstance(requests, list):
@@ -993,10 +998,16 @@ def _repair_rules_for_validation_errors(validation_errors: list[str]) -> list[st
             "직접강수 존재 확인, 단일 격자의 정량값, SYSTEM 필수 앵커는 그대로 유지하십시오.",
         ])
 
+    if "unavailable forecast_hours" in joined or "unavailable forecast hours" in joined:
+        rules.extend([
+            "모든 phase의 forecast_hours는 원래 입력 available_forecast_hours에서 선택하십시오. 개요자료 시각과 제품 전체 시각은 실행시간을 확대하지 않습니다.",
+            "각 Check는 product_execution_hours의 candidate_execution_hours 안에서 실제 비교 가능한 시각을 참조하고, expected_signal 및 정량 범위도 동일 시각에 맞추십시오.",
+        ])
+
     if "insufficient forecast-hour coverage" in joined:
         rules.extend([
             "시간 변화 및 공간 구조 변화 검증에는 서로 다른 실제 예측시각을 최소 2개 참조해야 합니다. required=2를 낮추지 마십시오.",
-            "입력의 time_feasibility_contract.effective_hours와 available_analysis_phase_types에서 실제 비교 가능한 시각을 확인하십시오.",
+            "입력의 time_feasibility_contract.effective_hours, available_analysis_phase_types와 product_execution_hours에서 실제 비교 가능한 시각을 확인하십시오.",
             "해당 check_key의 phase_keys가 가리키는 phase들의 forecast_hours 합집합이 2개 이상인지 확인하십시오. 필요하면 phase와 Check를 같은 chunk에서 함께 재구성하십시오.",
             "두 시각이 실제 존재하지 않으면 시간을 만들지 말고 오류를 그대로 보존하십시오.",
         ])
@@ -1232,6 +1243,12 @@ def _repair_rules_for_validation_errors(validation_errors: list[str]) -> list[st
                 "스키마 통과만을 위해 decrease를 greater_than으로 바꾸거나 increase를 less_than으로 바꾸지 마십시오. 원래 기상학적 명제가 시간 변화인지 두 특정 시각의 대소 비교인지에 따라 expected_state를 유지하거나 verification_request 전체를 다시 작성하십시오.",
             ]
         )
+    if "QUANTITATIVE_SCOPE_CONTRACT_INVALID" in joined and "requires an executable quantitative_scope" in joined:
+        rules.extend([
+            "단일 specific + greater_than/less_than/increase/decrease/strengthen/weaken 명제는 Step07까지 정량계약으로 해석됩니다. quantitative_scope=null인 채 같은 명제를 반복하지 마십시오.",
+            "정량 비교가 실제 목적이면 quantitative_execution_options에서 동일 기상요소와 실행 가능한 verification_mode/feature_id/forecast_hours를 선택하고, selectable_regions의 실제 단일 권역 및 통계량을 사용하십시오. phase와 claim이 두 시각 이상을 모두 참조해야 합니다.",
+            "영상 전용 진단에는 운영권역 정량자료가 없습니다. 위치·지속·이동·확대/축소·공간 결합 등 실제 검증하려는 정성적 상태를 표현하거나, 원래 명제가 실제로 성립하는 공간 범위에 맞는 양화사를 사용하십시오. 단순 통과를 위해 weaken을 contract로 치환하거나 specific을 majority/at_least_one으로 바꾸지 마십시오. 필요한 분석이 현재 phase/Check로 표현되지 않으면 전체 계획 복구에서 재구성하십시오.",
+        ])
     if (
         "QUANTITATIVE_SCOPE_CONTRACT_INVALID" in joined
         and "forecast_hours must be unique chronological forecast hours" in joined
@@ -8609,7 +8626,9 @@ def validate_compact_candidate_plan_response(
                 raise ValueError("continuation chunk must preserve context_domain_reason")
 
         available_hours = (
-            _available_candidate_forecast_hours(candidate, attachment_manifest)
+            _available_candidate_forecast_hours(
+                candidate, attachment_manifest, support_catalog=support_catalog
+            )
             if attachment_manifest is not None
             else sorted({hour for row in all_phase_rows for hour in _compact_phase_hours(row)})
         )
@@ -8919,6 +8938,25 @@ def validate_compact_candidate_plan_response(
             referenced_hours = {
                 hour for phase_key in references for hour in phase_hours_by_key.get(phase_key, set())
             }
+            if support_catalog is not None:
+                role = str(check.get("variable_role"))
+                components = _normalized_required_signal_components(
+                    check.get("required_signal_components"),
+                    variable_role=role, diagnostic_id=diagnostic_id,
+                )
+                product_id = _preferred_product_id_for_check(
+                    diagnostic_id, role, components, support_catalog, candidate
+                )
+                product_hours = _allowed_forecast_hours_for_product(product_id, support_catalog)
+                if product_hours is not None:
+                    referenced_hours &= product_hours
+                if not referenced_hours:
+                    raise ValueError(
+                        "compact diagnostic check has insufficient forecast-hour coverage "
+                        f"check_key={check.get('check_key')!r} product_id={product_id!r} "
+                        f"allowed_hours={sorted(set(available_hours) & product_hours) if product_hours is not None else available_hours} "
+                        "required=1 actual=0"
+                    )
             representative_hours_raw = check.get("representative_spatial_hours", [])
             if not isinstance(representative_hours_raw, list) or any(
                 isinstance(value, bool) or not isinstance(value, int) or value < 0
@@ -9122,7 +9160,9 @@ def validate_compact_candidate_plan_response(
                 )
 
         if attachment_manifest is not None:
-            available_phase_types = set(_compact_candidate_phase_hours(candidate, attachment_manifest))
+            available_phase_types = set(_compact_candidate_phase_hours(
+                candidate, attachment_manifest, support_catalog=support_catalog
+            ))
             unsupported_phase_types = sorted(
                 {
                     str(item.get("phase_type"))
@@ -9997,6 +10037,10 @@ def _validate_compact_quantitative_atomic_claims(
                 "QUANTITATIVE_SCOPE_CONTRACT_INVALID "
                 f"check_key={check.get('check_key')} claim_key={claim.get('claim_key')} "
                 f"specific expected_state={state!r} requires an executable quantitative_scope; "
+                f"verification_mode={check.get('verification_mode')!r} diagnostic_id={check.get('diagnostic_id')!r} "
+                f"regional_methods={bool(set(check.get('analysis_methods', [])) & REGIONAL_ANALYSIS_METHODS)} "
+                f"referenced_hours={sorted(referenced_hours)} "
+                f"selectable_region_ids={sorted(str(row.get('region_id')) for row in selectable_operational_regions or [] if isinstance(row, dict) and row.get('region_id'))}; "
                 "repair=regenerate the entire verification request with a supported quantitative feature, "
                 "single operational region, chronological hours and statistic. "
                 "If the original evidence is only visual, write a genuinely qualitative hypothesis "

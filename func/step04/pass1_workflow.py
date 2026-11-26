@@ -723,6 +723,9 @@ def call_and_validate_json(
     chunk_last_error_signature: str | None = None
     chunk_last_state_signature: str | None = None
     candidate_chunk_repair_history: list[dict[str, Any]] = []
+    # Only generic corrective guidance is retained, never discarded JSON or
+    # prior check IDs. Current failures still drive the repair scope/schema.
+    chunk_repair_guidance: list[str] = []
     repair_iteration = 0
     while errors:
         joined_errors = "\n".join(str(error) for error in errors)
@@ -791,25 +794,38 @@ def call_and_validate_json(
                     )
                 )
             ]
-            if repeated_error_targets:
-                errors = [
-                    *errors,
-                    "STEP04_ATOMIC_REPAIR_NONPROGRESS "
-                    f"check_keys={sorted(repeated_error_targets)}",
-                ]
-                break
             exhausted_targets = [
                 check_key
                 for check_key in atomic_check_targets
                 if check_repair_attempts.get(check_key, 0) >= repair_attempts
             ]
-            if exhausted_targets:
-                errors = [
-                    *errors,
-                    "STEP04_ATOMIC_REPAIR_BUDGET_EXHAUSTED "
-                    f"check_keys={sorted(exhausted_targets)} max_attempts={repair_attempts}",
-                ]
-                break
+            if repeated_error_targets or exhausted_targets:
+                # A quantitative contract may require changing the phase graph,
+                # mode, region or hypothesis together. A Check-only retry cannot
+                # always repair it. Reuse the existing bounded chunk budget;
+                # do not add retries or accept an invalid Check. Preserve the
+                # original fail-fast policy for unrelated atomic errors.
+                blocked_targets = sorted(set(repeated_error_targets) | set(exhausted_targets))
+                quantitative_blocked = all(
+                    "QUANTITATIVE_" in check_error_signatures.get(key, "")
+                    for key in blocked_targets
+                )
+                if quantitative_blocked and chunk_repair_attempts < repair_attempts:
+                    logging.warning(
+                        "STEP04_ATOMIC_REPAIR_ESCALATE unit=candidate_plan_chunk checks=%s errors=%s",
+                        blocked_targets, errors[:10],
+                    )
+                    atomic_check_targets = []
+                else:
+                    errors = [*errors, (
+                        "STEP04_ATOMIC_REPAIR_NONPROGRESS "
+                        f"check_keys={sorted(repeated_error_targets)}"
+                        if repeated_error_targets else
+                        "STEP04_ATOMIC_REPAIR_BUDGET_EXHAUSTED "
+                        f"check_keys={sorted(exhausted_targets)} max_attempts={repair_attempts}"
+                    )]
+                    break
+        if atomic_check_targets:
             # Regenerate complete Check objects only.  Do not ask the model to patch
             # individual fields, and do not accept changes to unrelated plan units.
             repair_schema = _compact_check_repair_schema(
@@ -878,6 +894,7 @@ def call_and_validate_json(
                     "validation_errors": errors,
                     "regenerate_check_keys": atomic_check_targets,
                     "allowed_phase_keys": phase_keys,
+                    "allowed_phase_hours_by_key": phase_hours_by_key,
                     "rules": [
                         f"{repair_transport_field} 배열만 반환하십시오.",
                         "각 regenerate_check_keys에 대해 정확히 하나의 완전한 객체를 반환하십시오.",
@@ -888,7 +905,7 @@ def call_and_validate_json(
                             else "기존 Check의 일부 필드만 고치지 마십시오. 기존 객체는 폐기된 참고자료이며 diagnostic_id, variable_role, required_signal_components, check_scope, phase_keys, analysis_methods, expected_signal, decision_relevance, purpose, priority, evidence_role, coverage_roles 및 단면 관련 필드를 하나의 일관된 Check로 함께 다시 결정하십시오."
                         ),
                         "원래 후보와 가설의 목적은 앞선 대화 컨텍스트에서 다시 확인하고, 현재 active catalog가 지원하는 진단만 선택하십시오.",
-                        "phase_keys는 allowed_phase_keys 중에서만 선택하십시오. 새로운 phase_key를 만들지 마십시오.",
+                        "phase_keys는 allowed_phase_keys 중에서만 선택하십시오. allowed_phase_hours_by_key로 실제 시각을 확인하고 새로운 phase_key나 시각을 만들지 마십시오.",
                         "지원되지 않는 product, feature, diagnostic 또는 분석방법을 만들어 내지 마십시오.",
                         "사람이 읽는 모든 설명 문자열은 한국어로 작성하십시오.",
                         *_repair_rules_for_validation_errors(errors),
@@ -987,6 +1004,24 @@ def call_and_validate_json(
             "validation_errors": list(errors),
         }
         candidate_chunk_repair_history.append(chunk_history)
+        persistent_markers = (
+            "unavailable forecast_hours", "unavailable forecast hours",
+            "insufficient forecast-hour coverage",
+            "EXPECTED_SIGNAL_VAGUE_COMPARISON_INVALID",
+            "EXPECTED_SIGNAL_PROCEDURAL_TEXT_INVALID",
+            "EXPECTED_SIGNAL_AMBIGUOUS_ALTERNATIVE_INVALID",
+            "EXPECTED_SIGNAL_SPATIAL_EVOLUTION_MODE_MISMATCH",
+            "QUANTITATIVE_SCOPE_CONTRACT_INVALID",
+            "QUANTITATIVE_SCOPE_PHASE_MISMATCH",
+            "QUANTITATIVE_SCOPE_EXECUTION_UNAVAILABLE",
+        )
+        persistent_errors = [
+            error for error in errors
+            if any(marker in str(error) for marker in persistent_markers)
+        ]
+        chunk_repair_guidance = list(dict.fromkeys([
+            *chunk_repair_guidance, *_repair_rules_for_validation_errors(persistent_errors),
+        ]))
         discovery_scope_requires_fresh_regeneration = any(
             marker in str(error)
             for error in errors
@@ -1031,13 +1066,16 @@ def call_and_validate_json(
                 *(
                     [
                         "이전 응답의 개별 필드를 patch하지 마십시오. 현재 chunk를 의미적으로 완결된 하나의 계획 단위로 다시 생성하십시오.",
-                        "verification_request를 다시 만들 때는 signal_components, verification_mode, domain_scope, spatial_relation_scope, phase_keys, expected_signal, decision_relevance, purpose, priority, evidence_role, coverage_roles와 단면 관련 필드를 하나의 일관된 요청으로 함께 결정하십시오.",
+                        "verification_request를 다시 만들 때는 signal_components, verification_mode, domain_scope, spatial_relation_scope, phase_keys, expected_signal, decision_relevance, purpose, priority, evidence_role, coverage_roles, atomic_claims 및 단면 관련 필드를 하나의 일관된 요청으로 함께 결정하십시오.",
                     ]
                     if regenerate_chunk_from_original
                     else ["유효한 관찰과 분석은 유지하고 형식 및 계약 오류만 수정하십시오."]
                 ),
                 "JSON 키·식별자·enum 값은 계약 범위 안에서 사용하고 사람이 읽는 설명 문자열은 모두 한국어로 작성하십시오.",
-                *_repair_rules_for_validation_errors(errors),
+                "이전 복구에서 확인된 교정 원칙도 동시에 준수하십시오. 이전 응답의 check_key나 예시 시각을 복원할 필요는 없습니다. 현재 입력과 현재 오류가 우선입니다.",
+                *list(dict.fromkeys([
+                    *chunk_repair_guidance, *_repair_rules_for_validation_errors(errors),
+                ])),
             ],
         }
         if quantitative_request_split_required:
@@ -1360,6 +1398,7 @@ def create_compact_candidate_plan(
                     transport_schema=transport_schema,
                     candidate=candidate,
                     attachment_manifest=attachment_manifest,
+                    support_catalog=support_catalog,
                 ),
                 repair_context_messages=messages,
                 semantic_unit_repair="diagnostic_check",
@@ -2234,7 +2273,9 @@ def expand_compact_candidate_plan(
         })
 
     available_phase_hours = set(
-        _available_candidate_forecast_hours(candidate, attachment_manifest)
+        _available_candidate_forecast_hours(
+            candidate, attachment_manifest, support_catalog=support_catalog
+        )
     )
     if not available_phase_hours:
         raise ValueError("compact candidate plan cannot derive available forecast hours")

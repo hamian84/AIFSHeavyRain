@@ -1472,8 +1472,88 @@ def build_candidate_plan_messages(
         for asset_id in summary.get("source_asset_ids", [])
     }
     related_assets = _related_asset_index(candidate, attachment_manifest, context_asset_ids=context_asset_ids)
+    # Overview groups are observations, not an authorization to request every
+    # hour in the group. Keep their full meteorological context intact.
+    temporal_contract = _candidate_temporal_feasibility_contract(
+        candidate, attachment_manifest, support_catalog=support_catalog
+    )
+    available_hours = temporal_contract["effective_hours"]
+    phase_hours = _compact_candidate_phase_hours(
+        candidate, attachment_manifest, support_catalog=support_catalog
+    )
+    # Use the same catalog schedule semantics as the Step05 request expander.
+    product_execution_hours = []
+    for product in support_catalog.get("spatial_field_products", []):
+        if not isinstance(product, dict) or not product.get("product_id"):
+            continue
+        schedule = _allowed_forecast_hours_for_product(str(product["product_id"]), support_catalog)
+        executable = (
+            sorted(set(available_hours) & schedule)
+            if schedule is not None else list(available_hours)
+        )
+        product_execution_hours.append({
+            "product_id": product["product_id"],
+            "signal_components": product.get("signal_components", []),
+            "candidate_execution_hours": executable,
+        })
+    synoptic_execution_hours = sorted(set(available_hours) & set(synoptic_hours))
+    time_guidance = (
+        "available_forecast_hours and product_execution_hours are executable limits; "
+        "related_group_summaries and related_asset_index may contain background hours "
+        "outside those limits. Use background only as context, not as a requested phase, "
+        "representative hour, atomic quantitative scope or expected_signal comparison. "
+        "For each Check, choose executable hours for its product; spatial/temporal evolution "
+        "needs at least two such hours. Use a single-time proposition or omit optional "
+        "context when only one hour is available."
+    )
+    # Advertise only the existing regional executor's candidate-specific options.
+    # The model owns the physical proposition; this is an execution aid, not a
+    # second validation policy. Use the same intent mapper and product selector
+    # as normalization/expansion so newly registered products stay consistent.
+    quantitative_execution_options = []
+    if candidate_operational_region_overlap.get("regional_verification_available"):
+        for mode in candidate_available_verification_modes:
+            if mode not in REGIONAL_VERIFICATION_MODES:
+                continue
+            for component in VERIFICATION_SIGNAL_COMPONENTS:
+                try:
+                    mapped = _derive_diagnostic_check_from_verification_request({
+                        "signal_components": [component], "verification_mode": mode,
+                        "domain_scope": "candidate", "evidence_role": "context",
+                    })
+                    diagnostic_id = mapped["diagnostic_id"]
+                    if diagnostic_id in SPATIAL_ONLY_DIAGNOSTIC_IDS:
+                        continue
+                    product_id = _preferred_product_id_for_check(
+                        diagnostic_id, mapped["variable_role"],
+                        mapped["required_signal_components"], support_catalog, candidate,
+                    )
+                except ValueError:
+                    # Unsupported combinations are not offered as executable.
+                    continue
+                features = _quantitative_feature_ids_for_check(
+                    diagnostic_id, product_id, support_catalog
+                )
+                schedule = _allowed_forecast_hours_for_product(product_id, support_catalog)
+                hours = sorted(set(available_hours) & schedule) if schedule is not None else list(available_hours)
+                if features and len(hours) >= 2:
+                    quantitative_execution_options.append({
+                        "signal_component": component, "verification_mode": mode,
+                        "product_id": product_id, "feature_ids": features,
+                        "forecast_hours": hours,
+                    })
+    quantitative_contract_guidance = (
+        "A single specific claim with greater_than/less_than/increase/decrease/strengthen/weaken "
+        "requires quantitative_scope in both Step04 and Step07. Only use this combination "
+        "with a matching quantitative_execution_options row, one selectable operational region, "
+        "two or more executable hours, and the actual feature/statistic. An empty list means "
+        "this quantitative comparison is unavailable. Spatial/image-only modes do not support "
+        "that numeric contract. For visual hypotheses choose a genuinely observable spatial "
+        "state or truthful area quantifier; never invent numbers, change polarity, extent, or "
+        "physical meaning to evade validation. Specific location/motion remains supported. "
+        "Existing majority convergence rules remain unchanged."
+    )
     if compact_transport:
-        phase_hours = _compact_candidate_phase_hours(candidate, attachment_manifest)
         compact_input = {
             "package_id": package_id,
             "candidate_id": candidate_id,
@@ -1484,7 +1564,7 @@ def build_candidate_plan_messages(
             "related_asset_index": related_assets,
             "available_verification_signals": [
                 component for component in VERIFICATION_SIGNAL_COMPONENTS
-                if component != "synoptic_support" or synoptic_hours
+                if component != "synoptic_support" or synoptic_execution_hours
             ],
             "available_verification_modes": candidate_available_verification_modes,
             "candidate_operational_region_overlap": candidate_operational_region_overlap,
@@ -1507,9 +1587,12 @@ def build_candidate_plan_messages(
             "feature_index": _minimal_feature_index(feature_catalog),
             "coverage_roles": list(COMPACT_COVERAGE_ROLES),
             "available_analysis_phase_types": list(phase_hours),
-            "available_forecast_hours": _available_candidate_forecast_hours(
-                candidate, attachment_manifest
-            ),
+            "available_forecast_hours": available_hours,
+            "product_execution_hours": product_execution_hours,
+            "quantitative_execution_options": quantitative_execution_options,
+            "quantitative_contract_guidance": quantitative_contract_guidance,
+            "time_contract_guidance": time_guidance,
+            "time_feasibility_contract": temporal_contract,
             "candidate_peak_forecast_hours": [
                 int(value) for value in candidate.get("peak_forecast_hours", [])
             ],
@@ -1526,18 +1609,11 @@ def build_candidate_plan_messages(
             ),
             "plan_chunk_index": int(plan_chunk_index),
         }
-        if synoptic_hours:
+        if synoptic_execution_hours:
             compact_input["synoptic_context_product"] = {
                 "product_id": "SYNOPTIC_CONTEXT_CORE",
-                "allowed_forecast_hours": synoptic_hours,
+                "allowed_forecast_hours": synoptic_execution_hours,
             }
-        # Keep the original model input and checkpoint semantics unchanged for
-        # already feasible multi-hour candidates.
-        temporal_contract = _candidate_temporal_feasibility_contract(
-            candidate, attachment_manifest, support_catalog=support_catalog
-        )
-        if temporal_contract["added_hours"]:
-            compact_input["time_feasibility_contract"] = temporal_contract
         compact_input["verification_mode_guidance"] = {
             key: value
             for key, value in compact_input["verification_mode_guidance"].items()
@@ -1557,8 +1633,8 @@ def build_candidate_plan_messages(
                     "signal_components, verification_mode, domain_scope, spatial_relation_scope, phase_keys, representative_spatial_hours와 확인 이유를 작성하십시오. "
                     "diagnostic_id, variable_role, check_scope, required_signal_components, analysis_methods, "
                     "product_id, request_id, output_spec은 Python이 결정하므로 출력하지 마십시오. "
-                    "단, atomic_claims[].quantitative_scope의 feature_id와 region_ids는 입력의 feature_index와 operational_region_index에서 "
-                    "실제 식별자를 선택해 작성하며 새 식별자를 만들지 마십시오. "
+                    "단, atomic_claims[].quantitative_scope의 feature_id와 region_ids는 입력의 quantitative_execution_options와 candidate_operational_region_overlap.selectable_regions에서 "
+                    "실제 실행 가능한 식별자를 선택하십시오. quantitative_contract_guidance를 준수하고 새 식별자를 만들지 마십시오. "
                     "candidate_operational_region_overlap.regional_verification_available=false이면 available_verification_modes에 없는 "
                     "regional_intensity, temporal_change, precipitation_amount를 사용하거나 candidate_area를 운영권역 쪽으로 확대하지 마십시오. "
                     "precursor_environment 후보의 핵심 시각은 선행환경 중첩 대표시각으로 해석하십시오. "
@@ -1583,6 +1659,14 @@ def build_candidate_plan_messages(
         "related_group_summaries": related_summaries,
         "related_asset_index": related_assets,
         "supported_analysis_data_requests": _minimal_support_catalog(support_catalog),
+        "available_forecast_hours": available_hours,
+        "available_analysis_phase_types": list(phase_hours),
+        "candidate_peak_forecast_hours": list(candidate.get("peak_forecast_hours", [])),
+        "product_execution_hours": product_execution_hours,
+        "quantitative_execution_options": quantitative_execution_options,
+        "quantitative_contract_guidance": quantitative_contract_guidance,
+        "time_contract_guidance": time_guidance,
+        "time_feasibility_contract": temporal_contract,
         "feature_index": _minimal_feature_index(feature_catalog),
         "operational_region_index": _minimal_operational_region_index(
             operational_region_catalog

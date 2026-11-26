@@ -880,16 +880,24 @@ def evaluate_compact_candidate_plan_coverage(
 def _available_candidate_forecast_hours(
     candidate: dict[str, Any],
     attachment_manifest: dict[str, Any],
+    *,
+    support_catalog: dict[str, Any] | None = None,
 ) -> list[int]:
-    return list(_candidate_temporal_feasibility_contract(candidate, attachment_manifest)["effective_hours"])
+    return list(_candidate_temporal_feasibility_contract(
+        candidate, attachment_manifest, support_catalog=support_catalog
+    )["effective_hours"])
 
 # Original func/step04/pass1_engine.py:14465
 def _compact_candidate_phase_hours(
     candidate: dict[str, Any],
     attachment_manifest: dict[str, Any],
+    *,
+    support_catalog: dict[str, Any] | None = None,
 ) -> dict[str, list[int]]:
     """Return only phase types that have concrete forecast-hour coverage."""
-    available_hours = _available_candidate_forecast_hours(candidate, attachment_manifest)
+    available_hours = _available_candidate_forecast_hours(
+        candidate, attachment_manifest, support_catalog=support_catalog
+    )
     peak_hours = sorted({int(item) for item in candidate.get("peak_forecast_hours", [])})
     if not available_hours or not peak_hours:
         return {}
